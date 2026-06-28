@@ -366,9 +366,18 @@ Show a normal EV dashboard mock: battery, speed, range. Ask:
 
 > "Where is the carbon impact? Where is the behaviour feedback?"
 
-### Scene 2: Live Sensor Connection
+### Scene 2: Eco-Route Planner (Map Integration)
 
-Open the Live Drive Dashboard and activate the iPad virtual pedal simulator. Tap the gas pedal gently (like playing an F1 game).
+Open the Eco-Route Planner map on the iPad. Show two routes to the same destination. 
+
+Expected result:
+- Route A shows 18 mins (High emissions, 0 EcoCoins).
+- Route B shows 20 mins (Low emissions, +50 EcoCoins).
+- Tap to select Route B, transitioning to the Live Drive Dashboard.
+
+### Scene 3: Live Sensor Connection
+
+Activate the iPad virtual pedal simulator. Tap the gas pedal gently (like playing an F1 game).
 
 Expected result:
 - The ESP32 receives the simulated acceleration.
@@ -377,7 +386,7 @@ Expected result:
 - OLED says "Excellent driving".
 - Website shows smooth segment and CO2 saved.
 
-### Scene 3: Harsh Driving Event
+### Scene 4: Harsh Driving Event
 
 Hit the virtual brake pedal hard on the iPad.
 
@@ -388,7 +397,7 @@ Expected result:
 - OLED shows hard brake warning.
 - Website eco-score drops and event feed updates instantly.
 
-### Scene 4: Behaviour Change
+### Scene 5: Behaviour Change
 
 Release the brake and tap the gas smoothly again.
 
@@ -397,7 +406,7 @@ Expected result:
 - Advice changes to "Smooth again".
 - EcoCoins are awarded for a smooth streak.
 
-### Scene 5: Sustainability Becomes Visible
+### Scene 6: Sustainability Becomes Visible
 
 Switch to Eco-City Builder.
 
@@ -406,7 +415,7 @@ Expected result:
 - Passive income meter increases, unlocking real-life rewards.
 - Adjacency bonus appears.
 
-### Scene 6: Scale the Impact
+### Scene 7: Scale the Impact
 
 Switch to Community and Fleet views.
 
