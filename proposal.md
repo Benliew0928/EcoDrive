@@ -49,7 +49,9 @@ For our live presentation, we will definitely be doing a functional hardware dem
 
 Since we cannot physically drive a car during the pitch, we will use an interactive simulator mode. For the visual dashboard itself, **we will demo it using an iPad during the pitching**. By mounting the iPad horizontally, it will perfectly simulate a real 16:9 widescreen EV center console. 
 
-On the iPad (or using a connected keyboard), we will have a set of "virtual pedals" (like playing an F1 racing game). When we press the virtual gas pedal gently, the ESP32 registers smooth acceleration: the LED stays green, and the virtual city thrives. If we smash the virtual brake pedal, the judges will instantly hear the hardware buzzer go off, the LED will turn red, and the app will show the Eco-Score dropping. This makes the demo interactive and easy to understand.
+On the iPad (or using a connected keyboard), we will have a set of "virtual pedals" (like playing an F1 racing game). When we press the virtual gas pedal gently, the ESP32 registers smooth acceleration: the LED stays green. If we smash the virtual brake pedal, the judges will instantly hear the hardware buzzer go off, the LED will turn red, and the app will show the Eco-Score dropping. This makes the demo interactive and easy to understand.
+
+After demonstrating the driving mechanics, we will switch the iPad to the **Eco-City Builder** mode to show the gamification in action. We will take the Raw EcoCoins we just earned from the "smooth driving" segment and use them to purchase a Solar Farm on the 8x8 city grid. The judges will immediately see our "Passive Yield Coin" generation rate increase. Finally, we will navigate to the built-in **Rewards Marketplace** and show how those accumulated Yield Coins can be directly exchanged for a real-world reward, like a simulated QR code for a free campus coffee. This perfectly wraps up the demo by proving the full loop: from physical pedal input, to eco-score calculation, to city building, and finally to real-world impact.
 
 ## 6. Impact, Targeted Users, and Future Improvements
 The targeted users are basically anyone who owns an EV, but we are also targeting campus fleets and new EV buyers. By turning eco-driving into a game, we are using psychology to make people actually care about their driving habits. Just like how the movie "The Big Short" showed that people are driven by incentives, EcoDrive+ gives drivers positive incentives to do the right thing. 
@@ -78,6 +80,12 @@ Because instant gratification is purely transactional—it gets boring fast! Ins
 Since we can't drive a car on stage, we built a virtual pedal simulator right here on the iPad, just like an F1 racing game. 
 *(Press the virtual pedal gently)* Look, when I press the gas smoothly, the ESP32 LED turns green, and I earn coins for my city. 
 *(Hit the virtual brake hard)* But if I brake harshly! *(Buzzer beeps, LED turns red)* You get instant physical feedback from the hardware, and the iPad dashboard drops my eco-score immediately."
+
+**The Game & Marketplace Demo:**
+"*(Switch the iPad to the Eco-City Builder mode)* 
+And here is the best part: the gamification. I just earned Raw EcoCoins from that smooth driving segment. Watch as I spend them right now to build a Solar Farm in my city. *(Tap to build Solar Farm)* Look at that—my Yield Coin generation just went up! 
+*(Switch to Rewards Marketplace mode)*
+And what does that mean in the real world? It means I can go to the Rewards Marketplace right here, take those Yield Coins, and instantly redeem a QR code for a free coffee on campus. This is the complete loop: from a physical pedal, to eco-scores, to city building, and straight to real-world rewards!"
 
 **Conclusion:**
 "In conclusion, EcoDrive+ isn't just a dashboard. It’s an ecosystem that uses psychology, hardware, and gamification to make drivers deeply aware of their carbon footprint. We don't just tell people to drive green—we make them want to. Thank you!"
