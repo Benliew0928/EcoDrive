@@ -23,6 +23,32 @@ At the end of the day, our **Community Leaderboard** makes drivers fully aware o
 ## 3. Technical Implementation & Use of Tools
 Technically, the system connects hardware and software together to create a seamless real-time data pipeline from the vehicle all the way to the driver's dashboard.
 
+```
+  ┌───────────────────────┐
+  │   Vehicle Sensors      │
+  │  MPU6050 (10Hz)        │
+  │  NEO-6M GPS (1Hz)     │
+  └──────────┬────────────┘
+             │ raw accel / speed / position
+             v
+  ┌───────────────────────┐
+  │   ESP32 (Car Brain)    │
+  │  Eco-Score Engine      │──► OLED Display (score)
+  │  Carbon Calculator     │──► LED Strip (green/red)
+  │  EcoCoin Rewards       │──► Buzzer (harsh brake)
+  └──────────┬────────────┘
+             │ JSON telemetry via WiFi WebSocket
+             v
+  ┌───────────────────────┐
+  │   Dashboard Web App    │
+  │  Eco-Route Planner     │
+  │  Live Driving View     │
+  │  Eco-City Builder      │
+  │  Rewards Marketplace   │
+  │  Community Leaderboard │
+  └───────────────────────┘
+```
+
 **ESP32 Hardware Unit (The Car Brain)**
 At the core of EcoDrive+ is the ESP32 microcontroller, which we are using as the vehicle's embedded brain. We hook it up to an **MPU6050 accelerometer and gyroscope** to track exactly how the car is moving — this is super important because it detects things like hard braking, fast acceleration, and sharp turning, which are the main culprits of energy waste. We are also using a **NEO-6M GPS module** to track the vehicle's speed, distance, and route position in real-time. The ESP32 reads the MPU6050 sensor data at 10Hz and the GPS at 1Hz, then calculates the eco-score locally right there on the device. We wanted the calculation to happen on-device so there is no lag for the driver.
 
