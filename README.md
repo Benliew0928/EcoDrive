@@ -72,7 +72,13 @@ Leaderboards, UTAR Green Week challenges, campus carbon goals, and a fleet comma
 - `plan.md` - improved champion build plan.
 - `proposal.md` - source text for the proposal.
 - `output/pdf/TeamEcoDrive_Proposal.pdf` - generated proposal PDF.
-- `design-ui-blueprint.md` - Figma website UI blueprint and remaining screen specification.
+- `cockpit-hmi-redesign.md` - cockpit-style Figma/UI redesign direction.
+- `apps/dashboard` - static Next.js cockpit HMI screen scaffold.
+- `apps/simulator` - future iPad driving simulator shell, design-first for now.
+- `apps/server` - future local WebSocket relay shell.
+- `firmware` - ESP32 PlatformIO scaffold with empty C++ module placeholders.
+- `docs/project-structure.md` - current repository structure.
+- `docs/simulator-design-concepts.md` - simulator stack recommendation and concept directions.
 - `question/MBOT Hackathon Participant Handbook.pdf` - hackathon handbook.
 
 ## Demo Flow
@@ -84,4 +90,3 @@ Leaderboards, UTAR Green Week challenges, campus carbon goals, and a fleet comma
 5. Return to smooth movement and earn EcoCoins.
 6. Show CarbonTwin forest and Eco-City growth.
 7. Show community challenge and fleet impact views.
-

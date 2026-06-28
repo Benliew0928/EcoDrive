@@ -1,0 +1,14 @@
+{
+  "name": "ecodrive-plus",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dashboard:dev": "npm --workspace @ecodrive/dashboard run dev",
+    "dashboard:build": "npm --workspace @ecodrive/dashboard run build",
+    "simulator:dev": "npm --workspace @ecodrive/simulator run dev",
+    "simulator:build": "npm --workspace @ecodrive/simulator run build"
+  }
+}
