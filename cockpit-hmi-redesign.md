@@ -35,15 +35,14 @@ All redesigned frames should live on Figma page:
 
 `01 Website Screens`
 
-Create seven 1600 x 900 frames:
+Create six 1600 x 900 frames:
 
 1. `Cockpit HMI / 01 Drive`
 2. `Cockpit HMI / 02 Eco Route`
 3. `Cockpit HMI / 03 Energy & Charging`
-4. `Cockpit HMI / 04 CarbonTwin`
-5. `Cockpit HMI / 05 Eco-City`
-6. `Cockpit HMI / 06 Community`
-7. `Cockpit HMI / 07 Fleet Diagnostics`
+4. `Cockpit HMI / 04 Eco-City`
+5. `Cockpit HMI / 05 Community`
+6. `Cockpit HMI / 06 Fleet Diagnostics`
 
 Arrange them in a 2-column grid to the right of the existing old frames.
 
@@ -74,7 +73,6 @@ Content:
   - Drive
   - Route
   - Energy
-  - Forest
   - City
   - Community
   - Fleet
@@ -181,32 +179,11 @@ Main zones:
   - `Nearest green charger: UTAR Solar Hub`
   - `2.3 km away | estimated grid mix 70% clean | RM 4.80 projected`
 
-## Screen 4: CarbonTwin
+## Screen 4: Eco-City (Investment & Rewards)
 
 Primary purpose:
 
-Make carbon savings emotionally visible while still feeling native to the car display.
-
-Main zones:
-
-- Large living forest viewport.
-- Carbon jar progress.
-- Metrics:
-  - Trees: `37 grown`
-  - Streak: `9 days`
-  - CO2 saved: `82.4 kg`
-  - Wildlife: `4 unlocked`
-- Trip-to-tree timeline:
-  - Today: smooth commute upgraded a sapling.
-  - Yesterday: no hard brakes earned rare seed.
-  - Week: carbon jar reached 82% to butterfly unlock.
-  - Next: hit 100 kg CO2 for monsoon biome.
-
-## Screen 5: Eco-City
-
-Primary purpose:
-
-Make the gamification feel like a built-in vehicle reward mode.
+Make the gamification feel like a built-in vehicle reward mode, teaching sustainable investment versus instant gratification.
 
 Main zones:
 
@@ -219,20 +196,19 @@ Main zones:
   - wind,
   - eco-school.
 - Header metrics:
-  - EcoCoins: `1,245`
-  - Income: `68/day`
-  - City stage: `Green Town`
-  - Bonus: `1.32x`
-- Building palette cards.
+  - Raw EcoCoins (For Building): `1,245`
+  - Passive Yield Coins (For Real-World Rewards): `68/day`
+  - Next Real-World Reward: `Free Campus Coffee (Requires 100 Yield Coins)`
+- Building palette cards (costing Raw EcoCoins, but increasing Passive Yield Coins).
 - Active adjacency bonus:
-  - `Solar Farm + EV Charger gives +25% clean charging income.`
+  - `Solar Farm + EV Charger gives +25% Yield Coin income.`
 
 Interaction:
 
 - Palette should visually feel drag-ready.
 - Highlight adjacency bonus with a green pulse.
 
-## Screen 6: Community
+## Screen 5: Community
 
 Primary purpose:
 
@@ -257,7 +233,7 @@ Main zones:
   - No Hard Brake Day
   - Million Meter March
 
-## Screen 7: Fleet Diagnostics
+## Screen 6: Fleet Diagnostics
 
 Primary purpose:
 
@@ -295,8 +271,7 @@ Optional interaction polish:
 
 - Route segmented control changes active mode.
 - Energy panel expands charger details.
-- Eco-City building cards have hover variants.
-- CarbonTwin timeline rows can open trip details.
+- Eco-City building cards have hover variants showing their Yield Coin generation.
 
 ## Why This Is Better
 

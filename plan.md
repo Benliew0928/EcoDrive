@@ -56,7 +56,7 @@ The final demo should be impressive without depending on a real car.
 - Trip metrics: speed, distance, kWh estimate, CO2 saved, EcoCoins earned.
 - Live event feed: acceleration, harsh brake, smooth segment, reward.
 - Route comparison: fastest route vs eco route.
-- CarbonTwin forest and Eco-City mini simulation.
+- Eco-City mini simulation (with passive coin yield for real-life rewards).
 - Community leaderboard and campus challenge.
 - Fleet/control-room view for judges to see scalability.
 
@@ -83,7 +83,7 @@ The final demo should be impressive without depending on a real car.
 |---|---|---|
 | Firmware | C++ with Arduino framework / PlatformIO | Best for ESP32 demo, sensors, OLED, LEDs, and judges familiar with Arduino workshop. |
 | Website | Next.js + TypeScript | Fast to build, polished for pitching, easy API/WebSocket integration. |
-| UI | React, Tailwind CSS, Recharts, Leaflet, Three.js optional | Strong visual dashboard, charts, maps, and possible 3D/2.5D city or forest. |
+| UI | React, Tailwind CSS, Recharts, Leaflet, Three.js optional | Strong visual dashboard, charts, maps, and possible 3D/2.5D city. |
 | Backend | Node.js + TypeScript + Express/Fastify + WebSocket | One language for web/backend, real-time telemetry is simple to show. |
 | Database | SQLite + Prisma or Drizzle | Reliable local demo, no internet dependency, easy seeding. |
 | Hardware Protocol | JSON over WiFi, WebSocket or MQTT-style topics | Easy to inspect and explain during judging. |
@@ -120,7 +120,6 @@ Impact Engine
 Next.js Demo Website
   - driver dashboard
   - route planner
-  - CarbonTwin forest
   - Eco-City builder
   - leaderboard
   - fleet dashboard
@@ -240,26 +239,15 @@ Required UI:
 - Explanation panel: "Eco route is 4 minutes longer but saves 0.7 kWh."
 - Weather and traffic modifiers as future-ready options.
 
-### 7.3 CarbonTwin Forest
+### 7.3 Eco-City Builder (Investment Mechanics)
 
-Purpose: emotional carbon visualization.
-
-Required UI:
-- Interactive 2.5D forest/city green zone.
-- Tree stages: sapling, young tree, mature tree, rare tree.
-- CO2 jar progress.
-- Trip-to-tree timeline.
-- Wildlife unlocks and streak reward.
-
-### 7.4 Eco-City Builder
-
-Purpose: strongest creative differentiator.
+Purpose: strongest creative differentiator and long-term retention. 
 
 Required UI:
 - 8x8 city grid.
 - Building palette: park, solar farm, wind turbine, EV charging hub, recycling centre, eco-school.
-- EcoCoin balance.
-- Passive income meter.
+- EcoCoin balance (Raw vs Yield).
+- Passive income meter (Generates Yield Coins for real-life rewards like coffee discounts).
 - Adjacency bonuses highlighted when placing buildings.
 - City stage progress: Barren Land to Eco-Metropolis.
 
@@ -409,11 +397,11 @@ Expected result:
 
 ### Scene 5: Sustainability Becomes Visible
 
-Switch to CarbonTwin and Eco-City.
+Switch to Eco-City Builder.
 
 Expected result:
-- Tree grows.
-- EcoCoins add a solar charger or park.
+- EcoCoins allow user to build a solar charger.
+- Passive income meter increases, unlocking real-life rewards.
 - Adjacency bonus appears.
 
 ### Scene 6: Scale the Impact
@@ -482,7 +470,7 @@ Judges value honesty. The final presentation should clearly state:
 | Eco-score calculation | Live, locally computed |
 | GPS route | Live if signal available, simulated fallback indoors |
 | Route energy comparison | Simulated using real formula and route-like sample data |
-| Eco-City and forest updates | Live in app based on telemetry/rewards |
+| Eco-City state updates | Live in app based on telemetry/rewards |
 | Leaderboard/fleet data | Seeded demo data plus live current user update |
 | Future AI coaching | Not built; positioned as future improvement |
 
@@ -507,9 +495,8 @@ The Figma website demo should include seven desktop pages:
 
 1. Live Drive Dashboard
 2. Eco Route Planner
-3. CarbonTwin Forest
-4. Eco-City Builder
-5. Community Challenge
+3. Eco-City Builder
+4. Community Challenge
 6. Fleet Command Centre
 7. Trip Replay & Carbon Certificate
 
