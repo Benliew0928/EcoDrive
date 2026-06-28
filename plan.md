@@ -46,7 +46,6 @@ The pitching demo consists of three connected components:
 ```text
 ┌─────────────────────────────┐
 │  APP 1: Driving Simulator   │  ← iPad (horizontal, like F1 game)
-│  - Route selection map       │
 │  - 2D driving game view      │
 │  - Virtual gas pedal         │
 │  - Virtual brake pedal       │
@@ -69,6 +68,7 @@ The pitching demo consists of three connected components:
                v
 ┌─────────────────────────────┐
 │  APP 2: Main Dashboard      │  ← Laptop/Monitor
+│  - Eco-Route Planner (map)    │
 │  - Live eco-score gauge       │
 │  - Trip metrics & event feed  │
 │  - Eco-City Builder           │
@@ -80,10 +80,9 @@ The pitching demo consists of three connected components:
 
 ### 3.2 App 1: Driving Simulator (iPad)
 
-A web app optimised for iPad landscape (like an F1 racing game):
+A web app optimised for iPad landscape (like an F1 racing game). This app is purely for driving — no menus, no route selection, no dashboard. Just the road and the pedals.
 
-- **Route Selection Screen**: Leaflet/OpenStreetMap showing two routes. Eco-Route highlighted green with EcoCoin bonus. Tap to start driving.
-- **Driving Game Screen**: 2D top-down road view with the car moving forward. Two large touch zones at the bottom: gas pedal (right) and brake pedal (left). Speed indicator. The road has curves, traffic lights, and stop zones that test driving smoothness.
+- **Driving Game Screen**: 2D top-down road view with the car moving forward automatically. Two large touch zones at the bottom: gas pedal (right) and brake pedal (left). Speed indicator. The road has curves, traffic lights, and stop zones that test driving smoothness.
 - **Data Output**: Every 200ms, sends a JSON packet to the ESP32 over WiFi WebSocket containing throttle position, brake force, current speed, and steering angle.
 
 ### 3.3 ESP32 Hardware Unit
@@ -102,6 +101,7 @@ The ESP32 acts as the "car brain" sitting on the table during the pitch:
 
 A web app running on a laptop or external monitor:
 
+- Eco-Route Planner with integrated map API (Leaflet/Google Maps) showing route comparison.
 - Live dashboard receiving processed telemetry from ESP32.
 - Big eco-score gauge.
 - Trip metrics: speed, distance, kWh estimate, CO2 saved, EcoCoins earned.
@@ -140,8 +140,11 @@ A web app running on a laptop or external monitor:
 ## 5. System Architecture (Detailed Data Flow)
 
 ```text
-iPad (Driving Simulator App)
-  - Route selection → user picks Eco-Route
+Laptop (Main Dashboard App)
+  - Eco-Route Planner: user picks Eco-Route on map
+  - Signals iPad to start driving game
+
+Ipad (Driving Simulator App)
   - Driving game starts
   - Sends every 200ms:
     { "throttle": 0.0-1.0, "brake": 0.0-1.0, "speed": km/h, "steering": -1.0 to 1.0 }
@@ -171,6 +174,7 @@ Backend WebSocket Server (on laptop)
          |
          v
 Laptop (Main Dashboard App)
+  - Switches from Route Planner to Live Drive Dashboard
   - Live eco-score gauge updates
   - Trip metrics update
   - Event feed scrolls
@@ -273,17 +277,9 @@ Why this works for judging:
 
 ## 7. App 1: Driving Simulator Pages (iPad)
 
-### 7.1 Route Selection Screen
+The iPad app is purely a driving game — no route selection, no menus, no dashboard. Just the road and the pedals.
 
-Purpose: let the driver choose between a fast route and an eco route before driving.
-
-Required UI:
-- Leaflet/OpenStreetMap showing the area around the destination.
-- Two route overlays: Route A (red, fast, high emissions) and Route B (green, eco, lower emissions).
-- Route comparison cards: time, distance, estimated CO2, EcoCoin bonus.
-- Large "Start Driving" button that transitions to the driving game.
-
-### 7.2 Driving Game Screen
+### 7.1 Driving Game Screen
 
 Purpose: simulate driving behaviour that feeds real data to the ESP32.
 
@@ -299,9 +295,20 @@ Required UI:
 
 ## 8. App 2: Main Dashboard Pages (Laptop/Monitor)
 
-The dashboard should open directly into the working live view, not a marketing landing page.
+The dashboard opens to the Eco-Route Planner first, then transitions to the Live Drive Dashboard once a route is selected.
 
-### 8.1 Live Drive Dashboard
+### 8.1 Eco-Route Planner
+
+Purpose: show route intelligence and map integration using a real map API.
+
+Required UI:
+- Integrated map (Leaflet + OpenStreetMap or Google Maps API).
+- Origin/destination input.
+- Two route overlays: Route A (red, fast, high emissions) and Route B (green, eco, lower emissions).
+- Route comparison cards: time, distance, estimated CO2, EcoCoin bonus.
+- "Select Eco-Route & Start Driving" button that transitions to the Live Drive Dashboard and signals the iPad to start the driving game.
+
+### 8.2 Live Drive Dashboard
 
 Purpose: show the hardware-to-software connection instantly.
 
@@ -313,7 +320,7 @@ Required UI:
 - Live event feed.
 - Hardware mirror: virtual OLED/LED showing what the physical ESP32 is displaying.
 
-### 8.2 Eco-City Builder (Investment Mechanics)
+### 8.3 Eco-City Builder (Investment Mechanics)
 
 Purpose: strongest creative differentiator and long-term retention.
 
@@ -325,7 +332,7 @@ Required UI:
 - Adjacency bonuses highlighted when placing buildings.
 - City stage progress: Barren Land to Eco-Metropolis.
 
-### 8.3 Rewards Marketplace
+### 8.4 Rewards Marketplace
 
 Purpose: prove that game coins have real-world value.
 
@@ -335,7 +342,7 @@ Required UI:
 - "Redeem" button that generates a simulated QR code.
 - Redemption history.
 
-### 8.4 Community Challenge & Leaderboard
+### 8.5 Community Challenge & Leaderboard
 
 Purpose: show social behaviour change and sustainability impact.
 
@@ -345,7 +352,7 @@ Required UI:
 - Friend comparison.
 - Campus carbon map preview.
 
-### 8.5 Fleet Command Centre
+### 8.6 Fleet Command Centre
 
 Purpose: make the project feel scalable and commercially relevant.
 
@@ -415,14 +422,14 @@ Show a normal EV dashboard mock on the laptop: battery, speed, range. Ask:
 
 > "Where is the carbon impact? Where is the behaviour feedback?"
 
-### Scene 2: Eco-Route Selection (iPad)
+### Scene 2: Eco-Route Selection (Dashboard)
 
-Open the Eco-Route Planner on the iPad. Show two routes on the map.
+Open the Eco-Route Planner on the Dashboard laptop. Show two routes on the integrated map.
 
 Expected result:
 - Route A: 18 mins, high emissions, 0 bonus EcoCoins.
 - Route B: 20 mins, low emissions, +50 bonus EcoCoins.
-- Tap Route B. The driving game starts on the iPad.
+- Tap "Select Eco-Route & Start Driving." The driving game starts on the iPad automatically.
 
 ### Scene 3: Smooth Driving (iPad → ESP32 → Dashboard)
 
@@ -497,20 +504,20 @@ Expected result:
 
 ### Phase 3: Driving Simulator App (iPad)
 
-- Build route selection screen with Leaflet map.
-- Build 2D driving game with gas/brake touch zones.
+- Build 2D driving game with gas/brake touch zones (no route selection — that's on Dashboard).
 - Connect to ESP32 via WebSocket.
 - Test: drive on iPad → ESP32 reacts in real-time.
 
 ### Phase 4: Main Dashboard App (Laptop)
 
+- Build Eco-Route Planner with Leaflet/Google Maps API integration.
 - Build live eco-score gauge and trip metrics.
 - Build event feed.
 - Build Eco-City Builder grid.
 - Build Rewards Marketplace.
 - Build Community Leaderboard.
 - Connect to ESP32 output via WebSocket.
-- Test: full pipeline from iPad → ESP32 → Dashboard.
+- Test: full pipeline — select route on Dashboard → iPad starts driving → ESP32 reacts → Dashboard updates.
 
 ### Phase 5: Pitch Polish
 
@@ -555,18 +562,18 @@ The PDF proposal should use one cover page plus five content pages:
 
 ## 14. UI Design Scope
 
-### Simulator App (iPad) — 2 screens:
+### Simulator App (iPad) — 1 screen:
 
-1. Route Selection Map
-2. Driving Game
+1. Driving Game (gas/brake pedals only)
 
-### Dashboard App (Laptop) — 5 screens:
+### Dashboard App (Laptop) — 6 screens:
 
-1. Live Drive Dashboard
-2. Eco-City Builder
-3. Rewards Marketplace
-4. Community Leaderboard
-5. Fleet Command Centre
+1. Eco-Route Planner (integrated map API)
+2. Live Drive Dashboard
+3. Eco-City Builder
+4. Rewards Marketplace
+5. Community Leaderboard
+6. Fleet Command Centre
 
 Design direction:
 - Simulator: dark racing-game aesthetic, large touch targets, neon accent colours.

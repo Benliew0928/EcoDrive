@@ -24,13 +24,13 @@ At the end of the day, our **Community Leaderboard** makes drivers fully aware o
 Technically, our demo uses a **two-app architecture** connected through an ESP32 microcontroller, creating a complete real-time data pipeline that we can demonstrate live on stage.
 
 **App 1: Driving Simulator (iPad)**
-The first app is an interactive driving simulator running on an iPad, laid horizontally like an F1 racing game. It has a route selection map where the driver chooses between a fast route and an eco-friendly route, followed by a 2D driving game with virtual gas and brake pedals. Every 200 milliseconds, the simulator sends raw driving data (throttle position, brake force, current speed) over WiFi to the ESP32.
+The first app is an interactive driving simulator running on an iPad, laid horizontally like an F1 racing game. It is purely a driving game — just the road and the pedals. It has a 2D driving game view with virtual gas and brake pedals. Every 200 milliseconds, the simulator sends raw driving data (throttle position, brake force, current speed) over WiFi to the ESP32.
 
 **ESP32 Hardware (The Car Brain)**
 The ESP32 microcontroller sits on the table during the pitch, acting as the "car's brain." It receives the raw driving data from the iPad, then processes the eco-score locally using our transparent formula. Based on the result, it drives physical hardware outputs: an RGB LED strip that glows green for smooth driving and flashes red for harsh braking, a buzzer that beeps on dangerous events, and an OLED display showing the live score. After processing, it forwards the results to our main dashboard.
 
 **App 2: Main Dashboard (Laptop/Monitor)**
-The second app is the full cockpit dashboard running on a laptop or external monitor. It receives the processed telemetry from the ESP32 and displays everything in real-time: the eco-score gauge, EcoCoins earned, carbon saved, the Eco-City Builder, the Rewards Marketplace, and the Community Leaderboard.
+The second app is the full cockpit dashboard running on a laptop or external monitor. It starts with the **Eco-Route Planner**, where drivers use an integrated map (powered by Leaflet or Google Maps API) to compare a fast route versus an eco-friendly route. After selecting the eco-route, the dashboard transitions to the live driving view and signals the iPad to start the driving game. It then receives the processed telemetry from the ESP32 and displays everything in real-time: the eco-score gauge, EcoCoins earned, carbon saved, the Eco-City Builder, the Rewards Marketplace, and the Community Leaderboard.
 
 For our use of tools, we are relying on open-source frameworks. The ESP32 firmware is written in C/C++ using the Arduino IDE. For the web apps, we are using Next.js with React for the UI, Leaflet for maps, and WebSocket for real-time communication. Everything runs locally on the same WiFi network — no internet dependency during the pitch.
 
@@ -58,7 +58,7 @@ When the Dashboard receives this packet, it instantly updates the eco-score gaug
 ## 5. Expected Demo: Two-Screen Live Demonstration
 For our live presentation, we will set up a **two-screen demo** with the ESP32 hardware visible between them. The iPad will be placed horizontally showing the Driving Simulator, the ESP32 board with its LED strip and OLED will sit on the table, and a laptop or monitor behind will display the Main Dashboard.
 
-To start the demo, we will first open the **Eco-Route Planner** on the iPad Simulator. This shows a map with two routes to a destination. We will show the judges the contrast: Route A is fast but high-emissions, Route B is the Eco-Route earning +50 EcoCoins. We tap Route B to start the driving game.
+To start the demo, we will first open the **Eco-Route Planner** on the Dashboard laptop. This shows an integrated map with two routes to a destination. We will show the judges the contrast: Route A is fast but high-emissions, Route B is the Eco-Route earning +50 EcoCoins. We tap "Select Eco-Route & Start Driving" on the Dashboard, which automatically starts the driving game on the iPad.
 
 Once the driving game starts on the iPad, we will press the virtual gas pedal gently. The judges will immediately see the ESP32 on the table light up green, and the Dashboard on the laptop will show the eco-score climbing. If we then slam the virtual brake pedal, the ESP32 buzzer will beep, the LED strip will flash red, and the Dashboard will show the eco-score dropping instantly. This three-way real-time reaction across iPad, hardware, and laptop creates a powerful visual effect.
 
@@ -79,8 +79,8 @@ Going forward, we would definitely want to partner with real businesses to make 
 "Good morning, judges! Let me ask you a question: why are EV dashboards so boring? People buy EVs to save the earth, but when they drive, all they see is a battery percentage and a speedometer. There is absolutely no emotional connection to the carbon they are actually saving. Today, we are changing that. Meet **EcoDrive+**, a premium in-car cockpit that turns saving the planet into an addictive, rewarding habit."
 
 **The Problem & Solution (Route Example):**
-"Let's be honest, drivers have bad habits. *(Open the Eco-Route Planner map on the iPad)* Let's say you are driving home. Look at this map. Route A takes 18 minutes, but it's full of traffic lights and sharp corners. You're constantly braking and accelerating, wasting tons of energy. Route B takes 20 minutes, it's slightly further, but it's a smooth, open road that generates way less carbon emissions. How do we convince a driver to take that 20-minute route? 
-Simple: **We pay them in EcoCoins.** *(Tap to select Route B. Driving game starts on iPad.)* EcoDrive+ calculates your carbon savings in real-time and rewards you for making the green choice."
+"Let's be honest, drivers have bad habits. *(Open the Eco-Route Planner map on the Dashboard laptop)* Let's say you are driving home. Look at this integrated map. Route A takes 18 minutes, but it's full of traffic lights and sharp corners. You're constantly braking and accelerating, wasting tons of energy. Route B takes 20 minutes, it's slightly further, but it's a smooth, open road that generates way less carbon emissions. How do we convince a driver to take that 20-minute route? 
+Simple: **We pay them in EcoCoins.** *(Tap "Select Eco-Route" on the Dashboard. The driving game starts on the iPad.)* EcoDrive+ calculates your carbon savings in real-time and rewards you for making the green choice."
 
 **The Gamification vs. Instant Reward Logic:**
 "Now, you might ask: why not just let users use those EcoCoins to instantly redeem a coffee discount? Why do we need a game? 
