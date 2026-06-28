@@ -11,3 +11,4 @@ Thumbs.db
 .pio/
 .vscode/
 dashboard-dev.log
+simulator-dev*.log

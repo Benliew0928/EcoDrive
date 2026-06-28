@@ -113,6 +113,17 @@ button {
   gap: 10px;
 }
 
+.speed-stack em {
+  border: 1px solid rgba(56, 189, 248, 0.38);
+  border-radius: 8px;
+  color: var(--cyan);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1;
+  padding: 8px 10px;
+}
+
 .speed-stack strong {
   font-size: clamp(58px, 8vw, 96px);
   line-height: 0.85;
@@ -155,9 +166,27 @@ button {
 }
 
 .route-brief h1 {
-  font-size: 28px;
+  font-size: 25px;
   line-height: 1.02;
   margin: 8px 0 14px;
+}
+
+.route-sequence {
+  display: grid;
+  gap: 7px;
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 14px;
+}
+
+.route-sequence span {
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 8px;
+  color: var(--cyan);
+  font-size: 10px;
+  font-weight: 900;
+  padding: 8px 6px;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .route-split {
@@ -206,6 +235,42 @@ button {
   display: block;
   font-size: 18px;
   margin-top: 6px;
+}
+
+.bonus-toast {
+  backdrop-filter: blur(22px);
+  background: linear-gradient(135deg, rgba(55, 229, 143, 0.82), rgba(56, 189, 248, 0.62));
+  border: 1px solid rgba(245, 255, 250, 0.42);
+  border-radius: 10px;
+  box-shadow: 0 22px 70px rgba(55, 229, 143, 0.22);
+  left: 50%;
+  opacity: 0;
+  padding: 16px 20px;
+  pointer-events: none;
+  position: absolute;
+  top: 132px;
+  transform: translate(-50%, -16px) scale(0.94);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.bonus-toast--active {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+
+.bonus-toast p {
+  color: rgba(3, 7, 7, 0.74);
+  font-size: 12px;
+  font-weight: 900;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.bonus-toast strong {
+  color: #031112;
+  display: block;
+  font-size: 18px;
+  margin-top: 4px;
 }
 
 .bottom-hud {
@@ -374,6 +439,10 @@ button {
   .event-callout {
     right: -10px;
     transform-origin: top right;
+  }
+
+  .bonus-toast {
+    top: 214px;
   }
 
   .bottom-hud {

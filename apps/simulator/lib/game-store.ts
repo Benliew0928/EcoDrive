@@ -11,6 +11,7 @@ export type GameEvent =
   | "harsh_brake"
   | "regen_success"
   | "fast_route_warning"
+  | "reverse_mode"
   | "finish_loop";
 
 export type ControlMode = "auto-cruise" | "keyboard" | "touch" | "controller-ready";
