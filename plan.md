@@ -368,9 +368,10 @@ Show a normal EV dashboard mock: battery, speed, range. Ask:
 
 ### Scene 2: Live Sensor Connection
 
-Open the Live Drive Dashboard. Move the ESP32 board gently.
+Open the Live Drive Dashboard and activate the iPad virtual pedal simulator. Tap the gas pedal gently (like playing an F1 game).
 
 Expected result:
+- The ESP32 receives the simulated acceleration.
 - Eco-score stays high.
 - LED stays green.
 - OLED says "Excellent driving".
@@ -378,9 +379,10 @@ Expected result:
 
 ### Scene 3: Harsh Driving Event
 
-Jolt the board to simulate hard braking.
+Hit the virtual brake pedal hard on the iPad.
 
 Expected result:
+- The ESP32 receives the harsh brake event.
 - LED flashes red.
 - Buzzer beeps.
 - OLED shows hard brake warning.
@@ -388,7 +390,7 @@ Expected result:
 
 ### Scene 4: Behaviour Change
 
-Hold the board steady again.
+Release the brake and tap the gas smoothly again.
 
 Expected result:
 - Score recovers.

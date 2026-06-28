@@ -47,9 +47,9 @@ For the hardware feedback in the car, we are using an OLED display to show the l
 ## 5. Expected Demo: Live Demonstration
 For our live presentation, we will definitely be doing a functional hardware demonstration to show exactly how the system reacts in real-time. We will have the ESP32 and all the sensors mounted on a small prototype board to act as the "car unit."
 
-During the demo, we will physically tilt and move the board to simulate different driving habits. If we hold it steady, the LED will stay green, and the virtual city will thrive on the dashboard. If we quickly jolt the board to simulate a harsh brake, the judges will instantly hear the buzzer go off, the LED will turn red, and the app will show the Eco-Score dropping. 
+Since we cannot physically drive a car during the pitch, we will use an interactive simulator mode. For the visual dashboard itself, **we will demo it using an iPad during the pitching**. By mounting the iPad horizontally, it will perfectly simulate a real 16:9 widescreen EV center console. 
 
-For the visual dashboard itself, **we will demo it using an iPad during the pitching**. By mounting the iPad horizontally, it will perfectly simulate a real 16:9 widescreen EV center console (like a Tesla screen), making the whole experience feel incredibly authentic and professional.
+On the iPad (or using a connected keyboard), we will have a set of "virtual pedals" (like playing an F1 racing game). When we press the virtual gas pedal gently, the ESP32 registers smooth acceleration: the LED stays green, and the virtual city thrives. If we smash the virtual brake pedal, the judges will instantly hear the hardware buzzer go off, the LED will turn red, and the app will show the Eco-Score dropping. This makes the demo interactive and easy to understand.
 
 ## 6. Impact, Targeted Users, and Future Improvements
 The targeted users are basically anyone who owns an EV, but we are also targeting campus fleets and new EV buyers. By turning eco-driving into a game, we are using psychology to make people actually care about their driving habits. Just like how the movie "The Big Short" showed that people are driven by incentives, EcoDrive+ gives drivers positive incentives to do the right thing. 
@@ -74,9 +74,10 @@ Simple: **We pay them in EcoCoins.** EcoDrive+ calculates your carbon savings in
 Because instant gratification is purely transactional—it gets boring fast! Instead, we built an **Eco-City Builder** right into the car's screen *(point to iPad)*. You have a choice: you can buy a small coffee discount now, OR you can invest those coins to build a Solar Farm in your virtual city. That Solar Farm will generate passive coins every day, allowing you to unlock massive real-world rewards later. This teaches long-term sustainable thinking and keeps users completely hooked on the app."
 
 **The Hardware Demo:**
-"And this isn't just software. We built the actual hardware integration *(hold up ESP32)*. This board acts as our car. It has an MPU6050 accelerometer tracking every movement. 
-*(Demonstrate holding it smooth)* Look, when I drive smoothly, the LED is green, and I earn coins for my city. 
-*(Jolt the board hard)* But if I brake harshly! *(Buzzer beeps, LED turns red)* You get instant physical feedback, and the iPad dashboard drops my eco-score immediately."
+"And this isn't just software. We built the actual hardware integration *(point to ESP32 board)*. This board acts as the car's brain. 
+Since we can't drive a car on stage, we built a virtual pedal simulator right here on the iPad, just like an F1 racing game. 
+*(Press the virtual pedal gently)* Look, when I press the gas smoothly, the ESP32 LED turns green, and I earn coins for my city. 
+*(Hit the virtual brake hard)* But if I brake harshly! *(Buzzer beeps, LED turns red)* You get instant physical feedback from the hardware, and the iPad dashboard drops my eco-score immediately."
 
 **Conclusion:**
 "In conclusion, EcoDrive+ isn't just a dashboard. It’s an ecosystem that uses psychology, hardware, and gamification to make drivers deeply aware of their carbon footprint. We don't just tell people to drive green—we make them want to. Thank you!"
