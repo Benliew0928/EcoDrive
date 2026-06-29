@@ -137,6 +137,7 @@ button {
 
 .status-cluster {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   justify-content: flex-end;
 }
@@ -235,6 +236,15 @@ button {
   display: block;
   font-size: 18px;
   margin-top: 6px;
+}
+
+.event-callout--warning {
+  border-color: rgba(255, 91, 91, 0.48);
+  box-shadow: inset 0 0 34px rgba(255, 91, 91, 0.08);
+}
+
+.event-callout--warning strong {
+  color: var(--red);
 }
 
 .bonus-toast {
@@ -383,6 +393,22 @@ button {
   grid-column: span 2;
   grid-template-columns: 1fr 1fr;
   padding: 10px;
+  overflow: hidden;
+}
+
+.steer-pad::after {
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.85), rgba(55, 229, 143, 0.6));
+  border-radius: 999px;
+  box-shadow: 0 0 22px rgba(56, 189, 248, 0.45);
+  content: "";
+  height: calc(100% - 20px);
+  left: var(--steer-force, 50%);
+  pointer-events: none;
+  position: absolute;
+  top: 10px;
+  transform: translateX(-50%);
+  width: 4px;
+  z-index: 1;
 }
 
 .steer-pad button {
@@ -392,6 +418,8 @@ button {
   color: var(--text);
   cursor: pointer;
   font-weight: 900;
+  position: relative;
+  z-index: 2;
 }
 
 .edge-warning {

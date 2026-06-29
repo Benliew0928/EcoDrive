@@ -1,8 +1,8 @@
 # EcoDrive+ Driving Simulator
 
-This app now contains the first playable Eco GP Route Chase prototype for phases 1-3.
+This app now contains the playable Eco GP Route Chase prototype for phases 1-6.
 
-The simulator will become the landscape driving game that supports iPad touch, laptop keyboard, laptop touch screen, and Xbox controller input while sending throttle, brake, steering, and speed packets to the ESP32 over WiFi WebSocket. The current prototype focuses on the foundation, fictional neon demo map, and third-person driving scene. ESP32 packets, full cross-device controls, and dashboard sync are planned later.
+The simulator is the landscape driving game that supports iPad touch, laptop keyboard, laptop touch screen, and Xbox-style controller input while preparing throttle, brake, steering, and speed packets for the future ESP32 WiFi WebSocket phase. The current prototype includes the foundation, fictional neon demo map, third-person driving scene, cross-device controls, touch pressure simulation, and local eco-behavior events. ESP32 packets and dashboard sync are planned later.
 
 See `DEVELOPMENT_PLAN.md` for the phase-by-phase implementation tracker.
 

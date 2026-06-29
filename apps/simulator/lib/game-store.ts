@@ -8,13 +8,16 @@ export type GameEvent =
   | "launch_ready"
   | "route_fork"
   | "smooth_segment"
+  | "smooth_streak"
   | "harsh_brake"
+  | "aggressive_acceleration"
+  | "overspeed"
   | "regen_success"
   | "fast_route_warning"
   | "reverse_mode"
   | "finish_loop";
 
-export type ControlMode = "auto-cruise" | "keyboard" | "touch" | "controller-ready";
+export type ControlMode = "auto-cruise" | "keyboard" | "touch" | "controller" | "controller-ready";
 
 export type SimulatorControls = {
   throttle: number;
@@ -34,6 +37,10 @@ type RawInput = {
   touchThrottle: number;
   touchBrake: number;
   touchSteering: number;
+  gamepadThrottle: number;
+  gamepadBrake: number;
+  gamepadSteering: number;
+  gamepadConnected: boolean;
   keys: Record<string, boolean>;
 };
 
@@ -45,6 +52,7 @@ type GameStore = {
   setTouchThrottle: (value: number) => void;
   setTouchBrake: (value: number) => void;
   setTouchSteering: (value: number) => void;
+  setGamepadInput: (input: SimulatorControls & { connected: boolean; active: boolean }) => void;
   setTelemetry: (telemetry: Telemetry) => void;
 };
 
@@ -65,6 +73,10 @@ export const useGameStore = create<GameStore>((set) => ({
     touchThrottle: 0,
     touchBrake: 0,
     touchSteering: 0,
+    gamepadThrottle: 0,
+    gamepadBrake: 0,
+    gamepadSteering: 0,
+    gamepadConnected: false,
     keys: {}
   },
   telemetry: initialTelemetry,
@@ -101,6 +113,25 @@ export const useGameStore = create<GameStore>((set) => ({
       rawInput: {
         ...state.rawInput,
         touchSteering: value
+      }
+    })),
+  setGamepadInput: (input) =>
+    set((state) => ({
+      controlMode: input.connected
+        ? input.active
+          ? "controller"
+          : state.controlMode === "controller" || state.controlMode === "auto-cruise"
+            ? "controller-ready"
+            : state.controlMode
+        : state.controlMode === "controller" || state.controlMode === "controller-ready"
+          ? "auto-cruise"
+          : state.controlMode,
+      rawInput: {
+        ...state.rawInput,
+        gamepadThrottle: input.throttle,
+        gamepadBrake: input.brake,
+        gamepadSteering: input.steering,
+        gamepadConnected: input.connected
       }
     })),
   setTelemetry: (telemetry) => set({ telemetry })

@@ -29,6 +29,11 @@ type VehicleState = {
   reverseHold: number;
   selectedRoute: RouteChoice;
   ecoScore: number;
+  previousSpeed: number;
+  smoothSeconds: number;
+  overspeedSeconds: number;
+  harshTimer: number;
+  aggressiveTimer: number;
   lastHudAt: number;
 };
 
@@ -41,7 +46,10 @@ const eventLabels: Record<GameEvent, string> = {
   launch_ready: "Launch ready. Hold W or press the gas pedal.",
   route_fork: "Route fork ahead. Green path saves energy.",
   smooth_segment: "Smooth segment. Eco-score climbing.",
+  smooth_streak: "Smooth driving streak. Eco-score bonus is active.",
   harsh_brake: "Harsh brake detected. ESP32 would flash red.",
+  aggressive_acceleration: "Aggressive acceleration detected. Eco-score penalty.",
+  overspeed: "Overspeed warning. Smooth route score is dropping.",
   regen_success: "Regen zone captured. +EcoCoin preview.",
   fast_route_warning: "Fast route warning: stop-start cluster ahead.",
   reverse_mode: "Reverse engaged. Brake pedal is now backing the EV.",
@@ -50,12 +58,19 @@ const eventLabels: Record<GameEvent, string> = {
 
 export function SimulatorGame() {
   useKeyboardInput();
+  useGamepadInput();
   const telemetry = useGameStore((state) => state.telemetry);
   const controlMode = useGameStore((state) => state.controlMode);
-  const speedLabel = Math.round(telemetry.speedKmh);
+  const gamepadConnected = useGameStore((state) => state.rawInput.gamepadConnected);
+  const speedLabel = Math.round(Math.abs(telemetry.speedKmh));
   const gearLabel = telemetry.speedKmh < -1 ? "R" : telemetry.speedKmh > 1 ? "D" : "P";
-  const isWarning = telemetry.event === "harsh_brake" || telemetry.event === "fast_route_warning";
-  const showBonus = telemetry.event === "regen_success" || telemetry.event === "finish_loop";
+  const controlModeLabel = controlMode.replace("-", " ");
+  const isWarning =
+    telemetry.event === "harsh_brake" ||
+    telemetry.event === "fast_route_warning" ||
+    telemetry.event === "aggressive_acceleration" ||
+    telemetry.event === "overspeed";
+  const showBonus = telemetry.event === "regen_success" || telemetry.event === "finish_loop" || telemetry.event === "smooth_streak";
 
   return (
     <main className="simulator-shell">
@@ -78,7 +93,8 @@ export function SimulatorGame() {
             <span>km/h</span>
           </div>
           <div className="status-cluster">
-            <span className="status-pill">Simulator only</span>
+            <span className="status-pill">Input {controlModeLabel}</span>
+            <span className="status-pill status-pill--muted">{gamepadConnected ? "Controller linked" : "Controller ready"}</span>
             <span className="status-pill status-pill--muted">ESP32 phase later</span>
           </div>
         </section>
@@ -103,14 +119,20 @@ export function SimulatorGame() {
           </div>
         </section>
 
-        <section className="event-callout">
+        <section className={`event-callout ${isWarning ? "event-callout--warning" : ""}`}>
           <p>Live driving event</p>
           <strong>{eventLabels[telemetry.event]}</strong>
         </section>
 
         <section className={`bonus-toast ${showBonus ? "bonus-toast--active" : ""}`}>
           <p>Eco reward window</p>
-          <strong>{telemetry.event === "finish_loop" ? "Loop complete" : "+50 EcoCoin regen capture"}</strong>
+          <strong>
+            {telemetry.event === "finish_loop"
+              ? "Loop complete"
+              : telemetry.event === "smooth_streak"
+                ? "Smooth streak score boost"
+                : "+50 EcoCoin regen capture"}
+          </strong>
         </section>
 
         <section className="bottom-hud">
@@ -344,6 +366,11 @@ function DriveRig() {
     reverseHold: 0,
     selectedRoute: "unknown",
     ecoScore: 84,
+    previousSpeed: 0,
+    smoothSeconds: 0,
+    overspeedSeconds: 0,
+    harshTimer: 0,
+    aggressiveTimer: 0,
     lastHudAt: 0
   });
   const camera = useThree((state) => state.camera);
@@ -357,10 +384,24 @@ function DriveRig() {
     const keyboardThrottle = keys.w || keys.arrowup ? 1 : 0;
     const keyboardBrake = keys.s || keys.arrowdown || keys[" "] ? 1 : 0;
     const keyboardSteer = (keys.a || keys.arrowleft ? -1 : 0) + (keys.d || keys.arrowright ? 1 : 0);
-    const hasManualInput = keyboardThrottle || keyboardBrake || keyboardSteer || raw.touchThrottle || raw.touchBrake || raw.touchSteering;
-    const targetThrottle = Math.max(raw.touchThrottle, keyboardThrottle, hasManualInput ? 0 : 0.18);
-    const targetBrake = Math.max(raw.touchBrake, keyboardBrake);
-    const targetSteering = clamp(raw.touchSteering + keyboardSteer, -1, 1);
+    const hasManualInput =
+      keyboardThrottle ||
+      keyboardBrake ||
+      keyboardSteer ||
+      raw.touchThrottle ||
+      raw.touchBrake ||
+      raw.touchSteering ||
+      raw.gamepadThrottle ||
+      raw.gamepadBrake ||
+      raw.gamepadSteering;
+    const targetThrottle = Math.max(raw.touchThrottle, raw.gamepadThrottle, keyboardThrottle, hasManualInput ? 0 : 0.18);
+    const targetBrake = Math.max(raw.touchBrake, raw.gamepadBrake, keyboardBrake);
+    const steeringSources = [raw.touchSteering, raw.gamepadSteering, keyboardSteer];
+    const targetSteering = clamp(
+      steeringSources.reduce((largest, current) => (Math.abs(current) > Math.abs(largest) ? current : largest), 0),
+      -1,
+      1
+    );
 
     vehicle.throttle = damp(vehicle.throttle, targetThrottle, targetThrottle > vehicle.throttle ? 3.2 : 5.6, dt);
     vehicle.brake = damp(vehicle.brake, targetBrake, targetBrake > vehicle.brake ? 5.5 : 7.4, dt);
@@ -424,6 +465,9 @@ function DriveRig() {
     vehicle.x = clamp(vehicle.x, -104, 104);
     vehicle.z = clamp(vehicle.z, -520, 96);
     vehicle.distance += speedAbs * dt;
+    const speedKmh = vehicle.speed * 3.6;
+    const speedAbsKmh = Math.abs(speedKmh);
+    const accelerationKmhS = ((vehicle.speed - vehicle.previousSpeed) * 3.6) / Math.max(dt, 0.001);
 
     let routeChoice: RouteChoice = "unknown";
     if (vehicle.z > -64) {
@@ -436,20 +480,45 @@ function DriveRig() {
       routeChoice = vehicle.selectedRoute;
     }
 
+    const inEcoRegenZone =
+      routeChoice === "eco" &&
+      ((vehicle.z < -142 && vehicle.z > -178) || (vehicle.z < -238 && vehicle.z > -280) || (vehicle.z < -292 && vehicle.z > -342));
+    const inFastRiskZone = routeChoice === "fast" && ((vehicle.z < -126 && vehicle.z > -214) || (vehicle.z < -238 && vehicle.z > -298));
+    const smoothFrame =
+      speedAbsKmh > 14 &&
+      speedAbsKmh < 68 &&
+      vehicle.throttle > 0.08 &&
+      vehicle.throttle < 0.76 &&
+      vehicle.brake < 0.18 &&
+      Math.abs(vehicle.steering) < 0.34 &&
+      !inFastRiskZone;
+
+    vehicle.smoothSeconds = smoothFrame ? Math.min(vehicle.smoothSeconds + dt, 8) : Math.max(0, vehicle.smoothSeconds - dt * 1.5);
+    vehicle.overspeedSeconds = speedAbsKmh > 72 ? Math.min(vehicle.overspeedSeconds + dt, 2) : Math.max(0, vehicle.overspeedSeconds - dt * 2.2);
+    vehicle.harshTimer = Math.max(0, vehicle.harshTimer - dt);
+    vehicle.aggressiveTimer = Math.max(0, vehicle.aggressiveTimer - dt);
+
+    if (vehicle.brake > 0.72 && accelerationKmhS < -18 && speedAbsKmh > 18) {
+      vehicle.harshTimer = 0.9;
+    }
+
+    if (vehicle.throttle > 0.84 && accelerationKmhS > 9.5 && speedAbsKmh > 8) {
+      vehicle.aggressiveTimer = 0.75;
+    }
+
     let event: GameEvent = "smooth_segment";
     if (vehicle.z < 50 && vehicle.z > -96) event = "route_fork";
+    if (vehicle.smoothSeconds > 4.2) event = "smooth_streak";
     if (vehicle.speed < -0.45) event = "reverse_mode";
-    if (vehicle.brake > 0.72 && vehicle.speed > 9) event = "harsh_brake";
-    if (
-      routeChoice === "eco" &&
-      ((vehicle.z < -142 && vehicle.z > -178) || (vehicle.z < -238 && vehicle.z > -280) || (vehicle.z < -292 && vehicle.z > -342)) &&
-      vehicle.brake < 0.48
-    ) {
+    if (inEcoRegenZone && vehicle.brake < 0.48 && vehicle.speed > 2.5) {
       event = "regen_success";
     }
-    if (routeChoice === "fast" && ((vehicle.z < -126 && vehicle.z > -214) || (vehicle.z < -238 && vehicle.z > -298))) {
+    if (inFastRiskZone) {
       event = "fast_route_warning";
     }
+    if (vehicle.overspeedSeconds > 0.35) event = "overspeed";
+    if (vehicle.aggressiveTimer > 0) event = "aggressive_acceleration";
+    if (vehicle.harshTimer > 0) event = "harsh_brake";
 
     if (vehicle.z < -504) {
       vehicle.z = 48;
@@ -459,6 +528,10 @@ function DriveRig() {
       vehicle.distance = 0;
       vehicle.reverseHold = 0;
       vehicle.selectedRoute = "unknown";
+      vehicle.smoothSeconds = 0;
+      vehicle.overspeedSeconds = 0;
+      vehicle.harshTimer = 0;
+      vehicle.aggressiveTimer = 0;
       event = "finish_loop";
     }
 
@@ -468,7 +541,11 @@ function DriveRig() {
       Math.abs(vehicle.steering) * 5 -
       (routeChoice === "fast" ? 14 : 0) -
       (event === "reverse_mode" ? 3 : 0) +
-      (event === "regen_success" ? 10 : 0);
+      (event === "regen_success" ? 10 : 0) +
+      (event === "smooth_streak" ? 7 : 0) -
+      (event === "aggressive_acceleration" ? 10 : 0) -
+      (event === "overspeed" ? 12 : 0) -
+      (event === "harsh_brake" ? 16 : 0);
     vehicle.ecoScore = damp(vehicle.ecoScore, clamp(scoreTarget, 38, 99), 1.7, dt);
 
     if (carRef.current) {
@@ -513,13 +590,15 @@ function DriveRig() {
         throttle: vehicle.throttle,
         brake: vehicle.brake,
         steering: vehicle.steering,
-        speedKmh: vehicle.speed * 3.6,
+        speedKmh,
         ecoScore: vehicle.ecoScore,
         routeChoice,
         event,
         distanceMeters: vehicle.distance
       });
     }
+
+    vehicle.previousSpeed = vehicle.speed;
   });
 
   return (
@@ -575,12 +654,97 @@ function ForceMeter({ label, value, brake = false }: { label: string; value: num
   );
 }
 
+type PedalName = "throttle" | "brake";
+
+type ActivePedalState = {
+  pointerId: number;
+  startedAt: number;
+  depth: number;
+  pressure: number;
+};
+
 function TouchControls() {
   const throttle = useGameStore((state) => state.telemetry.throttle);
   const brake = useGameStore((state) => state.telemetry.brake);
+  const steering = useGameStore((state) => state.telemetry.steering);
   const setTouchThrottle = useGameStore((state) => state.setTouchThrottle);
   const setTouchBrake = useGameStore((state) => state.setTouchBrake);
   const setTouchSteering = useGameStore((state) => state.setTouchSteering);
+  const throttleRef = useRef<ActivePedalState | null>(null);
+  const brakeRef = useRef<ActivePedalState | null>(null);
+
+  useEffect(() => {
+    let frame = 0;
+
+    const updatePedals = () => {
+      const now = performance.now();
+
+      if (throttleRef.current) {
+        setTouchThrottle(calculatePedalForce(throttleRef.current, now));
+      }
+
+      if (brakeRef.current) {
+        setTouchBrake(calculatePedalForce(brakeRef.current, now));
+      }
+
+      frame = window.requestAnimationFrame(updatePedals);
+    };
+
+    frame = window.requestAnimationFrame(updatePedals);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      setTouchThrottle(0);
+      setTouchBrake(0);
+      setTouchSteering(0);
+    };
+  }, [setTouchBrake, setTouchSteering, setTouchThrottle]);
+
+  const setPedalFromPointer = (pedal: PedalName, event: React.PointerEvent<HTMLElement>) => {
+    const nextPedal = {
+      pointerId: event.pointerId,
+      startedAt: performance.now(),
+      depth: readPedalDepth(event),
+      pressure: readPedalPressure(event)
+    };
+
+    if (pedal === "throttle") {
+      throttleRef.current = nextPedal;
+      setTouchThrottle(calculatePedalForce(nextPedal, nextPedal.startedAt));
+    } else {
+      brakeRef.current = nextPedal;
+      setTouchBrake(calculatePedalForce(nextPedal, nextPedal.startedAt));
+    }
+  };
+
+  const updatePedalFromPointer = (pedal: PedalName, event: React.PointerEvent<HTMLElement>) => {
+    const active = pedal === "throttle" ? throttleRef.current : brakeRef.current;
+
+    if (!active || active.pointerId !== event.pointerId) return;
+
+    active.depth = readPedalDepth(event);
+    active.pressure = Math.max(active.pressure, readPedalPressure(event));
+  };
+
+  const clearPedal = (pedal: PedalName, event?: React.PointerEvent<HTMLElement>) => {
+    if (pedal === "throttle") {
+      throttleRef.current = null;
+      setTouchThrottle(0);
+    } else {
+      brakeRef.current = null;
+      setTouchBrake(0);
+    }
+
+    if (event?.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  const setSteeringFromPointer = (event: React.PointerEvent<HTMLElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const value = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    setTouchSteering(clamp(value, -1, 1));
+  };
 
   return (
     <div className="pedal-row">
@@ -589,16 +753,11 @@ function TouchControls() {
         className="pedal pedal--brake"
         onPointerDown={(event) => {
           event.currentTarget.setPointerCapture(event.pointerId);
-          setTouchBrake(readPedalForce(event));
+          setPedalFromPointer("brake", event);
         }}
-        onPointerMove={(event) => event.buttons === 1 && setTouchBrake(readPedalForce(event))}
-        onPointerUp={(event) => {
-          if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-            event.currentTarget.releasePointerCapture(event.pointerId);
-          }
-          setTouchBrake(0);
-        }}
-        onPointerCancel={() => setTouchBrake(0)}
+        onPointerMove={(event) => event.buttons === 1 && updatePedalFromPointer("brake", event)}
+        onPointerUp={(event) => clearPedal("brake", event)}
+        onPointerCancel={(event) => clearPedal("brake", event)}
         style={{ "--pedal-force": `${Math.round(brake * 100)}%` } as React.CSSProperties}
       >
         <span>Brake / Reverse</span>
@@ -608,27 +767,39 @@ function TouchControls() {
         className="pedal pedal--gas"
         onPointerDown={(event) => {
           event.currentTarget.setPointerCapture(event.pointerId);
-          setTouchThrottle(readPedalForce(event));
+          setPedalFromPointer("throttle", event);
         }}
-        onPointerMove={(event) => event.buttons === 1 && setTouchThrottle(readPedalForce(event))}
-        onPointerUp={(event) => {
-          if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-            event.currentTarget.releasePointerCapture(event.pointerId);
-          }
-          setTouchThrottle(0);
-        }}
-        onPointerCancel={() => setTouchThrottle(0)}
+        onPointerMove={(event) => event.buttons === 1 && updatePedalFromPointer("throttle", event)}
+        onPointerUp={(event) => clearPedal("throttle", event)}
+        onPointerCancel={(event) => clearPedal("throttle", event)}
         style={{ "--pedal-force": `${Math.round(throttle * 100)}%` } as React.CSSProperties}
       >
         <span>Gas</span>
       </button>
-      <div className="steer-pad" aria-label="Touch steering controls">
-        <button onPointerDown={() => setTouchSteering(-1)} onPointerUp={() => setTouchSteering(0)} onPointerCancel={() => setTouchSteering(0)}>
-          Left
-        </button>
-        <button onPointerDown={() => setTouchSteering(1)} onPointerUp={() => setTouchSteering(0)} onPointerCancel={() => setTouchSteering(0)}>
-          Right
-        </button>
+      <div
+        className="steer-pad"
+        aria-label="Touch steering controls"
+        onPointerDown={(event) => {
+          event.currentTarget.setPointerCapture(event.pointerId);
+          setSteeringFromPointer(event);
+        }}
+        onPointerMove={(event) => event.buttons === 1 && setSteeringFromPointer(event)}
+        onPointerUp={(event) => {
+          if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId);
+          }
+          setTouchSteering(0);
+        }}
+        onPointerCancel={(event) => {
+          if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId);
+          }
+          setTouchSteering(0);
+        }}
+        style={{ "--steer-force": `${50 + steering * 50}%` } as React.CSSProperties}
+      >
+        <button type="button">Left</button>
+        <button type="button">Right</button>
       </div>
     </div>
   );
@@ -662,11 +833,91 @@ function useKeyboardInput() {
   }, [setKey]);
 }
 
-function readPedalForce(event: React.PointerEvent<HTMLElement>) {
+function useGamepadInput() {
+  const setGamepadInput = useGameStore((state) => state.setGamepadInput);
+
+  useEffect(() => {
+    let frame = 0;
+    let lastSignature = "";
+
+    const readGamepad = () => {
+      const pads = typeof navigator !== "undefined" && navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
+      const pad = pads.find((candidate): candidate is Gamepad => Boolean(candidate));
+
+      if (!pad) {
+        if (lastSignature !== "disconnected") {
+          setGamepadInput({ throttle: 0, brake: 0, steering: 0, connected: false, active: false });
+          lastSignature = "disconnected";
+        }
+
+        frame = window.requestAnimationFrame(readGamepad);
+        return;
+      }
+
+      const leftTrigger = pad.buttons[6]?.value ?? 0;
+      const rightTrigger = pad.buttons[7]?.value ?? 0;
+      const leftStick = applyDeadzone(pad.axes[0] ?? 0, 0.12);
+      const dpadSteer = (pad.buttons[14]?.pressed ? -1 : 0) + (pad.buttons[15]?.pressed ? 1 : 0);
+      const steering = Math.abs(dpadSteer) > 0 ? dpadSteer : leftStick;
+      const throttle = clamp(rightTrigger, 0, 1);
+      const brake = clamp(leftTrigger, 0, 1);
+      const active = Math.max(throttle, brake, Math.abs(steering)) > 0.08;
+      const signature = `${pad.index}:${active ? 1 : 0}:${throttle.toFixed(2)}:${brake.toFixed(2)}:${steering.toFixed(2)}`;
+
+      if (signature !== lastSignature) {
+        setGamepadInput({ throttle, brake, steering, connected: true, active });
+        lastSignature = signature;
+      }
+
+      frame = window.requestAnimationFrame(readGamepad);
+    };
+
+    const markConnected = () => {
+      lastSignature = "";
+    };
+
+    window.addEventListener("gamepadconnected", markConnected);
+    window.addEventListener("gamepaddisconnected", markConnected);
+    frame = window.requestAnimationFrame(readGamepad);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("gamepadconnected", markConnected);
+      window.removeEventListener("gamepaddisconnected", markConnected);
+      setGamepadInput({ throttle: 0, brake: 0, steering: 0, connected: false, active: false });
+    };
+  }, [setGamepadInput]);
+}
+
+function applyDeadzone(value: number, deadzone: number) {
+  if (Math.abs(value) < deadzone) return 0;
+  const sign = Math.sign(value);
+  return sign * clamp((Math.abs(value) - deadzone) / (1 - deadzone), 0, 1);
+}
+
+function calculatePedalForce(pedal: ActivePedalState, now: number) {
+  const holdRamp = clamp((now - pedal.startedAt) / 950, 0, 1);
+  const depthForce = 0.18 + pedal.depth * 0.76;
+  const holdForce = 0.24 + holdRamp * 0.58;
+  return clamp(Math.max(pedal.pressure, depthForce, holdForce), 0, 1);
+}
+
+function readPedalDepth(event: React.PointerEvent<HTMLElement>) {
   const rect = event.currentTarget.getBoundingClientRect();
-  const depth = clamp((event.clientY - rect.top) / rect.height, 0, 1);
-  const pressure = event.pressure > 0 && event.pressure < 1 ? event.pressure : 0;
-  return clamp(Math.max(pressure, 0.22 + depth * 0.78), 0, 1);
+  return clamp((event.clientY - rect.top) / rect.height, 0, 1);
+}
+
+function readPedalPressure(event: React.PointerEvent<HTMLElement>) {
+  const nativeEvent = event.nativeEvent as PointerEvent & {
+    touches?: TouchList;
+    changedTouches?: TouchList;
+  };
+  const hasRealPointerPressure = nativeEvent.pointerType !== "mouse" && nativeEvent.pressure > 0 && nativeEvent.pressure !== 0.5;
+  const pointerPressure = hasRealPointerPressure && nativeEvent.pressure <= 1 ? nativeEvent.pressure : 0;
+  const touch = nativeEvent.touches?.[0] ?? nativeEvent.changedTouches?.[0];
+  const touchForce = touch && "force" in touch && typeof touch.force === "number" ? touch.force : 0;
+
+  return clamp(Math.max(pointerPressure, touchForce), 0, 1);
 }
 
 function createRoadGeometry(points: Vector3[], width: number) {

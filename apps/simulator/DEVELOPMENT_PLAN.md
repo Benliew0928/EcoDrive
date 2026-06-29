@@ -15,9 +15,9 @@ Build a fictional self-created demo map first. The UTAR-inspired map is future s
 | 1. Foundation Setup | Complete | Team EcoDrive | High | Next.js simulator app, dependencies, folder structure |
 | 2. Self-Created Demo Map | Complete | Team EcoDrive | High | Fictional neon EV route with eco/fast branches |
 | 3. Driving Scene | Complete | Team EcoDrive | High | Third-person EV camera, movement, physics feel |
-| 4. Cross-Device Controls | Not Started | Team EcoDrive | High | Touch, keyboard, Xbox controller |
-| 5. Touch Pressure Simulation | Not Started | Team EcoDrive | High | Real pressure when available, fallback ramping |
-| 6. Eco Behavior Model | Not Started | Team EcoDrive | High | Harsh brake, smooth driving, regen zone events |
+| 4. Cross-Device Controls | Complete | Team EcoDrive | High | Touch, keyboard, and Xbox-style controller normalized into one control state |
+| 5. Touch Pressure Simulation | Complete | Team EcoDrive | High | Pointer pressure, touch force, pedal depth, and hold-time ramping |
+| 6. Eco Behavior Model | Complete | Team EcoDrive | High | Harsh brake, aggressive acceleration, overspeed, smooth streaks, regen events |
 | 7. ESP32 Packet Integration | Not Started | Team EcoDrive | High | Send normalized JSON every 200ms |
 | 8. Dashboard Integration | Not Started | Team EcoDrive | Medium | Start route command and demo sync |
 | 9. Visual and Pitch Polish | Not Started | Team EcoDrive | Medium | HUD, effects, fallback demo mode |
@@ -263,7 +263,7 @@ Field notes:
 - `steering`: normalized steering value from `-1` left to `1` right.
 - `speedKmh`: current simulator speed in kilometers per hour.
 - `routeChoice`: `eco`, `fast`, or `unknown`.
-- `event`: current simulator event, such as `smooth_segment`, `harsh_brake`, `aggressive_acceleration`, `regen_success`, or `none`.
+- `event`: current simulator event, such as `smooth_segment`, `smooth_streak`, `harsh_brake`, `aggressive_acceleration`, `overspeed`, `regen_success`, `fast_route_warning`, or `reverse_mode`.
 - `timestamp`: Unix timestamp or demo timestamp used by the ESP32 pipeline.
 
 ## UTAR Map Policy
