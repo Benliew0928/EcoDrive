@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   BatteryCharging,
@@ -16,6 +18,8 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cockpitModes, modeLinks, type ModeId } from "../data/cockpit-content";
+import { useDashboardRuntime } from "../hooks/use-dashboard-runtime";
+import { useDashboardStore } from "../lib/dashboard-store";
 
 const modeIcons: Record<ModeId, LucideIcon> = {
   drive: Gauge,
@@ -34,7 +38,20 @@ type CockpitShellProps = {
 };
 
 export function CockpitShell({ activeMode, children }: CockpitShellProps) {
+  useDashboardRuntime();
   const mode = cockpitModes[activeMode];
+  const telemetry = useDashboardStore((state) => state.telemetry);
+  const connectionStatus = useDashboardStore((state) => state.connectionStatus);
+  const speed = Math.round(telemetry.speedKmh);
+  const gear = telemetry.speedKmh > 1 ? "D" : "P";
+  const statusLabel =
+    connectionStatus === "live"
+      ? "ESP32 sensor live"
+      : connectionStatus === "connecting"
+        ? "Connecting ESP32"
+        : connectionStatus === "error"
+          ? "ESP32 reconnect"
+          : "Demo mode";
 
   return (
     <div className={`cockpit-shell cockpit-shell--${mode.accent}`}>
@@ -47,16 +64,16 @@ export function CockpitShell({ activeMode, children }: CockpitShellProps) {
           </div>
         </div>
         <div className="speed-readout">
-          <span>84</span>
+          <span>{speed}</span>
           <small>km/h</small>
-          <strong>D</strong>
+          <strong>{gear}</strong>
         </div>
         <div className="status-right">
-          <span className="live-pill">
+          <span className={`live-pill live-pill--${connectionStatus}`}>
             <RadioTower size={15} />
-            ESP32 sensor live
+            {statusLabel}
           </span>
-          <span className="battery-pill">82% battery</span>
+          <span className="battery-pill">{Math.round(telemetry.batteryPercent)}% battery</span>
         </div>
       </header>
 
@@ -88,10 +105,9 @@ export function CockpitShell({ activeMode, children }: CockpitShellProps) {
         </div>
         <div className="range-cluster">
           <Leaf size={15} />
-          <span>438 km</span>
+          <span>{Math.round(telemetry.rangeKm)} km</span>
         </div>
       </nav>
     </div>
   );
 }
-

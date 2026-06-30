@@ -21,7 +21,7 @@ Build a fictional self-created demo map first. The UTAR-inspired map is future s
 | 7. ESP32 Packet Integration | Not Started | Team EcoDrive | High | Send normalized JSON every 200ms |
 | 8. Dashboard Integration | Not Started | Team EcoDrive | Medium | Start route command and demo sync |
 | 9. Visual and Pitch Polish | Not Started | Team EcoDrive | Medium | HUD, effects, fallback demo mode |
-| 10. Future UTAR Map | Future | Team EcoDrive | Low | Only after fictional map is stable |
+| 10. UTAR Campus Map | In Progress | Team EcoDrive | Medium | Handmade UTAR Kampar loop based on official campus map anchors |
 
 ## Detailed Phase Plan
 
@@ -205,23 +205,25 @@ Acceptance criteria:
 - Judges can understand the input, ESP32, and dashboard connection.
 - Demo can continue even if one hardware input method is unavailable.
 
-### 10. Future UTAR Map
+### 10. UTAR Campus Map
 
-Purpose: add local campus flavor only after the main simulator is complete.
+Purpose: add a source-informed UTAR Kampar campus loop after the main simulator foundation is playable.
 
 Deliverables:
 
-- Build a simplified UTAR-inspired route loop.
-- Use handmade or open-data-informed road shapes.
-- Add campus-like landmarks, shuttle stops, gates, trees, crosswalks, and EV chargers.
-- Keep the environment stylized rather than trying to recreate the full real campus.
+- Build a simplified UTAR Kampar internal loop with East Gate and South Gate guardhouses.
+- Use the official UTAR campus map as the spatial reference for lakes, faculty blocks, road direction, and landmarks.
+- Add Lake 18, Lake 19, Library, FEGT, Faculty of Science, FBF, Lecture Complex I, Student Pavilion areas, Heritage Hall, Learning Complex I, west academic blocks, football field, parking zones, trees, and security checkpoints.
+- Keep the environment handmade and game-optimized rather than importing map imagery as a texture.
+- Preserve the eco-route lesson by making the lake route smoother and the academic spine faster but riskier.
 
 Acceptance criteria:
 
-- Core simulator is already stable before this phase starts.
-- No direct Google Maps imagery is used as game texture.
-- Campus version still runs smoothly on iPad.
+- Core simulator controls and eco model remain stable after the map swap.
+- No direct Google Maps imagery is used as a game texture.
+- Campus version still runs smoothly on iPad-class hardware.
 - The map supports the same Eco Route versus Fast Route lesson.
+- Judges can recognize UTAR-specific anchors without needing a full real-world campus reconstruction.
 
 ## Control Mapping
 
@@ -273,7 +275,7 @@ Field notes:
 - Do not use Google Maps imagery directly as game textures.
 - Build the fictional neon demo route first.
 - Only consider a UTAR-inspired map after the simulator, controls, ESP32 packet integration, and dashboard demo flow are complete.
-- Future UTAR version should use simplified handmade or open-data-informed landmarks, not a full real-world copy.
+- UTAR version should use simplified handmade or open-data-informed landmarks, not a full real-world copy.
 
 ## Testing Checklist
 

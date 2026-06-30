@@ -14,7 +14,19 @@ import {
 } from "three";
 import { useEffect, useMemo, useRef } from "react";
 import { clamp, damp, useGameStore, type GameEvent, type RouteChoice } from "../lib/game-store";
-import { mapLandmarks, routeMarkers, routePaths, skylineBlocks, type RoutePath } from "../data/demo-map";
+import {
+  campusBuildings,
+  campusDrive,
+  campusFields,
+  campusGates,
+  campusLakes,
+  campusParkingZones,
+  campusTrees,
+  mapLandmarks,
+  routeMarkers,
+  routePaths,
+  type RoutePath
+} from "../data/demo-map";
 
 type VehicleState = {
   x: number;
@@ -44,7 +56,7 @@ type RoadSample = {
 
 const eventLabels: Record<GameEvent, string> = {
   launch_ready: "Launch ready. Hold W or press the gas pedal.",
-  route_fork: "Route fork ahead. Green path saves energy.",
+  route_fork: "Library split ahead. Lake loop saves energy.",
   smooth_segment: "Smooth segment. Eco-score climbing.",
   smooth_streak: "Smooth driving streak. Eco-score bonus is active.",
   harsh_brake: "Harsh brake detected. ESP32 would flash red.",
@@ -53,7 +65,7 @@ const eventLabels: Record<GameEvent, string> = {
   regen_success: "Regen zone captured. +EcoCoin preview.",
   fast_route_warning: "Fast route warning: stop-start cluster ahead.",
   reverse_mode: "Reverse engaged. Brake pedal is now backing the EV.",
-  finish_loop: "Loop complete. Returning to launch spine."
+  finish_loop: "Campus lap complete. Returning to East Gate."
 };
 
 export function SimulatorGame() {
@@ -77,7 +89,7 @@ export function SimulatorGame() {
       <div className="canvas-stage">
         <Canvas dpr={[1, 1.65]} gl={{ antialias: true, powerPreference: "high-performance" }}>
           <color attach="background" args={["#030707"]} />
-          <fog attach="fog" args={["#031112", 48, 190]} />
+          <fog attach="fog" args={["#031112", 62, 260]} />
           <SceneContent />
         </Canvas>
       </div>
@@ -100,8 +112,8 @@ export function SimulatorGame() {
         </section>
 
         <section className="route-brief">
-          <p>Neon city demo loop</p>
-          <h1>Split, prove the route logic, merge, score.</h1>
+          <p>UTAR Kampar campus loop</p>
+          <h1>East Gate, Lake 18, South Gate, return.</h1>
           <div className="route-sequence">
             <span>Split</span>
             <span>Drive consequence</span>
@@ -109,12 +121,12 @@ export function SimulatorGame() {
           </div>
           <div className="route-split">
             <div className="route-choice route-choice--eco">
-              <strong>Eco Bypass</strong>
-              <small>Longer outer loop, two regen districts, smoother steering.</small>
+              <strong>Lake 18 Eco Loop</strong>
+              <small>Longer scenic line around the lakes, smoother turns, better regen scoring.</small>
             </div>
             <div className="route-choice route-choice--fast">
-              <strong>Downtown Fast Cut</strong>
-              <small>Shorter corridor, traffic-light stack, harsh brake risk.</small>
+              <strong>Academic Fast Line</strong>
+              <small>Shorter spine past faculty blocks and workshop slow zones.</small>
             </div>
           </div>
         </section>
@@ -158,16 +170,16 @@ function SceneContent() {
   return (
     <>
       <PerspectiveCamera makeDefault position={[0, 10, 22]} fov={60} />
-      <ambientLight intensity={0.32} />
-      <directionalLight castShadow intensity={2.4} position={[16, 24, 10]} shadow-mapSize={[1024, 1024]} />
-      <pointLight color="#37e58f" intensity={45} position={[-28, 5, -118]} distance={50} />
-      <pointLight color="#37e58f" intensity={36} position={[-68, 7, -230]} distance={70} />
-      <pointLight color="#ff5b5b" intensity={38} position={[72, 6, -220]} distance={80} />
-      <pointLight color="#38bdf8" intensity={34} position={[2, 7, -400]} distance={70} />
+      <ambientLight intensity={0.38} />
+      <directionalLight castShadow intensity={2.6} position={[24, 32, 18]} shadow-mapSize={[1024, 1024]} />
+      <pointLight color="#37e58f" intensity={42} position={[-62, 6, -96]} distance={82} />
+      <pointLight color="#0ea5e9" intensity={36} position={[-16, 5, -56]} distance={110} />
+      <pointLight color="#ff5b5b" intensity={28} position={[78, 6, -238]} distance={72} />
+      <pointLight color="#38bdf8" intensity={38} position={[82, 6, 88]} distance={76} />
       <Stars count={1100} depth={130} factor={4} fade speed={0.18} />
       <GroundPlane />
       <RoadNetwork />
-      <NeonCity />
+      <CampusEnvironment />
       <MapLandmarks />
       <RouteSigns />
       <DriveRig />
@@ -177,9 +189,9 @@ function SceneContent() {
 
 function GroundPlane() {
   return (
-    <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.04, -210]}>
-      <planeGeometry args={[280, 700, 1, 1]} />
-      <meshStandardMaterial color="#051011" roughness={0.88} metalness={0.18} />
+    <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, -112]}>
+      <planeGeometry args={[270, 620, 1, 1]} />
+      <meshStandardMaterial color="#06110f" roughness={0.9} metalness={0.12} />
     </mesh>
   );
 }
@@ -248,13 +260,12 @@ function NeonGuide({
 function EnergyGates() {
   return (
     <group>
-      <Gate position={[0, 0.1, -78]} color="#f5b84b" label="ROUTE SPLIT" />
-      <Gate position={[-58, 0.1, -158]} color="#37e58f" label="REGEN LINE" />
-      <Gate position={[-66, 0.1, -248]} color="#37e58f" label="SOLAR REGEN" />
-      <Gate position={[75, 0.1, -196]} color="#ff5b5b" label="STOP START" />
-      <Gate position={[70, 0.1, -282]} color="#ff5b5b" label="BRAKE RISK" />
-      <Gate position={[4, 0.1, -402]} color="#38bdf8" label="MERGE SCORE" />
-      <Gate position={[0, 0.1, -472]} color="#38bdf8" label="UPLOAD FINISH" />
+      <Gate position={[82, 0.1, 88]} color="#38bdf8" label="EAST GATE LAP" />
+      <Gate position={[45, 0.1, -124]} color="#f5b84b" label="ROUTE CHOICE" />
+      <Gate position={[-62, 0.1, -112]} color="#37e58f" label="LAKE 18 ECO" />
+      <Gate position={[-74, 0.1, 88]} color="#37e58f" label="SOUTH GATE" />
+      <Gate position={[80, 0.1, -238]} color="#ff5b5b" label="WORKSHOP SLOW" />
+      <Gate position={[42, 0.1, 112]} color="#38bdf8" label="RETURN MERGE" />
     </group>
   );
 }
@@ -281,18 +292,205 @@ function Gate({ position, color, label }: { position: [number, number, number]; 
   );
 }
 
-function NeonCity() {
+function CampusEnvironment() {
   return (
     <group>
-      {skylineBlocks.map((block) => (
-        <group key={block.id} position={block.position}>
-          <mesh castShadow receiveShadow>
-            <boxGeometry args={block.scale} />
-            <meshStandardMaterial color={block.color} emissive={block.light} emissiveIntensity={0.08} metalness={0.4} roughness={0.55} />
+      <CampusLakes />
+      <CampusFields />
+      <CampusParking />
+      <CampusBuildings />
+      <CampusGates />
+      <CampusTrees />
+    </group>
+  );
+}
+
+function CampusLakes() {
+  return (
+    <group>
+      {campusLakes.map((lake) => (
+        <group key={lake.id} position={lake.position}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} scale={[lake.radius[0], lake.radius[1], 1]}>
+            <circleGeometry args={[1, 96]} />
+            <meshStandardMaterial color={lake.color} emissive="#0ea5e9" emissiveIntensity={0.1} roughness={0.18} metalness={0.22} />
           </mesh>
-          <mesh position={[0, block.scale[1] / 2 + 0.08, 0]}>
-            <boxGeometry args={[block.scale[0] * 0.72, 0.08, block.scale[2] * 0.72]} />
-            <meshBasicMaterial color={block.light} transparent opacity={0.58} />
+          <mesh rotation={[-Math.PI / 2, 0, 0]} scale={[lake.radius[0] * 1.06, lake.radius[1] * 1.04, 1]}>
+            <ringGeometry args={[0.95, 1, 96]} />
+            <meshBasicMaterial color="#8bd9e8" transparent opacity={0.34} side={DoubleSide} />
+          </mesh>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[lake.radius[0] * 0.12, 0.018, -lake.radius[1] * 0.18]} scale={[lake.radius[0] * 0.34, lake.radius[1] * 0.08, 1]}>
+            <planeGeometry args={[1, 1]} />
+            <meshBasicMaterial color="#d6fbff" transparent opacity={0.13} side={DoubleSide} />
+          </mesh>
+          <Html center distanceFactor={28} position={[0, 2.2, 0]}>
+            <div style={{ color: "#b7f5ff", fontSize: 10, fontWeight: 900, whiteSpace: "nowrap" }}>{lake.label}</div>
+          </Html>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function CampusFields() {
+  return (
+    <group>
+      {campusFields.map((field) => (
+        <group key={field.id} position={field.position}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={field.scale} />
+            <meshStandardMaterial color={field.color} roughness={0.86} metalness={0.02} />
+          </mesh>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
+            <ringGeometry args={[0.14, 0.16, 48]} />
+            <meshBasicMaterial color="#b7ffe0" transparent opacity={0.3} side={DoubleSide} />
+          </mesh>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.035, 0]} scale={[field.scale[0] * 0.46, field.scale[1] * 0.46, 1]}>
+            <ringGeometry args={[0.99, 1, 4]} />
+            <meshBasicMaterial color="#d8ffe8" transparent opacity={0.22} side={DoubleSide} />
+          </mesh>
+          <Html center distanceFactor={24} position={[0, 2.2, 0]}>
+            <div style={{ color: "#b8ffd7", fontSize: 9, fontWeight: 900, whiteSpace: "nowrap" }}>{field.label}</div>
+          </Html>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function CampusParking() {
+  return (
+    <group>
+      {campusParkingZones.map((zone) => (
+        <group key={zone.id} position={zone.position} rotation={[0, zone.rotation ?? 0, 0]}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={zone.scale} />
+            <meshStandardMaterial color="#1f2829" roughness={0.76} metalness={0.2} />
+          </mesh>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.026, 0]} scale={[zone.scale[0] * 0.5, zone.scale[1] * 0.5, 1]}>
+            <ringGeometry args={[0.98, 1, 4]} />
+            <meshBasicMaterial color="#e8f0d6" transparent opacity={0.28} side={DoubleSide} />
+          </mesh>
+          <Html center distanceFactor={28} position={[0, 1.2, 0]}>
+            <div style={{ color: "#e8f0d6", fontSize: 8, fontWeight: 900, whiteSpace: "nowrap" }}>P{zone.label}</div>
+          </Html>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function CampusBuildings() {
+  return (
+    <group>
+      {campusBuildings.map((building) => (
+        <group key={building.id} position={building.position}>
+          <mesh castShadow receiveShadow position={[0, building.scale[1] / 2, 0]}>
+            <boxGeometry args={building.scale} />
+            <meshStandardMaterial
+              color={new Color(building.color).multiplyScalar(0.78)}
+              emissive={building.accent}
+              emissiveIntensity={0.045}
+              metalness={0.18}
+              roughness={0.58}
+            />
+          </mesh>
+          <mesh position={[0, building.scale[1] + 0.12, 0]}>
+            <boxGeometry args={[building.scale[0] * 1.08, 0.24, building.scale[2] * 1.06]} />
+            <meshStandardMaterial color={building.roof ?? "#546c74"} emissive={building.accent} emissiveIntensity={0.1} roughness={0.46} />
+          </mesh>
+          <mesh position={[0, building.scale[1] * 0.56, building.scale[2] / 2 + 0.04]}>
+            <boxGeometry args={[building.scale[0] * 0.72, 0.18, 0.08]} />
+            <meshBasicMaterial color={building.accent} transparent opacity={0.42} />
+          </mesh>
+          <mesh position={[building.scale[0] / 2 + 0.04, building.scale[1] * 0.48, 0]}>
+            <boxGeometry args={[0.08, 0.16, building.scale[2] * 0.62]} />
+            <meshBasicMaterial color={building.accent} transparent opacity={0.28} />
+          </mesh>
+          <BuildingWindowBands scale={building.scale} accent={building.accent} />
+          <Html center distanceFactor={26} position={[0, building.scale[1] + 1.5, 0]}>
+            <div style={{ color: building.accent, fontSize: 8, fontWeight: 900, whiteSpace: "nowrap", textShadow: "0 2px 8px #001" }}>
+              {building.label}
+            </div>
+          </Html>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function BuildingWindowBands({ scale, accent }: { scale: [number, number, number]; accent: string }) {
+  const levels = [0.28, 0.48, 0.68];
+
+  return (
+    <group>
+      {levels.map((level) => (
+        <group key={level}>
+          <mesh position={[0, scale[1] * level, scale[2] / 2 + 0.055]}>
+            <boxGeometry args={[scale[0] * 0.76, 0.09, 0.07]} />
+            <meshBasicMaterial color={accent} transparent opacity={0.22} />
+          </mesh>
+          <mesh position={[0, scale[1] * level, -scale[2] / 2 - 0.055]}>
+            <boxGeometry args={[scale[0] * 0.76, 0.09, 0.07]} />
+            <meshBasicMaterial color={accent} transparent opacity={0.16} />
+          </mesh>
+          <mesh position={[scale[0] / 2 + 0.055, scale[1] * level, 0]}>
+            <boxGeometry args={[0.07, 0.09, scale[2] * 0.62]} />
+            <meshBasicMaterial color={accent} transparent opacity={0.18} />
+          </mesh>
+          <mesh position={[-scale[0] / 2 - 0.055, scale[1] * level, 0]}>
+            <boxGeometry args={[0.07, 0.09, scale[2] * 0.62]} />
+            <meshBasicMaterial color={accent} transparent opacity={0.14} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function CampusGates() {
+  return (
+    <group>
+      {campusGates.map((gate) => (
+        <group key={gate.id} position={gate.position} rotation={[0, gate.rotation, 0]}>
+          <mesh castShadow receiveShadow position={[-6.6, 1.25, 0]}>
+            <boxGeometry args={[5.4, 2.5, 4.2]} />
+            <meshStandardMaterial color="#e5eee9" emissive={gate.color} emissiveIntensity={0.08} roughness={0.54} />
+          </mesh>
+          <mesh castShadow receiveShadow position={[6.6, 1.25, 0]}>
+            <boxGeometry args={[5.4, 2.5, 4.2]} />
+            <meshStandardMaterial color="#e5eee9" emissive={gate.color} emissiveIntensity={0.08} roughness={0.54} />
+          </mesh>
+          <mesh position={[0, 3.05, 0]}>
+            <boxGeometry args={[18, 0.42, 1.1]} />
+            <meshStandardMaterial color={gate.color} emissive={gate.color} emissiveIntensity={1.1} roughness={0.3} />
+          </mesh>
+          <mesh position={[0, 1.45, 3.05]} rotation={[0, 0, -0.12]}>
+            <boxGeometry args={[12.5, 0.22, 0.22]} />
+            <meshStandardMaterial color="#f5f7ef" emissive="#f5b84b" emissiveIntensity={0.42} />
+          </mesh>
+          <Html center distanceFactor={22} position={[0, 4.25, 0]}>
+            <div style={{ color: gate.color, fontSize: 10, fontWeight: 900, whiteSpace: "nowrap", textShadow: "0 2px 8px #001" }}>
+              {gate.label}
+            </div>
+          </Html>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function CampusTrees() {
+  return (
+    <group>
+      {campusTrees.map((tree) => (
+        <group key={tree.id} position={tree.position} scale={tree.scale}>
+          <mesh castShadow position={[0, 0.55, 0]}>
+            <cylinderGeometry args={[0.14, 0.2, 1.1, 8]} />
+            <meshStandardMaterial color="#4a2f22" roughness={0.74} />
+          </mesh>
+          <mesh castShadow position={[0, 1.35, 0]}>
+            <coneGeometry args={[0.78, 1.55, 8]} />
+            <meshStandardMaterial color="#1e6d46" emissive="#37e58f" emissiveIntensity={0.035} roughness={0.82} />
           </mesh>
         </group>
       ))}
@@ -354,9 +552,9 @@ function DriveRig() {
     []
   );
   const stateRef = useRef<VehicleState>({
-    x: 0,
-    z: 48,
-    yaw: 0,
+    x: campusDrive.start.x,
+    z: campusDrive.start.z,
+    yaw: campusDrive.start.yaw,
     speed: 0,
     distance: 0,
     throttle: 0,
@@ -462,28 +660,31 @@ function DriveRig() {
       }
     }
 
-    vehicle.x = clamp(vehicle.x, -104, 104);
-    vehicle.z = clamp(vehicle.z, -520, 96);
+    vehicle.x = clamp(vehicle.x, campusDrive.bounds.minX, campusDrive.bounds.maxX);
+    vehicle.z = clamp(vehicle.z, campusDrive.bounds.minZ, campusDrive.bounds.maxZ);
     vehicle.distance += speedAbs * dt;
     const speedKmh = vehicle.speed * 3.6;
     const speedAbsKmh = Math.abs(speedKmh);
     const accelerationKmhS = ((vehicle.speed - vehicle.previousSpeed) * 3.6) / Math.max(dt, 0.001);
 
     let routeChoice: RouteChoice = "unknown";
-    if (vehicle.z > -64) {
+    if (vehicle.distance < 85) {
       vehicle.selectedRoute = "unknown";
     }
-    if (vehicle.z < -86 && vehicle.z > -386 && vehicle.selectedRoute === "unknown") {
-      vehicle.selectedRoute = vehicle.x < 8 ? "eco" : "fast";
+    if (vehicle.selectedRoute === "unknown" && vehicle.distance > 105 && vehicle.z < -104) {
+      vehicle.selectedRoute = vehicle.x < 46 ? "eco" : "fast";
     }
     if (vehicle.selectedRoute !== "unknown") {
       routeChoice = vehicle.selectedRoute;
     }
 
+    const distanceFromStart = distance2D(vehicle.x, vehicle.z, campusDrive.start.x, campusDrive.start.z);
+    const distanceFromLake18 = distance2D(vehicle.x, vehicle.z, -16, -56);
+    const distanceFromLake19 = distance2D(vehicle.x, vehicle.z, -48, 112);
     const inEcoRegenZone =
       routeChoice === "eco" &&
-      ((vehicle.z < -142 && vehicle.z > -178) || (vehicle.z < -238 && vehicle.z > -280) || (vehicle.z < -292 && vehicle.z > -342));
-    const inFastRiskZone = routeChoice === "fast" && ((vehicle.z < -126 && vehicle.z > -214) || (vehicle.z < -238 && vehicle.z > -298));
+      ((distanceFromLake18 < 104 && vehicle.x < 26) || (distanceFromLake19 < 48 && vehicle.z > 70));
+    const inFastRiskZone = routeChoice === "fast" && vehicle.x > 56 && vehicle.z < -146 && vehicle.z > -302;
     const smoothFrame =
       speedAbsKmh > 14 &&
       speedAbsKmh < 68 &&
@@ -507,7 +708,7 @@ function DriveRig() {
     }
 
     let event: GameEvent = "smooth_segment";
-    if (vehicle.z < 50 && vehicle.z > -96) event = "route_fork";
+    if (vehicle.distance > 68 && vehicle.distance < 162) event = "route_fork";
     if (vehicle.smoothSeconds > 4.2) event = "smooth_streak";
     if (vehicle.speed < -0.45) event = "reverse_mode";
     if (inEcoRegenZone && vehicle.brake < 0.48 && vehicle.speed > 2.5) {
@@ -520,10 +721,11 @@ function DriveRig() {
     if (vehicle.aggressiveTimer > 0) event = "aggressive_acceleration";
     if (vehicle.harshTimer > 0) event = "harsh_brake";
 
-    if (vehicle.z < -504) {
-      vehicle.z = 48;
-      vehicle.x = 0;
-      vehicle.yaw = 0;
+    const completedByGate = vehicle.distance > 460 && distanceFromStart < campusDrive.finishRadius;
+    if (vehicle.distance > campusDrive.completionDistance || completedByGate) {
+      vehicle.z = campusDrive.start.z;
+      vehicle.x = campusDrive.start.x;
+      vehicle.yaw = campusDrive.start.yaw;
       vehicle.speed = 7;
       vehicle.distance = 0;
       vehicle.reverseHold = 0;
@@ -966,4 +1168,10 @@ function findNearestRoadSample(samples: RoadSample[], x: number, z: number) {
   }
 
   return nearest;
+}
+
+function distance2D(x: number, z: number, targetX: number, targetZ: number) {
+  const dx = x - targetX;
+  const dz = z - targetZ;
+  return Math.sqrt(dx * dx + dz * dz);
 }

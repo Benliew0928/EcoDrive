@@ -153,6 +153,21 @@ a {
   color: var(--cyan);
 }
 
+.live-pill--demo {
+  border-color: rgba(56, 189, 248, 0.35);
+  color: var(--cyan);
+}
+
+.live-pill--connecting {
+  border-color: rgba(245, 184, 75, 0.4);
+  color: var(--amber);
+}
+
+.live-pill--error {
+  border-color: rgba(255, 91, 91, 0.46);
+  color: var(--red);
+}
+
 .cockpit-main {
   display: grid;
   gap: 18px;
@@ -275,6 +290,7 @@ h1 {
 }
 
 .route-surface,
+.route-planner,
 .energy-flow,
 .forest-surface,
 .city-builder,
@@ -288,6 +304,151 @@ h1 {
   min-height: 520px;
   overflow: hidden;
   position: relative;
+}
+
+.route-planner {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(330px, 1fr) minmax(250px, 0.72fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  padding: 14px;
+}
+
+.route-form,
+.route-options {
+  display: grid;
+  gap: 12px;
+}
+
+.route-form {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.route-options {
+  align-content: start;
+  grid-template-columns: 1fr;
+}
+
+.route-form {
+  align-items: end;
+}
+
+.route-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.route-form span,
+.route-option span,
+.reward-balance span,
+.city-wallet span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.route-form input {
+  background: rgba(14, 23, 23, 0.92);
+  border: 1px solid rgba(38, 59, 58, 0.8);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.primary-action,
+.demo-controls button,
+.route-option,
+.asset-chip,
+.rewards-surface button,
+.challenge-card,
+.city-cell {
+  cursor: pointer;
+  font: inherit;
+}
+
+.primary-action,
+.demo-controls button,
+.rewards-surface button {
+  align-items: center;
+  background: rgba(55, 229, 143, 0.14);
+  border: 1px solid rgba(55, 229, 143, 0.48);
+  border-radius: 6px;
+  color: var(--green);
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 900;
+  gap: 8px;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 14px;
+  text-transform: uppercase;
+}
+
+.route-map-card {
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 8px;
+  min-height: 340px;
+  overflow: hidden;
+  position: relative;
+}
+
+.leaflet-route-map,
+.route-map-loading {
+  height: 100%;
+  min-height: 340px;
+  width: 100%;
+}
+
+.leaflet-route-map {
+  background: #071112;
+}
+
+.leaflet-tile {
+  filter: saturate(0.55) brightness(0.58) contrast(1.22);
+}
+
+.route-map-loading {
+  align-items: center;
+  color: var(--cyan);
+  display: flex;
+  font-weight: 900;
+  justify-content: center;
+}
+
+.route-option {
+  background: rgba(14, 23, 23, 0.9);
+  border: 1px solid rgba(38, 59, 58, 0.82);
+  border-left: 4px solid var(--route-color);
+  border-radius: 8px;
+  color: var(--text);
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  text-align: left;
+}
+
+.route-option--active {
+  background: rgba(55, 229, 143, 0.1);
+  box-shadow: inset 0 0 28px rgba(55, 229, 143, 0.08);
+}
+
+.route-option strong {
+  font-size: 16px;
+}
+
+.route-option small,
+.route-option em,
+.asset-chip small,
+.rewards-surface article span,
+.fleet-row em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
 }
 
 .map-grid {
@@ -396,6 +557,13 @@ h1 {
   width: 160px;
 }
 
+.gauge-ring--dynamic {
+  background:
+    radial-gradient(circle, rgba(55, 229, 143, 0.08), transparent 64%),
+    conic-gradient(var(--green) var(--score), rgba(38, 59, 58, 0.9) 0);
+  border-color: rgba(55, 229, 143, 0.18);
+}
+
 .gauge-ring strong {
   font-size: 44px;
 }
@@ -420,6 +588,97 @@ h1 {
   background: var(--cyan);
   border-radius: 999px 999px 0 0;
   flex: 1;
+}
+
+.hardware-pod,
+.demo-controls,
+.event-feed {
+  background: rgba(10, 18, 19, 0.92);
+  border: 1px solid rgba(38, 59, 58, 0.8);
+  border-radius: 8px;
+  position: absolute;
+}
+
+.hardware-pod {
+  align-items: center;
+  display: grid;
+  gap: 6px;
+  left: 28px;
+  padding: 16px;
+  top: 28px;
+  width: 230px;
+}
+
+.hardware-pod--green {
+  color: var(--green);
+}
+
+.hardware-pod--amber {
+  color: var(--amber);
+}
+
+.hardware-pod--red {
+  color: var(--red);
+}
+
+.hardware-pod--blue {
+  color: var(--cyan);
+}
+
+.hardware-pod span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.demo-controls {
+  bottom: 28px;
+  display: flex;
+  gap: 10px;
+  left: 28px;
+  padding: 12px;
+}
+
+.demo-controls .danger-action {
+  background: rgba(255, 91, 91, 0.12);
+  border-color: rgba(255, 91, 91, 0.46);
+  color: var(--red);
+}
+
+.event-feed {
+  bottom: 108px;
+  display: grid;
+  gap: 8px;
+  left: 28px;
+  padding: 14px;
+  width: min(460px, 52%);
+}
+
+.event-row {
+  border-left: 3px solid var(--cyan);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.35;
+  margin: 0;
+  padding-left: 10px;
+}
+
+.event-row span {
+  color: var(--muted);
+  display: inline-block;
+  font-weight: 800;
+  margin-right: 8px;
+}
+
+.event-row--good {
+  border-color: var(--green);
+}
+
+.event-row--warning {
+  border-color: var(--amber);
+}
+
+.event-row--danger {
+  border-color: var(--red);
 }
 
 .route-comparison {
@@ -534,11 +793,13 @@ h1 {
   display: flex;
   font-weight: 900;
   justify-content: center;
+  min-height: 0;
 }
 
 .city-cell--active {
   background: rgba(55, 229, 143, 0.16);
-  border-color: rgba(55, 229, 143, 0.46);
+  border-color: var(--asset-color, rgba(55, 229, 143, 0.46));
+  box-shadow: inset 0 0 22px rgba(55, 229, 143, 0.08);
 }
 
 .building-palette,
@@ -561,6 +822,39 @@ h1 {
   justify-content: space-between;
   margin: 0;
   padding: 14px;
+}
+
+.asset-chip,
+.challenge-card {
+  background: rgba(14, 23, 23, 0.9);
+  border: 1px solid rgba(38, 59, 58, 0.8);
+  border-left: 4px solid var(--asset-color, var(--green));
+  border-radius: 6px;
+  color: var(--text);
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  text-align: left;
+}
+
+.asset-chip--active {
+  background: rgba(55, 229, 143, 0.12);
+  border-color: rgba(55, 229, 143, 0.45);
+}
+
+.city-wallet,
+.reward-balance {
+  background: rgba(55, 229, 143, 0.1);
+  border: 1px solid rgba(55, 229, 143, 0.35);
+  border-radius: 6px;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
+.city-wallet strong,
+.reward-balance strong {
+  font-size: 22px;
 }
 
 .rewards-surface,
@@ -586,6 +880,12 @@ h1 {
   padding: 48px;
 }
 
+.qr-preview svg {
+  background: var(--text);
+  border-radius: 6px;
+  padding: 8px;
+}
+
 .challenge-progress {
   background: rgba(55, 229, 143, 0.12);
   border: 1px solid rgba(55, 229, 143, 0.45);
@@ -601,8 +901,42 @@ h1 {
   margin-top: 14px;
 }
 
+.challenge-card {
+  border-left-color: var(--green);
+}
+
+.challenge-card em {
+  color: var(--green);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.leaderboard-list {
+  display: grid;
+  gap: 12px;
+}
+
+.fleet-row {
+  gap: 8px;
+}
+
+.fleet-row--warning {
+  border-color: rgba(255, 91, 91, 0.42);
+}
+
+.fleet-row--idle {
+  opacity: 0.72;
+}
+
 .risk-map {
   color: var(--amber);
+}
+
+.action-message {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 12px 0 0;
 }
 
 .cockpit-shell--cyan .eyebrow,
@@ -656,6 +990,26 @@ h1 {
   .mode-cluster {
     flex-wrap: wrap;
   }
+
+  .route-planner {
+    grid-template-columns: 1fr;
+  }
+
+  .event-feed,
+  .demo-controls,
+  .hardware-pod {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    top: auto;
+    width: auto;
+  }
+
+  .drive-surface {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+  }
 }
 
 @media (max-width: 720px) {
@@ -688,4 +1042,3 @@ h1 {
     display: none;
   }
 }
-

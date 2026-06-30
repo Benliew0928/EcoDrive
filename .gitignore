@@ -10,5 +10,5 @@ coverage/
 Thumbs.db
 .pio/
 .vscode/
-dashboard-dev.log
+dashboard-dev*.log
 simulator-dev*.log
