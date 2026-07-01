@@ -52,4 +52,5 @@ export type DashboardState = {
   eventFeed: DashboardEvent[];
   lastPacketAt: number | null;
   lastActionMessage: string;
+  walletCoins: number;
 };

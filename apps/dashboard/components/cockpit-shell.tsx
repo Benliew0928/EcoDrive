@@ -26,7 +26,6 @@ const modeIcons: Record<ModeId, LucideIcon> = {
   drive: Gauge,
   route: Map,
   energy: BatteryCharging,
-  carbonTwin: Trees,
   city: Building2,
   rewards: Gift,
   community: Users,
@@ -43,6 +42,7 @@ export function CockpitShell({ activeMode, children }: CockpitShellProps) {
   const mode = cockpitModes[activeMode];
   const telemetry = useDashboardStore((state) => state.telemetry);
   const connectionStatus = useDashboardStore((state) => state.connectionStatus);
+  const walletCoins = useDashboardStore((state) => state.walletCoins);
   const [clock, setClock] = useState("--:--");
   const speed = telemetry?.speedKmh == null ? "--" : Math.round(telemetry.speedKmh).toString();
   const numericSpeed = telemetry?.speedKmh ?? 0;
@@ -82,6 +82,18 @@ export function CockpitShell({ activeMode, children }: CockpitShellProps) {
           <div>
             <p className="brand">EcoDrive+</p>
             <p className="mode-subtitle">{mode.subtitle}</p>
+          </div>
+        </div>
+        <div className="user-profile">
+          <div className="avatar">
+            <img src="https://ui-avatars.com/api/?name=Demo+Driver&background=070E0F&color=38BDF8" alt="Driver" />
+          </div>
+          <div className="user-details">
+            <strong>Driver Profile</strong>
+            <span className="coin-balance">
+              <Gift size={12} />
+              {walletCoins.toLocaleString()} Coins
+            </span>
           </div>
         </div>
         <div className="speed-readout">

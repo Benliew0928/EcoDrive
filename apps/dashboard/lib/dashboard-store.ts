@@ -8,6 +8,7 @@ type DashboardActions = {
   setConnectionStatus: (connectionStatus: ConnectionStatus) => void;
   receiveTelemetry: (telemetry: ProcessedTelemetry) => void;
   clearTelemetry: () => void;
+  spendCoins: (amount: number) => boolean;
 };
 
 const initialState: DashboardState = {
@@ -15,7 +16,8 @@ const initialState: DashboardState = {
   telemetry: null,
   eventFeed: [],
   lastPacketAt: null,
-  lastActionMessage: "Waiting for simulator telemetry."
+  lastActionMessage: "Waiting for simulator telemetry.",
+  walletCoins: 1250 // Give them some starting coins for the demo
 };
 
 export const useDashboardStore = create<DashboardState & DashboardActions>()((set) => ({
@@ -40,9 +42,22 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()((se
         eventFeed,
         connectionStatus: "live",
         lastPacketAt: timestamp,
-        lastActionMessage: "Live simulator telemetry received."
+        lastActionMessage: "Live simulator telemetry received.",
+        // If telemetry provides a totalCoins override, use it. Otherwise accumulate coinsEarned.
+        walletCoins: telemetry.totalCoins ?? (state.walletCoins + (telemetry.coinsEarned ?? 0))
       };
     }),
+  spendCoins: (amount) => {
+    let success = false;
+    set((state) => {
+      if (state.walletCoins >= amount) {
+        success = true;
+        return { walletCoins: state.walletCoins - amount };
+      }
+      return state;
+    });
+    return success;
+  },
   clearTelemetry: () => set(initialState)
 }));
 

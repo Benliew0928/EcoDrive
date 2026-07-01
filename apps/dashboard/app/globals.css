@@ -861,3 +861,145 @@ h1 {
   color: var(--text);
   font-size: 16px;
 }
+
+/* Header User Profile */
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 16px;
+  border-radius: 99px;
+}
+
+.user-profile .avatar img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-details strong {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.coin-balance {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 700;
+}
+
+/* Rewards Marketplace Styles */
+.rewards-surface-clean {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  gap: 24px;
+  overflow-y: auto;
+}
+
+.rewards-header {
+  text-align: left;
+}
+
+.rewards-header h2 {
+  font-size: 24px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.rewards-header p {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.rewards-header strong {
+  color: var(--green);
+  font-size: 16px;
+}
+
+.rewards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.reward-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s;
+}
+
+.reward-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(55, 229, 143, 0.3);
+}
+
+.reward-icon {
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.2);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin-bottom: 8px;
+}
+
+.reward-card h3 {
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.reward-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.reward-cost {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.redeem-btn {
+  background: var(--green);
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.redeem-btn:disabled {
+  background: var(--border);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.redeem-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}

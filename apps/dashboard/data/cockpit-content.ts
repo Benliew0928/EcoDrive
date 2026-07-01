@@ -1,8 +1,7 @@
 export type ModeId =
-  | "drive"
   | "route"
+  | "drive"
   | "energy"
-  | "carbonTwin"
   | "city"
   | "rewards"
   | "community"
@@ -25,20 +24,19 @@ export type CockpitMode = {
 };
 
 export const modeLinks: Array<Pick<CockpitMode, "id" | "label" | "shortLabel" | "href">> = [
-  { id: "drive", label: "Drive", shortLabel: "Drive", href: "/" },
-  { id: "route", label: "Route", shortLabel: "Route", href: "/route" },
-  { id: "energy", label: "Energy", shortLabel: "Energy", href: "/energy" },
-  { id: "carbonTwin", label: "CarbonTwin", shortLabel: "Forest", href: "/carbon-twin" },
+  { id: "route", label: "Route Planner", shortLabel: "Route", href: "/route" },
+  { id: "drive", label: "Live Telemetry", shortLabel: "Drive", href: "/" },
+  { id: "energy", label: "Energy Flow", shortLabel: "Energy", href: "/energy" },
   { id: "city", label: "Eco-City", shortLabel: "City", href: "/city" },
-  { id: "rewards", label: "Rewards", shortLabel: "Rewards", href: "/rewards" },
-  { id: "community", label: "Community", shortLabel: "Community", href: "/community" },
-  { id: "fleet", label: "Fleet", shortLabel: "Fleet", href: "/fleet" }
+  { id: "rewards", label: "Marketplace", shortLabel: "Rewards", href: "/rewards" },
+  { id: "community", label: "Leaderboard", shortLabel: "Social", href: "/community" },
+  { id: "fleet", label: "Fleet Connect", shortLabel: "Fleet", href: "/fleet" }
 ];
 
 export const cockpitModes: Record<ModeId, CockpitMode> = {
   drive: {
     id: "drive",
-    label: "Drive",
+    label: "Live Telemetry",
     shortLabel: "Drive",
     href: "/",
     subtitle: "Simulator telemetry cockpit",
@@ -47,7 +45,7 @@ export const cockpitModes: Record<ModeId, CockpitMode> = {
   },
   route: {
     id: "route",
-    label: "Route",
+    label: "Route Planner",
     shortLabel: "Route",
     href: "/route",
     subtitle: "Route state from simulator",
@@ -56,20 +54,11 @@ export const cockpitModes: Record<ModeId, CockpitMode> = {
   },
   energy: {
     id: "energy",
-    label: "Energy",
+    label: "Energy Flow",
     shortLabel: "Energy",
     href: "/energy",
     subtitle: "Battery, regen and motor data",
     headline: "Energy cockpit",
-    accent: "green"
-  },
-  carbonTwin: {
-    id: "carbonTwin",
-    label: "CarbonTwin",
-    shortLabel: "Forest",
-    href: "/carbon-twin",
-    subtitle: "Carbon model from real drives",
-    headline: "CarbonTwin",
     accent: "green"
   },
   city: {

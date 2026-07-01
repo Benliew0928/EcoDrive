@@ -10,6 +10,7 @@ import {
   Signal,
   Trees
 } from "lucide-react";
+import { useState } from "react";
 import { CockpitShell } from "./cockpit-shell";
 import { cockpitModes, type Metric, type ModeId } from "../data/cockpit-content";
 import { eventLabel, hardwareFeedbackForTelemetry } from "../lib/dashboard-data";
@@ -72,9 +73,8 @@ export function CockpitScreen({ mode }: CockpitScreenProps) {
 function ModeVisual({ mode, telemetry }: { mode: ModeId; telemetry: ProcessedTelemetry | null }) {
   if (mode === "route") return <RouteSurface telemetry={telemetry} />;
   if (mode === "energy") return <EnergySurface telemetry={telemetry} />;
-  if (mode === "carbonTwin") return <CarbonSurface telemetry={telemetry} />;
   if (mode === "city") return <FutureModuleSurface title="Eco-City data model" telemetry={telemetry} />;
-  if (mode === "rewards") return <FutureModuleSurface title="Rewards wallet" telemetry={telemetry} />;
+  if (mode === "rewards") return <RewardsSurface />;
   if (mode === "community") return <FutureModuleSurface title="Community challenges" telemetry={telemetry} />;
   if (mode === "fleet") return <FleetSurface telemetry={telemetry} />;
   return <DriveSurface telemetry={telemetry} />;
@@ -154,6 +154,53 @@ function CarbonSurface({ telemetry }: { telemetry: ProcessedTelemetry | null }) 
         <PacketRow label="Eco score" value={formatNumber(telemetry?.ecoScore, 0)} />
       </div>
       {!telemetry ? <EmptyState icon={Leaf} title="Carbon model waiting for drive data" /> : null}
+    </div>
+  );
+}
+
+function RewardsSurface() {
+  const walletCoins = useDashboardStore((state) => state.walletCoins);
+  const spendCoins = useDashboardStore((state) => state.spendCoins);
+  
+  const [redeemed, setRedeemed] = useState<string | null>(null);
+
+  const rewards = [
+    { id: "coffee", title: "Campus Coffee Discount (RM 5)", cost: 500, icon: "☕" },
+    { id: "parking", title: "Reserved EV Parking (1 Day)", cost: 1200, icon: "🅿️" },
+    { id: "merch", title: "UTAR Green Merch T-Shirt", cost: 3500, icon: "👕" },
+  ];
+
+  const handleRedeem = (id: string, cost: number) => {
+    if (spendCoins(cost)) {
+      setRedeemed(id);
+      setTimeout(() => setRedeemed(null), 3000);
+    }
+  };
+
+  return (
+    <div className="live-surface rewards-surface-clean">
+      <div className="rewards-header">
+        <h2>EcoDrive+ Marketplace</h2>
+        <p>You have <strong>{walletCoins.toLocaleString()}</strong> EcoCoins to spend.</p>
+      </div>
+      <div className="rewards-grid">
+        {rewards.map((reward) => (
+          <div key={reward.id} className="reward-card">
+            <span className="reward-icon">{reward.icon}</span>
+            <h3>{reward.title}</h3>
+            <div className="reward-action">
+              <span className="reward-cost">{reward.cost} Coins</span>
+              <button 
+                className="redeem-btn" 
+                disabled={walletCoins < reward.cost}
+                onClick={() => handleRedeem(reward.id, reward.cost)}
+              >
+                {redeemed === reward.id ? "Redeemed!" : "Redeem"}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -253,14 +300,6 @@ function buildMetrics(mode: ModeId, telemetry: ProcessedTelemetry | null): Metri
     ];
   }
 
-  if (mode === "carbonTwin") {
-    return [
-      { label: "CO2 saved", value: formatUnit(telemetry?.co2SavedKg, "kg", 2), trend: "from carbon model" },
-      { label: "Energy", value: formatUnit(telemetry?.energyKwh, "kWh", 2), trend: "current trip" },
-      { label: "Distance", value: formatUnit(telemetry?.distanceKm, "km", 2), trend: "current trip" },
-      { label: "Eco score", value: formatNumber(telemetry?.ecoScore, 0), trend: "live packet" }
-    ];
-  }
 
   if (mode === "city" || mode === "rewards" || mode === "community") {
     return [
