@@ -1,19 +1,20 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
-import { AlertTriangle, CheckCircle2, Pause, Play, QrCode, RadioTower, Zap } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
+import {
+  BatteryCharging,
+  CircleGauge,
+  Gauge,
+  Leaf,
+  RadioTower,
+  Route,
+  Signal,
+  Trees
+} from "lucide-react";
 import { CockpitShell } from "./cockpit-shell";
-import { cockpitModes, type ModeId } from "../data/cockpit-content";
-import { cityAssets, feedbackForScore, routeOptions } from "../lib/dashboard-data";
-import { activeRouteLabel, calculateDailyYield, useDashboardStore } from "../lib/dashboard-store";
-import type { CityAsset, ProcessedTelemetry, RouteId } from "../types/dashboard";
-
-const RouteMap = dynamic(() => import("./route-map").then((module) => module.RouteMap), {
-  ssr: false,
-  loading: () => <div className="route-map-loading">Loading UTAR route map...</div>
-});
+import { cockpitModes, type Metric, type ModeId } from "../data/cockpit-content";
+import { eventLabel, hardwareFeedbackForTelemetry } from "../lib/dashboard-data";
+import { useDashboardStore } from "../lib/dashboard-store";
+import type { ProcessedTelemetry } from "../types/dashboard";
 
 type CockpitScreenProps = {
   mode: ModeId;
@@ -22,11 +23,10 @@ type CockpitScreenProps = {
 export function CockpitScreen({ mode }: CockpitScreenProps) {
   const screen = cockpitModes[mode];
   const telemetry = useDashboardStore((state) => state.telemetry);
-  const wallet = useDashboardStore((state) => state.wallet);
-  const cityCells = useDashboardStore((state) => state.cityCells);
-  const activeRouteId = useDashboardStore((state) => state.activeRouteId);
+  const connectionStatus = useDashboardStore((state) => state.connectionStatus);
   const lastActionMessage = useDashboardStore((state) => state.lastActionMessage);
-  const metrics = buildMetrics(mode, telemetry, wallet, cityCells, activeRouteId);
+  const metrics = buildMetrics(mode, telemetry);
+  const isLive = connectionStatus === "live" && Boolean(telemetry);
 
   return (
     <CockpitShell activeMode={mode}>
@@ -37,9 +37,11 @@ export function CockpitScreen({ mode }: CockpitScreenProps) {
               <p className="eyebrow">{screen.label}</p>
               <h1>{screen.headline}</h1>
             </div>
-            <span className="auto-eco-pill">{activeRouteId ? activeRouteLabel(activeRouteId) : "Auto Eco ready"}</span>
+            <span className={`auto-eco-pill ${isLive ? "auto-eco-pill--live" : ""}`}>
+              {isLive ? "Live packet" : "Awaiting simulator"}
+            </span>
           </div>
-          <ModeVisual mode={mode} />
+          <ModeVisual mode={mode} telemetry={telemetry} />
         </section>
 
         <aside className="metrics-panel">
@@ -53,12 +55,12 @@ export function CockpitScreen({ mode }: CockpitScreenProps) {
         </aside>
 
         <section className="advice-panel">
-          <p>Eco co-pilot recommendation</p>
-          <strong>{buildAdvice(mode, telemetry, activeRouteId)}</strong>
+          <p>Integration status</p>
+          <strong>{buildStatusMessage(mode, telemetry, connectionStatus)}</strong>
         </section>
 
         <section className="secondary-panel">
-          <SecondaryContent mode={mode} />
+          <SecondaryContent telemetry={telemetry} />
           <p className="action-message">{lastActionMessage}</p>
         </section>
       </main>
@@ -66,450 +68,271 @@ export function CockpitScreen({ mode }: CockpitScreenProps) {
   );
 }
 
-function ModeVisual({ mode }: { mode: ModeId }) {
-  if (mode === "route") return <RoutePlanner />;
-  if (mode === "drive") return <DriveDashboard />;
-  if (mode === "city") return <CityGrid />;
-  if (mode === "energy") return <EnergyFlow />;
-  if (mode === "carbonTwin") return <CarbonForest />;
-  if (mode === "rewards") return <RewardsSurface />;
-  if (mode === "community") return <CommunitySurface />;
-  if (mode === "fleet") return <FleetSurface />;
-  return <DriveDashboard />;
+function ModeVisual({ mode, telemetry }: { mode: ModeId; telemetry: ProcessedTelemetry | null }) {
+  if (mode === "route") return <RouteSurface telemetry={telemetry} />;
+  if (mode === "energy") return <EnergySurface telemetry={telemetry} />;
+  if (mode === "carbonTwin") return <CarbonSurface telemetry={telemetry} />;
+  if (mode === "city") return <FutureModuleSurface title="Eco-City data model" telemetry={telemetry} />;
+  if (mode === "rewards") return <FutureModuleSurface title="Rewards wallet" telemetry={telemetry} />;
+  if (mode === "community") return <FutureModuleSurface title="Community challenges" telemetry={telemetry} />;
+  if (mode === "fleet") return <FleetSurface telemetry={telemetry} />;
+  return <DriveSurface telemetry={telemetry} />;
 }
 
-function RoutePlanner() {
-  const router = useRouter();
-  const activeRouteId = useDashboardStore((state) => state.activeRouteId);
-  const selectRoute = useDashboardStore((state) => state.selectRoute);
-  const selectRouteAndStart = useDashboardStore((state) => state.selectRouteAndStart);
-  const selectedRouteId = activeRouteId ?? "eco";
-
-  const startRoute = () => {
-    selectRouteAndStart(selectedRouteId);
-    router.push("/");
-  };
+function DriveSurface({ telemetry }: { telemetry: ProcessedTelemetry | null }) {
+  const feedback = hardwareFeedbackForTelemetry(telemetry);
+  const speed = telemetry?.speedKmh ?? null;
+  const ecoScore = telemetry?.ecoScore ?? null;
 
   return (
-    <div className="route-planner">
-      <div className="route-form">
-        <label>
-          <span>Origin</span>
-          <input value="East Gate" readOnly />
-        </label>
-        <label>
-          <span>Destination</span>
-          <input value="Library / Heritage Hall" readOnly />
-        </label>
-        <button className="primary-action" onClick={startRoute} type="button">
-          <Play size={17} />
-          Select Eco Route & Start Driving
-        </button>
-      </div>
-
-      <div className="route-map-card">
-        <RouteMap activeRouteId={selectedRouteId} onSelectRoute={selectRoute} />
-      </div>
-
-      <div className="route-options">
-        {routeOptions.map((option) => (
-          <button
-            className={`route-option ${selectedRouteId === option.id ? "route-option--active" : ""}`}
-            key={option.id}
-            onClick={() => selectRoute(option.id)}
-            style={{ "--route-color": option.color } as React.CSSProperties}
-            type="button"
-          >
-            <span>{option.badge}</span>
-            <strong>{option.label}</strong>
-            <small>{option.description}</small>
-            <em>
-              {option.etaMin} min | {option.energyKwh} kWh | +{option.coinsBonus} coins
-            </em>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function DriveDashboard() {
-  const telemetry = useDashboardStore((state) => state.telemetry);
-  const eventFeed = useDashboardStore((state) => state.eventFeed);
-  const demoRunning = useDashboardStore((state) => state.demoRunning);
-  const startDemo = useDashboardStore((state) => state.startDemo);
-  const pauseDemo = useDashboardStore((state) => state.pauseDemo);
-  const injectEvent = useDashboardStore((state) => state.injectEvent);
-  const feedback = feedbackForScore(telemetry.ecoScore, telemetry.event);
-  const gaugeStyle = { "--score": `${Math.round(telemetry.ecoScore)}%` } as React.CSSProperties;
-
-  return (
-    <div className="route-surface drive-surface">
-      <div className="map-grid" />
-      <div className="route-line route-line--eco" />
-      <div className="route-line route-line--fast" />
-      <span className="vehicle-marker" />
-      <span className="route-tag">{activeRouteLabel(useDashboardStore.getState().activeRouteId)}</span>
+    <div className="live-surface drive-surface-clean">
+      <div className="surface-grid" />
       <div className={`hardware-pod hardware-pod--${feedback.color}`}>
         <RadioTower size={18} />
-        <strong>{feedback.led}</strong>
-        <span>{feedback.oled}</span>
+        <strong>LED {feedback.led}</strong>
+        <span>OLED {feedback.oled}</span>
       </div>
-
-      <div className="eco-gauge">
-        <div className="gauge-ring gauge-ring--dynamic" style={gaugeStyle}>
-          <strong>{Math.round(telemetry.ecoScore)}</strong>
-          <span>Eco score</span>
+      <div className="drive-centerpiece">
+        <div className="speed-orb">
+          <span>{formatNumber(speed, 0)}</span>
+          <small>km/h</small>
         </div>
-        <p>ESP32 packet mirror</p>
-        <div className="bars">
-          {Array.from({ length: 18 }).map((_, index) => (
-            <span key={index} style={{ height: `${24 + ((index * 13 + Math.round(telemetry.speedKmh)) % 56)}px` }} />
-          ))}
+        <div className="steering-arc">
+          <span style={{ transform: `translateX(${Math.max(-44, Math.min(44, (telemetry?.steering ?? 0) * 44))}px)` }} />
         </div>
       </div>
-
-      <div className="demo-controls">
-        <button onClick={demoRunning ? pauseDemo : startDemo} type="button">
-          {demoRunning ? <Pause size={16} /> : <Play size={16} />}
-          {demoRunning ? "Pause" : "Start"}
-        </button>
-        <button onClick={() => injectEvent("smooth_streak")} type="button">
-          <Zap size={16} />
-          Smooth
-        </button>
-        <button className="danger-action" onClick={() => injectEvent("harsh_brake")} type="button">
-          <AlertTriangle size={16} />
-          Harsh brake
-        </button>
+      <div className="packet-panel">
+        <PacketRow label="Eco score" value={formatNumber(ecoScore, 0)} />
+        <PacketRow label="Event" value={telemetry?.event ? eventLabel(telemetry.event) : "--"} />
+        <PacketRow label="Throttle" value={formatPercent(telemetry?.throttle)} />
+        <PacketRow label="Brake" value={formatPercent(telemetry?.brake)} />
       </div>
-
-      <div className="event-feed">
-        {eventFeed.slice(0, 5).map((event) => (
-          <p className={`event-row event-row--${event.severity}`} key={event.id}>
-            <span>{formatTime(event.timestamp)}</span>
-            {event.label}
-          </p>
-        ))}
-      </div>
+      {!telemetry ? <EmptyState icon={Gauge} title="Waiting for simulator telemetry" /> : null}
     </div>
   );
 }
 
-function EnergyFlow() {
-  const telemetry = useDashboardStore((state) => state.telemetry);
-
+function RouteSurface({ telemetry }: { telemetry: ProcessedTelemetry | null }) {
   return (
-    <div className="energy-flow">
-      <div className="battery-module">
-        <span>{Math.round(telemetry.batteryPercent)}%</span>
+    <div className="live-surface route-surface-clean">
+      <div className="surface-grid" />
+      <div className="route-spine">
+        <span />
+        <i />
+        <b />
       </div>
-      <div className="flow-line flow-line--regen">Regen +{Math.round(telemetry.regenKw)} kW</div>
-      <div className="flow-line flow-line--motor">Motor {Math.round(telemetry.motorKw)} kW</div>
-      <div className="charger-card">UTAR Solar Hub | 2.3 km | {Math.round(telemetry.rangeKm)} km projected range</div>
+      <div className="packet-panel packet-panel--wide">
+        <PacketRow label="Route choice" value={telemetry?.routeChoice ?? "--"} />
+        <PacketRow label="Distance" value={formatUnit(telemetry?.distanceKm, "km", 2)} />
+        <PacketRow label="Steering" value={formatSigned(telemetry?.steering)} />
+        <PacketRow label="Speed" value={formatUnit(telemetry?.speedKmh, "km/h", 0)} />
+      </div>
+      {!telemetry ? <EmptyState icon={Route} title="Route feed not connected" /> : null}
     </div>
   );
 }
 
-function CarbonForest() {
-  const telemetry = useDashboardStore((state) => state.telemetry);
-  const treeCount = Math.min(64, Math.max(18, Math.round(telemetry.co2SavedKg * 9)));
-
+function EnergySurface({ telemetry }: { telemetry: ProcessedTelemetry | null }) {
   return (
-    <div className="forest-surface">
-      {Array.from({ length: treeCount }).map((_, index) => (
-        <span className={index % 7 === 0 ? "tree tree--rare" : "tree"} key={index} />
-      ))}
-      <div className="forest-score">{telemetry.co2SavedKg.toFixed(2)} kg CO2 saved story</div>
+    <div className="live-surface energy-surface-clean">
+      <div className="battery-outline">
+        <span>{formatPercentValue(telemetry?.batteryPercent)}</span>
+      </div>
+      <div className="energy-readouts">
+        <PacketRow label="Range" value={formatUnit(telemetry?.rangeKm, "km", 0)} />
+        <PacketRow label="Regen" value={formatUnit(telemetry?.regenKw, "kW", 0)} />
+        <PacketRow label="Motor" value={formatUnit(telemetry?.motorKw, "kW", 0)} />
+        <PacketRow label="Energy" value={formatUnit(telemetry?.energyKwh, "kWh", 2)} />
+      </div>
+      {!telemetry ? <EmptyState icon={BatteryCharging} title="Energy packets pending" /> : null}
     </div>
   );
 }
 
-function CityGrid() {
-  const wallet = useDashboardStore((state) => state.wallet);
-  const cityCells = useDashboardStore((state) => state.cityCells);
-  const selectedCityAssetId = useDashboardStore((state) => state.selectedCityAssetId);
-  const selectCityAsset = useDashboardStore((state) => state.selectCityAsset);
-  const placeCityAsset = useDashboardStore((state) => state.placeCityAsset);
-  const yieldPerDay = calculateDailyYield(cityCells);
-
+function CarbonSurface({ telemetry }: { telemetry: ProcessedTelemetry | null }) {
   return (
-    <div className="city-builder">
-      <div className="city-grid" aria-label="Eco-City grid">
-        {cityCells.map((cell, index) => {
-          const asset = cityAssets.find((candidate) => candidate.id === cell.assetId);
-
-          return (
-            <button
-              className={`city-cell ${asset ? "city-cell--active" : ""}`}
-              key={index}
-              onClick={() => placeCityAsset(index)}
-              style={asset ? ({ "--asset-color": asset.color } as React.CSSProperties) : undefined}
-              type="button"
-            >
-              {asset ? assetInitial(asset) : ""}
-            </button>
-          );
-        })}
+    <div className="live-surface carbon-surface-clean">
+      <div className="carbon-ring">
+        <Trees size={46} />
+        <strong>{formatUnit(telemetry?.co2SavedKg, "kg", 2)}</strong>
+        <span>CO2 saved</span>
       </div>
-      <div className="building-palette">
-        <div className="city-wallet">
-          <strong>{wallet.rawCoins}</strong>
-          <span>Raw coins</span>
-          <strong>{yieldPerDay}/day</strong>
-          <span>Yield projection</span>
-        </div>
-        {cityAssets.map((asset) => (
-          <button
-            className={`asset-chip ${selectedCityAssetId === asset.id ? "asset-chip--active" : ""}`}
-            key={asset.id}
-            onClick={() => selectCityAsset(asset.id)}
-            style={{ "--asset-color": asset.color } as React.CSSProperties}
-            type="button"
-          >
-            <span>{asset.label}</span>
-            <small>{asset.cost} coins | +{asset.yieldPerDay}/day</small>
-          </button>
-        ))}
+      <div className="packet-panel">
+        <PacketRow label="Distance" value={formatUnit(telemetry?.distanceKm, "km", 2)} />
+        <PacketRow label="Energy" value={formatUnit(telemetry?.energyKwh, "kWh", 2)} />
+        <PacketRow label="Eco score" value={formatNumber(telemetry?.ecoScore, 0)} />
       </div>
+      {!telemetry ? <EmptyState icon={Leaf} title="Carbon model waiting for drive data" /> : null}
     </div>
   );
 }
 
-function RewardsSurface() {
-  const rewards = useDashboardStore((state) => state.rewards);
-  const wallet = useDashboardStore((state) => state.wallet);
-  const activeQrToken = useDashboardStore((state) => state.activeQrToken);
-  const redeemReward = useDashboardStore((state) => state.redeemReward);
-
+function FutureModuleSurface({ title, telemetry }: { title: string; telemetry: ProcessedTelemetry | null }) {
   return (
-    <div className="rewards-surface">
-      <div className="reward-balance">
-        <strong>{wallet.yieldCoins}</strong>
-        <span>Yield Coins available</span>
+    <div className="live-surface future-surface-clean">
+      <div className="module-shell">
+        <CircleGauge size={44} />
+        <strong>{title}</strong>
+        <span>{telemetry ? "Telemetry is available. Module logic can be connected next." : "Blank until real simulator data is mapped."}</span>
       </div>
-      {rewards.map((reward) => (
-        <article key={reward.id}>
-          <div>
-            <strong>{reward.title}</strong>
-            <span>{reward.description}</span>
-          </div>
-          <button disabled={wallet.yieldCoins < reward.cost} onClick={() => redeemReward(reward.id)} type="button">
-            <QrCode size={15} />
-            {reward.cost}
-          </button>
-        </article>
-      ))}
-      <div className="qr-preview">
-        {activeQrToken ? <QRCodeSVG bgColor="transparent" fgColor="#06100f" size={132} value={activeQrToken} /> : "QR"}
+      <div className="packet-panel">
+        <PacketRow label="EcoCoins" value={formatNumber(telemetry?.totalCoins, 0)} />
+        <PacketRow label="CO2 saved" value={formatUnit(telemetry?.co2SavedKg, "kg", 2)} />
+        <PacketRow label="Event" value={telemetry?.event ? eventLabel(telemetry.event) : "--"} />
       </div>
     </div>
   );
 }
 
-function CommunitySurface() {
-  const telemetry = useDashboardStore((state) => state.telemetry);
-  const challenges = useDashboardStore((state) => state.challenges);
-  const joinChallenge = useDashboardStore((state) => state.joinChallenge);
-  const leaderboard = [
-    ["Ben", Math.round(Math.max(telemetry.ecoScore, 91))],
-    ["Aina", 88],
-    ["Wei", 85],
-    ["Kumar", 82],
-    ["Team FEGT", 79]
-  ];
-
+function FleetSurface({ telemetry }: { telemetry: ProcessedTelemetry | null }) {
   return (
-    <div className="community-surface">
-      {challenges.map((challenge) => (
-        <button className="challenge-card" key={challenge.id} onClick={() => joinChallenge(challenge.id)} type="button">
-          <strong>{challenge.title}</strong>
-          <span>{Math.round((challenge.progressKg / challenge.targetKg) * 100)}% complete</span>
-          <em>{challenge.joined ? "Joined" : `Join | +${challenge.rewardCoins} coins`}</em>
-        </button>
-      ))}
-      <div className="leaderboard-list">
-        {leaderboard.map(([name, score], index) => (
-          <p key={name}>
-            <span>{index + 1}</span>
-            {name}
-            <strong>{score}</strong>
-          </p>
-        ))}
+    <div className="live-surface fleet-surface-clean">
+      <div className="packet-panel packet-panel--wide">
+        <PacketRow label="Device" value={telemetry?.deviceId ?? "--"} />
+        <PacketRow label="Last event" value={telemetry?.event ? eventLabel(telemetry.event) : "--"} />
+        <PacketRow label="LED" value={telemetry?.ledState ?? "--"} />
+        <PacketRow label="Hard brakes" value={formatNumber(telemetry?.hardBrakes, 0)} />
       </div>
+      {!telemetry ? <EmptyState icon={Signal} title="No fleet unit connected" /> : null}
     </div>
   );
 }
 
-function FleetSurface() {
-  const fleetVehicles = useDashboardStore((state) => state.fleetVehicles);
-
-  return (
-    <div className="fleet-surface">
-      {fleetVehicles.map((vehicle) => (
-        <p className={`fleet-row fleet-row--${vehicle.status}`} key={vehicle.id}>
-          <span>{vehicle.name}</span>
-          <strong>{vehicle.status} / score {vehicle.ecoScore}</strong>
-          <em>{vehicle.alert}</em>
-        </p>
-      ))}
-      <div className="risk-map">Gate Road braking cluster | Demo unit telemetry mirrors current dashboard packet</div>
-    </div>
-  );
-}
-
-function SecondaryContent({ mode }: { mode: ModeId }) {
-  const telemetry = useDashboardStore((state) => state.telemetry);
-  const activeRouteId = useDashboardStore((state) => state.activeRouteId);
-  const wallet = useDashboardStore((state) => state.wallet);
-  const cityCells = useDashboardStore((state) => state.cityCells);
-  const feedback = feedbackForScore(telemetry.ecoScore, telemetry.event);
-
-  if (mode === "route") {
-    return (
-      <>
-        <p>Selected route</p>
-        <strong>{activeRouteLabel(activeRouteId)} is ready to launch the live drive dashboard.</strong>
-      </>
-    );
-  }
-
-  if (mode === "city") {
-    return (
-      <>
-        <p>Active adjacency bonus</p>
-        <strong>City yield is {calculateDailyYield(cityCells)}/day. Solar beside EV hub gives +25% Yield Coin income.</strong>
-      </>
-    );
-  }
-
-  if (mode === "rewards") {
-    return (
-      <>
-        <p>Marketplace status</p>
-        <strong>{wallet.yieldCoins} Yield Coins available. Redeemed rewards generate a simulated QR code.</strong>
-      </>
-    );
-  }
-
-  if (mode === "fleet") {
-    return (
-      <>
-        <p>Actionable fleet insight</p>
-        <strong>Demo Unit mirrors the current telemetry stream; harsh events become fleet alerts instantly.</strong>
-      </>
-    );
-  }
+function SecondaryContent({ telemetry }: { telemetry: ProcessedTelemetry | null }) {
+  const feedback = hardwareFeedbackForTelemetry(telemetry);
+  const eventFeed = useDashboardStore((state) => state.eventFeed);
 
   return (
     <>
-      <p>Hardware feedback mirror</p>
+      <p>Packet mirror</p>
       <strong>
         LED: {feedback.led} | OLED: {feedback.oled} | Buzzer: {feedback.buzzer}
       </strong>
+      <div className="compact-feed">
+        {eventFeed.length ? (
+          eventFeed.slice(0, 4).map((event) => (
+            <p className={`event-row event-row--${event.severity}`} key={event.id}>
+              <span>{formatTime(event.timestamp)}</span>
+              {event.label}
+            </p>
+          ))
+        ) : (
+          <p className="empty-feed">No simulator events received yet.</p>
+        )}
+      </div>
     </>
   );
 }
 
-function buildMetrics(
-  mode: ModeId,
-  telemetry: ProcessedTelemetry,
-  wallet: { rawCoins: number; yieldCoins: number },
-  cityCells: ReturnType<typeof useDashboardStore.getState>["cityCells"],
-  activeRouteId: RouteId | null
-) {
-  const activeRoute = routeOptions.find((route) => route.id === activeRouteId) ?? routeOptions[0];
-  const yieldPerDay = calculateDailyYield(cityCells);
-  const treeCount = Math.round(Math.max(18, telemetry.co2SavedKg * 9));
+function PacketRow({ label, value }: { label: string; value: string }) {
+  return (
+    <p className="packet-row">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </p>
+  );
+}
 
+function EmptyState({ icon: Icon, title }: { icon: typeof Gauge; title: string }) {
+  return (
+    <div className="empty-state">
+      <Icon size={28} />
+      <strong>{title}</strong>
+      <span>Connect the simulator or telemetry bridge to populate this panel.</span>
+    </div>
+  );
+}
+
+function buildMetrics(mode: ModeId, telemetry: ProcessedTelemetry | null): Metric[] {
   if (mode === "route") {
     return [
-      { label: "Eco route", value: `${routeOptions[0].energyKwh} kWh`, trend: `+${routeOptions[0].coinsBonus} EcoCoins` },
-      { label: "Fast route", value: `${routeOptions[1].energyKwh} kWh`, trend: `${routeOptions[1].etaMin} min ETA` },
-      { label: "CO2 saved", value: `${(routeOptions[1].co2Kg - routeOptions[0].co2Kg).toFixed(2)} kg`, trend: "per trip" },
-      { label: "Selected", value: activeRoute.badge, trend: activeRoute.label }
+      { label: "Route", value: telemetry?.routeChoice ?? "--", trend: "from simulator packet" },
+      { label: "Distance", value: formatUnit(telemetry?.distanceKm, "km", 2), trend: "current trip" },
+      { label: "Steering", value: formatSigned(telemetry?.steering), trend: "normalized input" },
+      { label: "Speed", value: formatUnit(telemetry?.speedKmh, "km/h", 0), trend: "live packet" }
     ];
   }
 
   if (mode === "energy") {
     return [
-      { label: "Battery", value: `${Math.round(telemetry.batteryPercent)}%`, trend: `${Math.round(telemetry.rangeKm)} km range` },
-      { label: "Regen", value: `+${Math.round(telemetry.regenKw)} kW`, trend: "active window" },
-      { label: "Motor", value: `${Math.round(telemetry.motorKw)} kW`, trend: "live draw" },
-      { label: "Energy", value: `${telemetry.energyKwh.toFixed(2)}`, trend: "kWh this drive" }
+      { label: "Battery", value: formatPercentValue(telemetry?.batteryPercent), trend: "from vehicle state" },
+      { label: "Range", value: formatUnit(telemetry?.rangeKm, "km", 0), trend: "estimated" },
+      { label: "Regen", value: formatUnit(telemetry?.regenKw, "kW", 0), trend: "live draw" },
+      { label: "Motor", value: formatUnit(telemetry?.motorKw, "kW", 0), trend: "live draw" }
     ];
   }
 
   if (mode === "carbonTwin") {
     return [
-      { label: "Trees", value: `${treeCount}`, trend: "+ live growth" },
-      { label: "Saplings", value: `${Math.max(3, Math.round(treeCount / 5))}`, trend: "growing" },
-      { label: "CO2 forest", value: `${telemetry.co2SavedKg.toFixed(1)} kg`, trend: "lifetime" },
-      { label: "Biome", value: "4", trend: "unlocked" }
+      { label: "CO2 saved", value: formatUnit(telemetry?.co2SavedKg, "kg", 2), trend: "from carbon model" },
+      { label: "Energy", value: formatUnit(telemetry?.energyKwh, "kWh", 2), trend: "current trip" },
+      { label: "Distance", value: formatUnit(telemetry?.distanceKm, "km", 2), trend: "current trip" },
+      { label: "Eco score", value: formatNumber(telemetry?.ecoScore, 0), trend: "live packet" }
     ];
   }
 
-  if (mode === "city") {
+  if (mode === "city" || mode === "rewards" || mode === "community") {
     return [
-      { label: "Raw coins", value: `${wallet.rawCoins}`, trend: "for building" },
-      { label: "Yield", value: `${yieldPerDay}/day`, trend: "for rewards" },
-      { label: "Assets", value: `${cityCells.filter((cell) => cell.assetId).length}`, trend: "placed" },
-      { label: "City stage", value: yieldPerDay > 60 ? "Green" : "Growing", trend: "level 4" }
-    ];
-  }
-
-  if (mode === "rewards") {
-    return [
-      { label: "Yield balance", value: `${wallet.yieldCoins}`, trend: `+${yieldPerDay}/day` },
-      { label: "Coffee QR", value: "100", trend: wallet.yieldCoins >= 100 ? "ready" : "locked" },
-      { label: "Charging credit", value: "320", trend: wallet.yieldCoins >= 320 ? "ready" : "locked" },
-      { label: "History", value: `${useDashboardStore.getState().redemptionHistory.length}`, trend: "redeemed" }
-    ];
-  }
-
-  if (mode === "community") {
-    return [
-      { label: "Progress", value: `${Math.round(386 + telemetry.co2SavedKg)} kg`, trend: "of 500 kg CO2" },
-      { label: "Rank", value: "#3", trend: "weekly driver" },
-      { label: "Avg score", value: `${Math.round(telemetry.ecoScore)}`, trend: "team smoothness" },
-      { label: "Challenges", value: "3", trend: "active" }
+      { label: "EcoCoins", value: formatNumber(telemetry?.totalCoins, 0), trend: "from real score logic" },
+      { label: "Coins earned", value: formatNumber(telemetry?.coinsEarned, 0), trend: "current packet" },
+      { label: "CO2 saved", value: formatUnit(telemetry?.co2SavedKg, "kg", 2), trend: "current drive" },
+      { label: "Eco score", value: formatNumber(telemetry?.ecoScore, 0), trend: "current drive" }
     ];
   }
 
   if (mode === "fleet") {
     return [
-      { label: "Active EVs", value: "6", trend: "campus fleet" },
-      { label: "Avg score", value: `${Math.round((78 + telemetry.ecoScore) / 2)}`, trend: "demo adjusted" },
-      { label: "CO2 month", value: "2.3 t", trend: "saved" },
-      { label: "Alerts", value: `${telemetry.hardBrakes + 3}`, trend: "needs review" }
+      { label: "Device", value: telemetry?.deviceId ?? "--", trend: "telemetry source" },
+      { label: "Status", value: telemetry ? "Live" : "--", trend: "connection state" },
+      { label: "Hard brakes", value: formatNumber(telemetry?.hardBrakes, 0), trend: "safety signal" },
+      { label: "Last event", value: telemetry?.event ? telemetry.event.replaceAll("_", " ") : "--", trend: "live packet" }
     ];
   }
 
   return [
-    { label: "Eco score", value: `${Math.round(telemetry.ecoScore)}`, trend: telemetry.event.replaceAll("_", " ") },
-    { label: "CO2 saved", value: `${telemetry.co2SavedKg.toFixed(2)} kg`, trend: "vs petrol baseline" },
-    { label: "Range", value: `${Math.round(telemetry.rangeKm)} km`, trend: `${Math.round(telemetry.batteryPercent)}% battery` },
-    { label: "EcoCoins", value: `${wallet.rawCoins}`, trend: `+${telemetry.coinsEarned} this packet` }
+    { label: "Speed", value: formatUnit(telemetry?.speedKmh, "km/h", 0), trend: "live packet" },
+    { label: "Eco score", value: formatNumber(telemetry?.ecoScore, 0), trend: telemetry?.event ? telemetry.event.replaceAll("_", " ") : "waiting" },
+    { label: "CO2 saved", value: formatUnit(telemetry?.co2SavedKg, "kg", 2), trend: "current drive" },
+    { label: "EcoCoins", value: formatNumber(telemetry?.totalCoins, 0), trend: "from real score logic" }
   ];
 }
 
-function buildAdvice(mode: ModeId, telemetry: ProcessedTelemetry, activeRouteId: RouteId | null) {
-  if (telemetry.event === "harsh_brake") return "Brake earlier and hold a smoother deceleration curve. ESP32 would flash red and beep twice.";
-  if (telemetry.event === "aggressive_acceleration") return "Ease acceleration. The motor draw spike is reducing the eco-score.";
-  if (mode === "route") return "Choose the Lake 18 Eco Route for a slightly longer drive with lower energy use and higher EcoCoins.";
-  if (mode === "city") return "Place Solar beside EV hub or Wind to increase Yield Coin income before redeeming rewards.";
-  if (mode === "rewards") return "Redeem low-cost rewards first to prove the value loop during the pitch.";
-  if (mode === "fleet") return "Watch the Demo Unit row: injected harsh events become command-centre alerts instantly.";
-  if (activeRouteId === "eco") return "Hold current throttle. Regen window is optimal and the route is trending below target energy.";
-  return "Select the eco route before the live drive to maximize scoring clarity for judges.";
+function buildStatusMessage(
+  mode: ModeId,
+  telemetry: ProcessedTelemetry | null,
+  connectionStatus: ReturnType<typeof useDashboardStore.getState>["connectionStatus"]
+) {
+  if (telemetry) return "Rendering only values received from the simulator or telemetry bridge.";
+  if (connectionStatus === "connecting") return "Trying to connect to the configured telemetry WebSocket.";
+  if (connectionStatus === "error") return "The telemetry WebSocket reported an error. The dashboard is staying blank instead of using invented values.";
+  if (connectionStatus === "disconnected") return "Telemetry disconnected. Waiting for the next real simulator packet.";
+  if (mode === "drive") return "No local data loop is running. This cockpit will populate when simulator telemetry is connected.";
+  return "This page is intentionally blank until its real simulator data contract is wired.";
 }
 
-function assetInitial(asset: CityAsset) {
-  return asset.label
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .slice(0, 2);
+function formatNumber(value: number | undefined | null, digits: number) {
+  if (value == null || Number.isNaN(value)) return "--";
+  return value.toFixed(digits);
+}
+
+function formatUnit(value: number | undefined | null, unit: string, digits: number) {
+  const number = formatNumber(value, digits);
+  return number === "--" ? "--" : `${number} ${unit}`;
+}
+
+function formatPercent(value: number | undefined | null) {
+  if (value == null || Number.isNaN(value)) return "--";
+  return `${Math.round(value * 100)}%`;
+}
+
+function formatPercentValue(value: number | undefined | null) {
+  if (value == null || Number.isNaN(value)) return "--";
+  return `${Math.round(value)}%`;
+}
+
+function formatSigned(value: number | undefined | null) {
+  if (value == null || Number.isNaN(value)) return "--";
+  return value > 0 ? `+${value.toFixed(2)}` : value.toFixed(2);
 }
 
 function formatTime(timestamp: number) {

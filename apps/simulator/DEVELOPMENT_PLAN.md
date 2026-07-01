@@ -4,9 +4,11 @@
 
 Simulator name: **Eco GP Route Chase**.
 
-The simulator combines a cinematic EV racing feel with clear eco-route decision moments. It should feel like a polished driving game, not a website, while still teaching why smoother eco-routes save energy and earn EcoCoins.
+The simulator combines a cinematic EV driving feel with a clean in-car dashboard/HMI. It should feel like a polished driving game cockpit, not a separate website full of fake demo panels, while still teaching why smoother eco-routes save energy.
 
-Build a fictional self-created demo map first. The UTAR-inspired map is future scope and should only be considered after the core simulator, controls, ESP32 packet flow, and dashboard integration are stable.
+The dashboard direction is now: **make the dashboard part of the car experience**. The current external dashboard app can be used as a rough visual reference only, but the final demo should prioritize a simple, believable cockpit display inside the simulator. First-person cockpit view can be developed later after the driving, camera, and data model feel stable.
+
+Avoid overusing fake data. The main pitch screen should show only values produced by the simulator or ESP32 pipeline: speed, throttle, brake, steering, eco-score, route choice, battery/range estimate, current event, and hardware connection state. Rewards, city, fleet, and community screens are future optional extras, not the core demo.
 
 ## Progress Tracker
 
@@ -19,8 +21,8 @@ Build a fictional self-created demo map first. The UTAR-inspired map is future s
 | 5. Touch Pressure Simulation | Complete | Team EcoDrive | High | Pointer pressure, touch force, pedal depth, and hold-time ramping |
 | 6. Eco Behavior Model | Complete | Team EcoDrive | High | Harsh brake, aggressive acceleration, overspeed, smooth streaks, regen events |
 | 7. ESP32 Packet Integration | Not Started | Team EcoDrive | High | Send normalized JSON every 200ms |
-| 8. Dashboard Integration | Not Started | Team EcoDrive | Medium | Start route command and demo sync |
-| 9. Visual and Pitch Polish | Not Started | Team EcoDrive | Medium | HUD, effects, fallback demo mode |
+| 8. In-Car Dashboard/HMI | Not Started | Team EcoDrive | High | Simple cockpit display inside simulator, using real simulator/ESP32 telemetry |
+| 9. Cockpit View and Visual Polish | Not Started | Team EcoDrive | High | Cleaner UI, first-person cockpit preparation, less fake demo data |
 | 10. UTAR Campus Map | In Progress | Team EcoDrive | Medium | Handmade UTAR Kampar loop based on official campus map anchors |
 
 ## Detailed Phase Plan
@@ -167,43 +169,82 @@ Acceptance criteria:
 - Connection loss does not crash the simulator.
 - Simulator-only demo mode remains usable.
 
-### 8. Dashboard Integration
+### 8. In-Car Dashboard/HMI
 
-Purpose: connect the simulator to the main EcoDrive+ presentation flow.
+Purpose: replace the separate fake-data-heavy dashboard idea with a simple in-car dashboard that belongs inside the simulator.
 
 Deliverables:
 
-- Match dashboard route concepts: Eco Route selected on dashboard, simulator route begins.
-- Later receive a `start_route` command from the dashboard or local relay server.
-- Simulator sends raw driving behavior to ESP32.
-- ESP32 sends processed telemetry to the dashboard.
+- Create a compact cockpit dashboard overlay or in-car display surface.
+- Show only core live values:
+  - speed,
+  - gear,
+  - throttle force,
+  - brake/reverse force,
+  - steering input,
+  - eco-score,
+  - route choice,
+  - battery/range estimate,
+  - current driving event,
+  - ESP32/simulator connection state.
+- Use simulator telemetry as the source of truth first.
+- Later replace or enrich simulator telemetry with processed ESP32 telemetry when the hardware pipeline is ready.
+- Keep route choice inside the simulator experience, either as:
+  - a small in-car navigation panel, or
+  - a simple pre-drive route selector overlay.
+- Remove or avoid fake leaderboard, fleet, reward, city, and unrelated large dashboard panels from the core driving demo.
 
 Acceptance criteria:
 
-- Demo flow can start from the dashboard route selection.
-- Simulator shows route context that matches the dashboard.
-- Dashboard can explain why Eco Route was chosen before driving starts.
+- Dashboard values visibly react to actual driving input.
+- No major display value is purely decorative unless clearly labelled as future/placeholder.
+- The UI feels like an EV cockpit screen, not a website dashboard.
+- The dashboard does not block the driving view on iPad or laptop.
+- The demo still works without ESP32 by using local simulator telemetry only.
 
-### 9. Visual and Pitch Polish
+### 9. Cockpit View and Visual Polish
 
-Purpose: make the simulator feel premium during the live pitch.
+Purpose: make the simulator feel premium, simpler, and more believable during the live pitch.
 
 Deliverables:
 
-- Add cinematic HUD.
-- Add countdown start.
-- Add route fork callout.
-- Add EcoCoin reward popup.
+- Simplify the HUD so it does not look cluttered or glitchy.
+- Keep only pitch-critical UI:
+  - speed,
+  - route,
+  - eco-score,
+  - input force,
+  - warning/reward event.
+- Add countdown start only if it improves the driving flow.
+- Add route fork callout in a minimal navigation style.
+- Add a small reward/regen indicator, not a large fake gamification popup.
 - Add finish summary.
 - Add controller/keyboard/touch hint overlay.
-- Add fallback demo mode for no ESP32 or no controller.
+- Add fallback simulator-only mode for no ESP32 or no controller.
+- Prepare the scene for a future first-person cockpit camera:
+  - steering wheel,
+  - dashboard panel position,
+  - windshield framing,
+  - readable in-car instrument cluster,
+  - camera toggle between chase view and cockpit view.
 
 Acceptance criteria:
 
 - First 30 seconds of gameplay look impressive.
+- UI is readable, uncluttered, and stable.
 - Route choice is obvious without long explanation.
-- Judges can understand the input, ESP32, and dashboard connection.
+- Judges can understand the input, ESP32, and in-car dashboard connection.
 - Demo can continue even if one hardware input method is unavailable.
+
+## Dashboard Philosophy
+
+- The dashboard is not a separate fake-data website for the main demo.
+- The dashboard should feel like the screen inside the simulator car.
+- The external dashboard app should be treated as a temporary prototype/reference until it is simplified or merged into the simulator cockpit.
+- Use real simulator values wherever possible.
+- Use ESP32 values when the hardware pipeline is ready.
+- Avoid filling the demo with fake community, fleet, marketplace, or city data unless those features are explicitly being presented as future scope.
+- A simpler, cleaner cockpit is better than a busy dashboard with many fake numbers.
 
 ### 10. UTAR Campus Map
 
@@ -268,13 +309,15 @@ Field notes:
 - `event`: current simulator event, such as `smooth_segment`, `smooth_streak`, `harsh_brake`, `aggressive_acceleration`, `overspeed`, `regen_success`, `fast_route_warning`, or `reverse_mode`.
 - `timestamp`: Unix timestamp or demo timestamp used by the ESP32 pipeline.
 
+The in-car dashboard should render these packet fields directly where possible. Any extra values, such as battery estimate or range estimate, should be derived from the simulator/ESP32 state rather than hard-coded as fake dashboard content.
+
 ## UTAR Map Policy
 
 - Do not build the UTAR map first.
 - Do not recreate the full real campus in 3D.
 - Do not use Google Maps imagery directly as game textures.
 - Build the fictional neon demo route first.
-- Only consider a UTAR-inspired map after the simulator, controls, ESP32 packet integration, and dashboard demo flow are complete.
+- Only expand the UTAR-inspired map after the simulator, controls, ESP32 packet integration, and in-car dashboard flow are stable.
 - UTAR version should use simplified handmade or open-data-informed landmarks, not a full real-world copy.
 
 ## Testing Checklist

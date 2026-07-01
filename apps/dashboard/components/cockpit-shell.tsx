@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   BatteryCharging,
   Building2,
@@ -42,22 +43,42 @@ export function CockpitShell({ activeMode, children }: CockpitShellProps) {
   const mode = cockpitModes[activeMode];
   const telemetry = useDashboardStore((state) => state.telemetry);
   const connectionStatus = useDashboardStore((state) => state.connectionStatus);
-  const speed = Math.round(telemetry.speedKmh);
-  const gear = telemetry.speedKmh > 1 ? "D" : "P";
+  const [clock, setClock] = useState("--:--");
+  const speed = telemetry?.speedKmh == null ? "--" : Math.round(telemetry.speedKmh).toString();
+  const numericSpeed = telemetry?.speedKmh ?? 0;
+  const gear = telemetry?.speedKmh == null ? "--" : numericSpeed < -1 ? "R" : numericSpeed > 1 ? "D" : "P";
+  const battery = telemetry?.batteryPercent == null ? "-- battery" : `${Math.round(telemetry.batteryPercent)}% battery`;
+  const range = telemetry?.rangeKm == null ? "-- km" : `${Math.round(telemetry.rangeKm)} km`;
   const statusLabel =
     connectionStatus === "live"
-      ? "ESP32 sensor live"
+      ? "Simulator live"
       : connectionStatus === "connecting"
-        ? "Connecting ESP32"
+        ? "Connecting"
         : connectionStatus === "error"
-          ? "ESP32 reconnect"
-          : "Demo mode";
+          ? "Connection error"
+          : connectionStatus === "disconnected"
+            ? "Disconnected"
+            : "Waiting for data";
+
+  useEffect(() => {
+    const updateClock = () =>
+      setClock(
+        new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit"
+        })
+      );
+
+    updateClock();
+    const interval = window.setInterval(updateClock, 30_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   return (
     <div className={`cockpit-shell cockpit-shell--${mode.accent}`}>
       <header className="vehicle-status">
         <div className="status-left">
-          <span className="clock">13:42</span>
+          <span className="clock">{clock}</span>
           <div>
             <p className="brand">EcoDrive+</p>
             <p className="mode-subtitle">{mode.subtitle}</p>
@@ -73,7 +94,7 @@ export function CockpitShell({ activeMode, children }: CockpitShellProps) {
             <RadioTower size={15} />
             {statusLabel}
           </span>
-          <span className="battery-pill">{Math.round(telemetry.batteryPercent)}% battery</span>
+          <span className="battery-pill">{battery}</span>
         </div>
       </header>
 
@@ -105,7 +126,7 @@ export function CockpitShell({ activeMode, children }: CockpitShellProps) {
         </div>
         <div className="range-cluster">
           <Leaf size={15} />
-          <span>{Math.round(telemetry.rangeKm)} km</span>
+          <span>{range}</span>
         </div>
       </nav>
     </div>
