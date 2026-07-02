@@ -154,9 +154,8 @@ a {
 /* ──── Main Layout ──── */
 .cockpit-main {
   display: grid;
-  gap: 18px;
-  grid-template-columns: minmax(0, 1.7fr) minmax(260px, 0.8fr);
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-columns: 1fr;
+  grid-template-rows: minmax(0, 1fr);
   min-height: 100vh;
   padding: 88px 28px 100px;
 }
@@ -173,7 +172,6 @@ a {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  grid-row: span 2;
   min-height: 0;
   padding: 22px;
 }
@@ -1132,4 +1130,82 @@ body:has(.cockpit-shell--simulator-display) {
 
 .cockpit-shell--simulator-display .mode-chip span {
   display: inline;
+}
+
+/* ──── Community Leaderboard ──── */
+.community-surface {
+  display: flex;
+  flex-direction: column;
+  padding: 40px;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-y: auto;
+}
+
+.leaderboard-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.leaderboard-header h2 {
+  font-size: 32px;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.leaderboard-header p {
+  color: var(--muted);
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.leaderboard-list {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-size: 18px;
+  font-weight: 600;
+  transition: transform 0.2s;
+}
+
+.leaderboard-row:hover {
+  transform: translateX(4px);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.leaderboard-row--real {
+  background: rgba(245, 184, 75, 0.15);
+  border-color: rgba(245, 184, 75, 0.4);
+  color: #F5B84B;
+  box-shadow: 0 0 20px rgba(245, 184, 75, 0.1);
+}
+
+.leaderboard-row .rank {
+  width: 60px;
+  color: var(--muted);
+}
+
+.leaderboard-row--real .rank {
+  color: #F5B84B;
+}
+
+.leaderboard-row .player-name {
+  flex: 1;
+}
+
+.leaderboard-row .player-score {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }

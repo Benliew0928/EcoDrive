@@ -17,8 +17,6 @@ export function CockpitScreen({ mode }: CockpitScreenProps) {
   const screen = cockpitModes[mode];
   const telemetry = useDashboardStore((state) => state.telemetry);
   const connectionStatus = useDashboardStore((state) => state.connectionStatus);
-  const lastActionMessage = useDashboardStore((state) => state.lastActionMessage);
-  const metrics = buildMetrics(mode, telemetry);
   const isLive = connectionStatus === "live" && Boolean(telemetry);
 
   return (
@@ -36,21 +34,6 @@ export function CockpitScreen({ mode }: CockpitScreenProps) {
           </div>
           <ModeVisual mode={mode} telemetry={telemetry} />
         </section>
-
-        <aside className="metrics-panel">
-          {metrics.map((metric) => (
-            <article className="metric-card" key={metric.label}>
-              <p>{metric.label}</p>
-              <strong>{metric.value}</strong>
-              <span>{metric.trend}</span>
-            </article>
-          ))}
-        </aside>
-
-        <section className="secondary-panel">
-          <SecondaryContent telemetry={telemetry} />
-          <p className="action-message">{lastActionMessage}</p>
-        </section>
       </main>
     </CockpitShell>
   );
@@ -60,8 +43,43 @@ function ModeVisual({ mode, telemetry }: { mode: ModeId; telemetry: ProcessedTel
   if (mode === "route") return <RouteSurface telemetry={telemetry} />;
   if (mode === "city") return <FutureModuleSurface title="Eco-City data model" telemetry={telemetry} />;
   if (mode === "rewards") return <RewardsSurface />;
-  if (mode === "community") return <FutureModuleSurface title="Community challenges" telemetry={telemetry} />;
+  if (mode === "community") return <CommunitySurface />;
   return <DriveSurface telemetry={telemetry} />;
+}
+
+function CommunitySurface() {
+  const globalScore = useDashboardStore((state) => state.globalScore);
+  
+  // Fake players from UTAR
+  const players = [
+    { name: "You", score: globalScore, isReal: true },
+    { name: "Ali (FICT)", score: 28500, isReal: false },
+    { name: "Mei Ling (FAS)", score: 26120, isReal: false },
+    { name: "John Doe (FBF)", score: 23400, isReal: false },
+    { name: "Ahmad (FEGT)", score: 21950, isReal: false },
+    { name: "Siti (FSc)", score: 18200, isReal: false },
+  ];
+
+  // Sort by score descending
+  players.sort((a, b) => b.score - a.score);
+
+  return (
+    <div className="live-surface community-surface">
+      <div className="leaderboard-header">
+        <h2>🏆 UTAR Campus Leaderboard</h2>
+        <p>Monthly Top Eco-Drivers</p>
+      </div>
+      <div className="leaderboard-list">
+        {players.map((player, index) => (
+          <div key={player.name} className={`leaderboard-row ${player.isReal ? "leaderboard-row--real" : ""}`}>
+            <span className="rank">#{index + 1}</span>
+            <span className="player-name">{player.name}</span>
+            <span className="player-score">{player.score.toLocaleString()} pts</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function DriveSurface({ telemetry }: { telemetry: ProcessedTelemetry | null }) {
@@ -164,32 +182,6 @@ function FutureModuleSurface({ title, telemetry }: { title: string; telemetry: P
   );
 }
 
-function SecondaryContent({ telemetry }: { telemetry: ProcessedTelemetry | null }) {
-  const feedback = hardwareFeedbackForTelemetry(telemetry);
-  const eventFeed = useDashboardStore((state) => state.eventFeed);
-
-  return (
-    <>
-      <p>Hardware mirror</p>
-      <strong>
-        LED: {feedback.led} · OLED: {feedback.oled} · Buzzer: {feedback.buzzer}
-      </strong>
-      <div className="compact-feed">
-        {eventFeed.length ? (
-          eventFeed.slice(0, 4).map((event) => (
-            <p className={`event-row event-row--${event.severity}`} key={event.id}>
-              <span>{formatTime(event.timestamp)}</span>
-              {event.label}
-            </p>
-          ))
-        ) : (
-          <p className="empty-feed">No simulator events received yet.</p>
-        )}
-      </div>
-    </>
-  );
-}
-
 function PacketRow({ label, value }: { label: string; value: string }) {
   return (
     <p className="packet-row">
@@ -209,71 +201,12 @@ function EmptyState({ icon: Icon, title }: { icon: typeof Gauge; title: string }
   );
 }
 
-function buildMetrics(mode: ModeId, telemetry: ProcessedTelemetry | null): Metric[] {
-  if (mode === "route") {
-    return [
-      { label: "Route", value: telemetry?.routeChoice ?? "--", trend: "from simulator packet" },
-      { label: "Distance", value: formatUnit(telemetry?.distanceKm, "km", 2), trend: "current trip" },
-      { label: "CO2 saved", value: formatUnit(telemetry?.co2SavedKg, "kg", 2), trend: "eco route benefit" },
-      { label: "Speed", value: formatUnit(telemetry?.speedKmh, "km/h", 0), trend: "live packet" }
-    ];
-  }
-
-  if (mode === "city" || mode === "rewards" || mode === "community") {
-    return [
-      { label: "EcoCoins", value: formatNumber(telemetry?.totalCoins, 0), trend: "from real score logic" },
-      { label: "Coins earned", value: formatNumber(telemetry?.coinsEarned, 0), trend: "current packet" },
-      { label: "CO2 saved", value: formatUnit(telemetry?.co2SavedKg, "kg", 2), trend: "current drive" },
-      { label: "Eco score", value: formatNumber(telemetry?.ecoScore, 0), trend: "current drive" }
-    ];
-  }
-
-  // Default: drive mode
-  return [
-    { label: "Speed", value: formatUnit(telemetry?.speedKmh, "km/h", 0), trend: "live packet" },
-    { label: "Eco score", value: formatNumber(telemetry?.ecoScore, 0), trend: telemetry?.event ? telemetry.event.replaceAll("_", " ") : "waiting" },
-    { label: "CO2 saved", value: formatUnit(telemetry?.co2SavedKg, "kg", 2), trend: "current drive" },
-    { label: "EcoCoins", value: formatNumber(telemetry?.totalCoins, 0), trend: "from real score logic" }
-  ];
-}
-
-function buildStatusMessage(
-  mode: ModeId,
-  telemetry: ProcessedTelemetry | null,
-  connectionStatus: ReturnType<typeof useDashboardStore.getState>["connectionStatus"]
-) {
-  if (telemetry) return "Rendering only values received from the simulator or telemetry bridge.";
-  if (connectionStatus === "connecting") return "Trying to connect to the configured telemetry WebSocket.";
-  if (connectionStatus === "error") return "The telemetry WebSocket reported an error.";
-  if (connectionStatus === "disconnected") return "Telemetry disconnected. Waiting for the next real simulator packet.";
-  if (mode === "drive") return "No local data loop is running. This cockpit will populate when simulator telemetry is connected.";
-  return "This page is intentionally blank until its real simulator data contract is wired.";
-}
-
 function formatNumber(value: number | undefined | null, digits: number) {
   if (value == null || Number.isNaN(value)) return "--";
   return value.toFixed(digits);
 }
 
-function formatUnit(value: number | undefined | null, unit: string, digits: number) {
-  const number = formatNumber(value, digits);
-  return number === "--" ? "--" : `${number} ${unit}`;
-}
-
 function formatPercent(value: number | undefined | null) {
   if (value == null || Number.isNaN(value)) return "--";
   return `${Math.round(value * 100)}%`;
-}
-
-function formatSigned(value: number | undefined | null) {
-  if (value == null || Number.isNaN(value)) return "--";
-  return value > 0 ? `+${value.toFixed(2)}` : value.toFixed(2);
-}
-
-function formatTime(timestamp: number) {
-  return new Date(timestamp).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
-  });
 }

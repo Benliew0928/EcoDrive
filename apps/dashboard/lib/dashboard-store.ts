@@ -17,7 +17,8 @@ const initialState: DashboardState = {
   eventFeed: [],
   lastPacketAt: null,
   lastActionMessage: "Waiting for simulator telemetry.",
-  walletCoins: 1250 // Give them some starting coins for the demo
+  walletCoins: 1250, // Give them some starting coins for the demo
+  globalScore: 24500 // Demo global ranking score
 };
 
 export const useDashboardStore = create<DashboardState & DashboardActions>()((set) => ({
@@ -44,7 +45,8 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()((se
         lastPacketAt: timestamp,
         lastActionMessage: "Live simulator telemetry received.",
         // If telemetry provides a totalCoins override, use it. Otherwise accumulate coinsEarned.
-        walletCoins: telemetry.totalCoins ?? (state.walletCoins + (telemetry.coinsEarned ?? 0))
+        walletCoins: telemetry.totalCoins ?? (state.walletCoins + (telemetry.coinsEarned ?? 0)),
+        globalScore: state.globalScore + (telemetry.coinsEarned ?? 0)
       };
     }),
   spendCoins: (amount) => {

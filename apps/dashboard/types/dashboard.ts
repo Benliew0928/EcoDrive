@@ -53,4 +53,5 @@ export type DashboardState = {
   lastPacketAt: number | null;
   lastActionMessage: string;
   walletCoins: number;
+  globalScore: number;
 };
