@@ -131,6 +131,8 @@ export function SimulatorGame() {
   const gamepadConnected = useGameStore((state) => state.rawInput.gamepadConnected);
   const dashboardUrl = useReachableDashboardUrl();
   const dashboardFrameRef = useRef<HTMLIFrameElement>(null);
+  const [touchControlsVisible, setTouchControlsVisible] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   useDashboardTelemetryBridge(dashboardFrameRef, telemetry, dashboardUrl);
   const speedLabel = Math.round(Math.abs(telemetry.speedKmh));
   const gearLabel = telemetry.speedKmh < -1 ? "R" : telemetry.speedKmh > 1 ? "D" : "P";
@@ -141,6 +143,11 @@ export function SimulatorGame() {
     telemetry.event === "aggressive_acceleration" ||
     telemetry.event === "overspeed";
   const showBonus = telemetry.event === "regen_success" || telemetry.event === "finish_loop" || telemetry.event === "smooth_streak";
+
+  useEffect(() => {
+    const isTouchFirst = window.matchMedia("(pointer: coarse)").matches;
+    setTouchControlsVisible(isTouchFirst);
+  }, []);
 
   return (
     <main className="simulator-shell">
@@ -157,10 +164,15 @@ export function SimulatorGame() {
         dashboardUrl={dashboardUrl}
         gearLabel={gearLabel}
         gamepadConnected={gamepadConnected}
+        helpOpen={helpOpen}
         isWarning={isWarning}
+        onCloseHelp={() => setHelpOpen(false)}
+        onToggleHelp={() => setHelpOpen((isOpen) => !isOpen)}
+        onToggleTouchControls={() => setTouchControlsVisible((isVisible) => !isVisible)}
         showBonus={showBonus}
         speedLabel={speedLabel}
         telemetry={telemetry}
+        touchControlsVisible={touchControlsVisible}
       />
       <div className={`edge-warning ${isWarning ? "edge-warning--active" : ""}`} />
       <div className="scanlines" />
@@ -174,20 +186,30 @@ function CockpitOverlay({
   dashboardUrl,
   gearLabel,
   gamepadConnected,
+  helpOpen,
   isWarning,
+  onCloseHelp,
+  onToggleHelp,
+  onToggleTouchControls,
   showBonus,
   speedLabel,
-  telemetry
+  telemetry,
+  touchControlsVisible
 }: {
   controlModeLabel: string;
   dashboardFrameRef: RefObject<HTMLIFrameElement | null>;
   dashboardUrl: string;
   gearLabel: string;
   gamepadConnected: boolean;
+  helpOpen: boolean;
   isWarning: boolean;
+  onCloseHelp: () => void;
+  onToggleHelp: () => void;
+  onToggleTouchControls: () => void;
   showBonus: boolean;
   speedLabel: number;
   telemetry: Telemetry;
+  touchControlsVisible: boolean;
 }) {
   const steeringDegrees = telemetry.steering * 34;
   const routeLabel = telemetry.routeChoice === "unknown" ? "Fork ahead" : `${telemetry.routeChoice} route`;
@@ -200,6 +222,27 @@ function CockpitOverlay({
 
   return (
     <div className="cockpit-hud">
+      <div className="sim-toolbar" aria-label="Simulator controls">
+        <button
+          aria-label={touchControlsVisible ? "Hide touch controls for keyboard mode" : "Show touch controls for mobile or iPad mode"}
+          className={`icon-button mode-toggle ${touchControlsVisible ? "mode-toggle--touch" : "mode-toggle--pc"}`}
+          onClick={onToggleTouchControls}
+          type="button"
+        >
+          <span className="device-icon" aria-hidden="true" />
+        </button>
+        <button
+          aria-label={helpOpen ? "Hide control help" : "Show control help"}
+          className={`icon-button info-button ${helpOpen ? "info-button--active" : ""}`}
+          onClick={onToggleHelp}
+          type="button"
+        >
+          <span aria-hidden="true">i</span>
+        </button>
+      </div>
+
+      {helpOpen ? <ControlHelpPanel onClose={onCloseHelp} /> : null}
+
       <section className="windshield-strip">
         <div className="rearview-mirror">
           <span>EcoDrive+</span>
@@ -276,12 +319,7 @@ function CockpitOverlay({
           <div className="console-dial" />
         </div>
 
-        <div className="footwell-meters">
-          <ForceMeter label="Throttle" value={telemetry.throttle} />
-          <ForceMeter label="Brake / reverse" value={telemetry.brake} brake />
-        </div>
-
-        <div className="touch-control-well">
+        <div className={`touch-control-well ${touchControlsVisible ? "touch-control-well--visible" : "touch-control-well--hidden"}`}>
           <TouchControls />
         </div>
       </section>
@@ -289,10 +327,32 @@ function CockpitOverlay({
   );
 }
 
+function ControlHelpPanel({ onClose }: { onClose: () => void }) {
+  return (
+    <section className="control-help" aria-label="How to play">
+      <button aria-label="Close control help" className="control-help-close" onClick={onClose} type="button">
+        <span aria-hidden="true">x</span>
+      </button>
+      <div>
+        <p>Keyboard</p>
+        <strong>W / Up accelerate, S / Down / Space brake, A-D or arrows steer.</strong>
+      </div>
+      <div>
+        <p>Touch</p>
+        <strong>Hold the right pedal to accelerate, left pedal to brake, and the left/right pad to steer.</strong>
+      </div>
+      <div>
+        <p>Xbox</p>
+        <strong>RT gas, LT brake or reverse, left stick steers.</strong>
+      </div>
+    </section>
+  );
+}
+
 function SceneContent() {
   return (
     <>
-      <PerspectiveCamera makeDefault position={[0, 1.58, 0]} fov={68} />
+      <PerspectiveCamera makeDefault position={[0, 1.65, 0]} fov={73} />
       <ambientLight intensity={0.38} />
       <directionalLight castShadow intensity={2.6} position={[24, 32, 18]} shadow-mapSize={[1024, 1024]} />
       <pointLight color="#37e58f" intensity={42} position={[-62, 6, -96]} distance={82} />
@@ -894,14 +954,14 @@ function DriveRig() {
     const cockpitSway = right.clone().multiplyScalar(-vehicle.steering * Math.min(speedAbs / 18, 1) * 0.13);
     const cameraTarget = carPosition
       .clone()
-      .add(forward.clone().multiplyScalar(isReverse ? -10 : 34))
-      .add(right.clone().multiplyScalar(vehicle.steering * 2.4))
-      .add(new Vector3(0, 1.42 + vehicle.throttle * 0.08 - vehicle.brake * 0.04, 0));
+      .add(forward.clone().multiplyScalar(isReverse ? -12 : 42))
+      .add(right.clone().multiplyScalar(vehicle.steering * 2.9))
+      .add(new Vector3(0, 0.96 + vehicle.throttle * 0.05 - vehicle.brake * 0.04, 0));
     const cameraPosition = carPosition
       .clone()
-      .add(forward.clone().multiplyScalar(0.9))
+      .add(forward.clone().multiplyScalar(0.55))
       .add(right.clone().multiplyScalar(0.58))
-      .add(new Vector3(0, 1.62, 0))
+      .add(new Vector3(0, 1.68, 0))
       .add(cockpitSway);
     const shakePower =
       (event === "harsh_brake" ? 0.18 : event === "regen_success" ? 0.055 : 0) +
@@ -1108,18 +1168,8 @@ function ledStateForTelemetry(telemetry: Telemetry): DashboardTelemetry["ledStat
   return "green";
 }
 
-function ForceMeter({ label, value, brake = false }: { label: string; value: number; brake?: boolean }) {
-  return (
-    <div className="meter">
-      <span>{label}</span>
-      <div className="meter-track">
-        <div className={`meter-fill ${brake ? "meter-fill--brake" : ""}`} style={{ width: `${Math.round(value * 100)}%` }} />
-      </div>
-    </div>
-  );
-}
-
 type PedalName = "throttle" | "brake";
+type SteeringPadName = "left" | "right";
 
 type ActivePedalState = {
   pointerId: number;
@@ -1137,6 +1187,7 @@ function TouchControls() {
   const setTouchSteering = useGameStore((state) => state.setTouchSteering);
   const throttleRef = useRef<ActivePedalState | null>(null);
   const brakeRef = useRef<ActivePedalState | null>(null);
+  const steeringRef = useRef<{ pointerId: number } | null>(null);
 
   useEffect(() => {
     let frame = 0;
@@ -1205,66 +1256,87 @@ function TouchControls() {
     }
   };
 
-  const setSteeringFromPointer = (event: React.PointerEvent<HTMLElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const value = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    setTouchSteering(clamp(value, -1, 1));
+  const setSteeringPad = (pad: SteeringPadName, event: React.PointerEvent<HTMLButtonElement>) => {
+    const value = pad === "left" ? -1 : 1;
+    steeringRef.current = {
+      pointerId: event.pointerId
+    };
+    setTouchSteering(value);
+  };
+
+  const clearSteeringPad = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (steeringRef.current?.pointerId === event.pointerId) {
+      steeringRef.current = null;
+      setTouchSteering(0);
+    }
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
   };
 
   return (
-    <div className="pedal-row">
-      <button
-        aria-label="Brake pedal"
-        className="pedal pedal--brake"
-        onPointerDown={(event) => {
-          event.currentTarget.setPointerCapture(event.pointerId);
-          setPedalFromPointer("brake", event);
-        }}
-        onPointerMove={(event) => event.buttons === 1 && updatePedalFromPointer("brake", event)}
-        onPointerUp={(event) => clearPedal("brake", event)}
-        onPointerCancel={(event) => clearPedal("brake", event)}
-        style={{ "--pedal-force": `${Math.round(brake * 100)}%` } as React.CSSProperties}
-      >
-        <span>Brake / Reverse</span>
-      </button>
-      <button
-        aria-label="Gas pedal"
-        className="pedal pedal--gas"
-        onPointerDown={(event) => {
-          event.currentTarget.setPointerCapture(event.pointerId);
-          setPedalFromPointer("throttle", event);
-        }}
-        onPointerMove={(event) => event.buttons === 1 && updatePedalFromPointer("throttle", event)}
-        onPointerUp={(event) => clearPedal("throttle", event)}
-        onPointerCancel={(event) => clearPedal("throttle", event)}
-        style={{ "--pedal-force": `${Math.round(throttle * 100)}%` } as React.CSSProperties}
-      >
-        <span>Gas</span>
-      </button>
-      <div
-        className="steer-pad"
-        aria-label="Touch steering controls"
-        onPointerDown={(event) => {
-          event.currentTarget.setPointerCapture(event.pointerId);
-          setSteeringFromPointer(event);
-        }}
-        onPointerMove={(event) => event.buttons === 1 && setSteeringFromPointer(event)}
-        onPointerUp={(event) => {
-          if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-            event.currentTarget.releasePointerCapture(event.pointerId);
-          }
-          setTouchSteering(0);
-        }}
-        onPointerCancel={(event) => {
-          if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-            event.currentTarget.releasePointerCapture(event.pointerId);
-          }
-          setTouchSteering(0);
-        }}
-        style={{ "--steer-force": `${50 + steering * 50}%` } as React.CSSProperties}
-      >
-        <button type="button">Left</button>
-        <button type="button">Right</button>
+    <div className="touch-gamepad">
+      <div className="steer-pad" style={{ "--steer-force": `${50 + steering * 50}%` } as React.CSSProperties}>
+        <button
+          aria-label="Steer left"
+          className="steer-button steer-button--left"
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            setSteeringPad("left", event);
+          }}
+          onPointerUp={clearSteeringPad}
+          onPointerCancel={clearSteeringPad}
+          type="button"
+        >
+          <span aria-hidden="true" />
+        </button>
+        <button
+          aria-label="Steer right"
+          className="steer-button steer-button--right"
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            setSteeringPad("right", event);
+          }}
+          onPointerUp={clearSteeringPad}
+          onPointerCancel={clearSteeringPad}
+          type="button"
+        >
+          <span aria-hidden="true" />
+        </button>
+      </div>
+
+      <div className="action-pad">
+        <button
+          aria-label="Brake or reverse"
+          className="action-button action-button--brake"
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            setPedalFromPointer("brake", event);
+          }}
+          onPointerMove={(event) => event.buttons === 1 && updatePedalFromPointer("brake", event)}
+          onPointerUp={(event) => clearPedal("brake", event)}
+          onPointerCancel={(event) => clearPedal("brake", event)}
+          style={{ "--press-force": `${Math.round(brake * 100)}%` } as React.CSSProperties}
+          type="button"
+        >
+          <span>Brake</span>
+        </button>
+        <button
+          aria-label="Throttle"
+          className="action-button action-button--gas"
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            setPedalFromPointer("throttle", event);
+          }}
+          onPointerMove={(event) => event.buttons === 1 && updatePedalFromPointer("throttle", event)}
+          onPointerUp={(event) => clearPedal("throttle", event)}
+          onPointerCancel={(event) => clearPedal("throttle", event)}
+          style={{ "--press-force": `${Math.round(throttle * 100)}%` } as React.CSSProperties}
+          type="button"
+        >
+          <span>Throttle</span>
+        </button>
       </div>
     </div>
   );

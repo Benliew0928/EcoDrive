@@ -67,6 +67,167 @@ button {
   z-index: 2;
 }
 
+.sim-toolbar {
+  display: flex;
+  gap: 10px;
+  position: absolute;
+  right: 20px;
+  top: 18px;
+  z-index: 9;
+}
+
+.icon-button {
+  align-items: center;
+  backdrop-filter: blur(18px);
+  background: rgba(5, 10, 11, 0.72);
+  border: 1px solid rgba(164, 188, 181, 0.28);
+  border-radius: 50%;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  height: 42px;
+  justify-content: center;
+  pointer-events: auto;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+  width: 42px;
+}
+
+.icon-button:hover,
+.icon-button:focus-visible {
+  background: rgba(10, 22, 22, 0.92);
+  border-color: rgba(55, 229, 143, 0.48);
+  outline: 0;
+  transform: translateY(-1px);
+}
+
+.info-button span {
+  align-items: center;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  display: flex;
+  font-size: 17px;
+  font-weight: 900;
+  height: 22px;
+  justify-content: center;
+  line-height: 1;
+  width: 22px;
+}
+
+.info-button--active {
+  border-color: rgba(55, 229, 143, 0.62);
+  color: var(--green);
+}
+
+.device-icon {
+  border: 2px solid currentColor;
+  display: block;
+  position: relative;
+}
+
+.mode-toggle--pc .device-icon {
+  border-radius: 3px;
+  height: 17px;
+  width: 24px;
+}
+
+.mode-toggle--pc .device-icon::before {
+  background: currentColor;
+  bottom: -7px;
+  content: "";
+  height: 2px;
+  left: 7px;
+  position: absolute;
+  width: 10px;
+}
+
+.mode-toggle--pc .device-icon::after {
+  background: currentColor;
+  bottom: -11px;
+  content: "";
+  height: 2px;
+  left: 4px;
+  position: absolute;
+  width: 16px;
+}
+
+.mode-toggle--touch {
+  border-color: rgba(56, 189, 248, 0.46);
+  color: var(--cyan);
+}
+
+.mode-toggle--touch .device-icon {
+  border-radius: 5px;
+  height: 25px;
+  width: 18px;
+}
+
+.mode-toggle--touch .device-icon::after {
+  background: currentColor;
+  border-radius: 50%;
+  bottom: 2px;
+  content: "";
+  height: 3px;
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  width: 3px;
+}
+
+.control-help {
+  backdrop-filter: blur(22px);
+  background: rgba(5, 10, 11, 0.9);
+  border: 1px solid rgba(164, 188, 181, 0.28);
+  border-radius: 10px;
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.38);
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  pointer-events: auto;
+  position: absolute;
+  right: 20px;
+  top: 72px;
+  width: min(360px, calc(100vw - 40px));
+  z-index: 9;
+}
+
+.control-help div {
+  border-left: 3px solid rgba(55, 229, 143, 0.58);
+  display: grid;
+  gap: 4px;
+  padding-left: 12px;
+}
+
+.control-help p,
+.control-help strong {
+  margin: 0;
+}
+
+.control-help p {
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.control-help strong {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.control-help-close {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text);
+  cursor: pointer;
+  height: 28px;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 28px;
+}
+
 .windshield-strip {
   align-items: start;
   display: grid;
@@ -85,7 +246,6 @@ button {
 .reward-flash,
 .driver-cluster,
 .center-display,
-.footwell-meters,
 .touch-control-well {
   backdrop-filter: blur(20px);
   background: var(--panel);
@@ -165,9 +325,9 @@ button {
 
 .ev-cabin {
   bottom: 0;
-  height: min(52vh, 500px);
+  height: min(46vh, 430px);
   left: 0;
-  min-height: 330px;
+  min-height: 300px;
   pointer-events: none;
   position: absolute;
   right: 0;
@@ -237,7 +397,7 @@ button {
   border-radius: 54% 54% 0 0 / 22% 22% 0 0;
   bottom: -24px;
   box-shadow: 0 -26px 80px rgba(0, 0, 0, 0.62);
-  height: 76%;
+  height: 68%;
   left: -6%;
   position: absolute;
   right: -6%;
@@ -332,17 +492,17 @@ button {
   background: #020404;
   border-color: rgba(164, 188, 181, 0.36);
   border-radius: 14px;
-  bottom: clamp(78px, 15%, 112px);
+  bottom: clamp(34px, 9%, 74px);
   box-shadow:
     0 28px 80px rgba(0, 0, 0, 0.5),
     inset 0 0 0 8px #090e0f;
-  left: 44%;
+  left: 45%;
   overflow: hidden;
-  padding: 11px;
+  padding: 8px;
   pointer-events: auto;
   position: absolute;
-  transform: translateX(-50%) perspective(900px) rotateX(2deg) rotateY(-4deg);
-  width: clamp(360px, 38vw, 640px);
+  transform: translateX(-50%) perspective(900px) rotateX(1.5deg) rotateY(-3deg);
+  width: clamp(340px, 34vw, 560px);
   z-index: 4;
 }
 
@@ -353,7 +513,7 @@ button {
   height: 7px;
   left: 50%;
   position: absolute;
-  top: 5px;
+  top: 4px;
   transform: translateX(-50%);
   width: 7px;
   z-index: 2;
@@ -399,12 +559,12 @@ button {
 }
 
 .steering-module {
-  bottom: -28px;
-  height: clamp(250px, 30vw, 390px);
+  bottom: -70px;
+  height: clamp(230px, 26vw, 330px);
   pointer-events: none;
   position: absolute;
-  right: clamp(30px, 7vw, 128px);
-  width: clamp(250px, 30vw, 390px);
+  right: clamp(26px, 7vw, 120px);
+  width: clamp(230px, 26vw, 330px);
 }
 
 .steering-wheel {
@@ -472,13 +632,13 @@ button {
     #0b1011;
   border: 1px solid rgba(164, 188, 181, 0.13);
   border-radius: 42px 42px 0 0;
-  bottom: -34px;
+  bottom: -86px;
   box-shadow: 0 -16px 44px rgba(0, 0, 0, 0.4);
-  height: 41%;
-  left: 38%;
+  height: 46%;
+  left: 45%;
   position: absolute;
   transform: translateX(-50%);
-  width: clamp(230px, 28vw, 390px);
+  width: clamp(230px, 23vw, 340px);
   z-index: 2;
 }
 
@@ -507,144 +667,144 @@ button {
   width: 54px;
 }
 
-.footwell-meters {
-  border-radius: 10px;
-  bottom: 112px;
-  display: grid;
-  gap: 10px;
-  left: clamp(18px, 3vw, 46px);
-  padding: 14px;
-  position: absolute;
-  width: clamp(230px, 22vw, 330px);
-}
-
-.meter {
-  display: grid;
-  gap: 7px;
-}
-
-.meter-track {
-  background: rgba(142, 165, 160, 0.14);
-  border-radius: 999px;
-  height: 10px;
-  overflow: hidden;
-}
-
-.meter-fill {
-  background: linear-gradient(90deg, var(--cyan), var(--green));
-  border-radius: inherit;
-  height: 100%;
-  transition: width 120ms linear;
-}
-
-.meter-fill--brake {
-  background: linear-gradient(90deg, var(--amber), var(--red));
-}
-
 .touch-control-well {
-  border-radius: 12px;
-  bottom: 18px;
-  left: clamp(18px, 3vw, 46px);
-  padding: 12px;
+  bottom: 24px;
+  left: 50%;
   pointer-events: auto;
   position: absolute;
-  width: clamp(280px, 21vw, 320px);
-  z-index: 5;
+  transform: translateX(-50%);
+  transition: opacity 180ms ease, transform 180ms ease;
+  width: min(720px, calc(100vw - 42px));
+  z-index: 8;
 }
 
-.pedal-row {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: 1fr 1fr;
+.touch-control-well--hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 24px);
 }
 
-.pedal,
-.steer-pad {
-  backdrop-filter: blur(22px);
-  background: rgba(8, 15, 16, 0.84);
-  border: 1px solid var(--border);
-  color: var(--text);
-  cursor: pointer;
-  min-height: 70px;
-  pointer-events: auto;
-  position: relative;
-}
-
-.pedal {
-  align-items: center;
-  border-radius: 10px;
+.touch-gamepad {
+  align-items: end;
   display: flex;
-  justify-content: center;
-  overflow: hidden;
+  justify-content: space-between;
+  gap: 20px;
 }
 
-.pedal::after {
-  background: linear-gradient(0deg, rgba(255, 255, 255, 0.18), transparent);
-  bottom: 0;
-  content: "";
-  height: var(--pedal-force, 0%);
-  left: 0;
-  position: absolute;
-  right: 0;
-  transition: height 90ms linear;
-}
-
-.pedal span {
-  font-size: 12px;
-  font-weight: 900;
-  overflow-wrap: anywhere;
-  padding: 0 8px;
-  position: relative;
-  text-align: center;
-  text-transform: uppercase;
-  z-index: 1;
-}
-
-.pedal--brake {
-  border-color: rgba(255, 91, 91, 0.48);
-}
-
-.pedal--gas {
-  border-color: rgba(55, 229, 143, 0.5);
+.steer-pad,
+.action-pad {
+  display: flex;
+  gap: 12px;
 }
 
 .steer-pad {
-  border-radius: 10px;
-  display: grid;
-  gap: 10px;
-  grid-column: span 2;
-  grid-template-columns: 1fr 1fr;
-  min-height: 60px;
-  overflow: hidden;
-  padding: 9px;
+  position: relative;
 }
 
 .steer-pad::after {
-  background: linear-gradient(180deg, rgba(56, 189, 248, 0.9), rgba(55, 229, 143, 0.65));
+  background: rgba(56, 189, 248, 0.72);
   border-radius: 999px;
-  box-shadow: 0 0 22px rgba(56, 189, 248, 0.45);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.55);
   content: "";
-  height: calc(100% - 18px);
+  height: 4px;
   left: var(--steer-force, 50%);
   pointer-events: none;
   position: absolute;
-  top: 9px;
+  top: -12px;
   transform: translateX(-50%);
-  width: 4px;
+  width: 46px;
+}
+
+.steer-button,
+.action-button {
+  backdrop-filter: blur(18px);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(5, 10, 11, 0.76);
+  border: 1px solid rgba(164, 188, 181, 0.28);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 18px 50px rgba(0, 0, 0, 0.38);
+  color: var(--text);
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  touch-action: none;
+  transition: transform 90ms ease, border-color 90ms ease, background 90ms ease;
+}
+
+.steer-button:active,
+.action-button:active {
+  transform: translateY(3px) scale(0.98);
+}
+
+.steer-button {
+  align-items: center;
+  border-radius: 18px;
+  display: flex;
+  height: 96px;
+  justify-content: center;
+  width: 112px;
+}
+
+.steer-button span {
+  border-bottom: 18px solid transparent;
+  border-top: 18px solid transparent;
+  display: block;
+  height: 0;
+  width: 0;
+}
+
+.steer-button--left span {
+  border-right: 25px solid var(--cyan);
+}
+
+.steer-button--right span {
+  border-left: 25px solid var(--cyan);
+}
+
+.action-pad {
+  align-items: end;
+}
+
+.action-button {
+  align-items: center;
+  border-radius: 50%;
+  display: flex;
+  height: 112px;
+  justify-content: center;
+  overflow: hidden;
+  width: 112px;
+}
+
+.action-button::after {
+  background: linear-gradient(0deg, rgba(255, 255, 255, 0.22), transparent);
+  bottom: 0;
+  content: "";
+  height: var(--press-force, 0%);
+  left: 0;
+  position: absolute;
+  right: 0;
+  transition: height 80ms linear;
+}
+
+.action-button span {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0;
+  position: relative;
+  text-transform: uppercase;
   z-index: 1;
 }
 
-.steer-pad button {
-  background: rgba(255, 255, 255, 0.055);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 900;
-  position: relative;
-  text-transform: uppercase;
-  z-index: 2;
+.action-button--brake {
+  border-color: rgba(255, 91, 91, 0.56);
+  color: #ffd7d7;
+}
+
+.action-button--gas {
+  border-color: rgba(55, 229, 143, 0.56);
+  color: #d9ffee;
 }
 
 .edge-warning {
@@ -684,16 +844,12 @@ button {
   }
 
   .center-display {
-    left: 42%;
-    width: clamp(320px, 45vw, 520px);
+    left: 43%;
+    width: clamp(320px, 39vw, 500px);
   }
 
   .driver-cluster {
     right: clamp(54px, 8vw, 100px);
-  }
-
-  .footwell-meters {
-    display: none;
   }
 }
 
@@ -716,8 +872,8 @@ button {
   }
 
   .ev-cabin {
-    height: 58vh;
-    min-height: 390px;
+    height: min(48vh, 420px);
+    min-height: 340px;
   }
 
   .side-mirror {
@@ -725,7 +881,7 @@ button {
   }
 
   .center-display {
-    bottom: 184px;
+    bottom: 150px;
     left: 50%;
     transform: translateX(-50%);
     width: min(520px, calc(100vw - 28px));
@@ -743,7 +899,7 @@ button {
   }
 
   .steering-module {
-    bottom: -18px;
+    bottom: -46px;
     height: min(260px, 46vw);
     right: 10px;
     width: min(260px, 46vw);
@@ -754,9 +910,23 @@ button {
   }
 
   .touch-control-well {
-    bottom: 12px;
-    left: 12px;
-    width: min(330px, calc(100vw - 24px));
+    bottom: 14px;
+    width: calc(100vw - 24px);
+  }
+
+  .touch-gamepad {
+    gap: 12px;
+  }
+
+  .steer-button {
+    border-radius: 15px;
+    height: 76px;
+    width: 72px;
+  }
+
+  .action-button {
+    height: 82px;
+    width: 82px;
   }
 }
 
@@ -766,7 +936,7 @@ button {
   }
 
   .center-display {
-    bottom: 210px;
+    bottom: 170px;
   }
 
   .driver-cluster {
@@ -778,12 +948,39 @@ button {
     right: -42px;
   }
 
-  .touch-control-well {
-    width: calc(100vw - 24px);
+  .touch-gamepad {
+    align-items: end;
   }
 
-  .pedal,
-  .steer-pad {
-    min-height: 58px;
+  .steer-pad,
+  .action-pad {
+    gap: 8px;
+  }
+
+  .steer-button {
+    height: 64px;
+    width: 56px;
+  }
+
+  .steer-button span {
+    border-bottom-width: 13px;
+    border-top-width: 13px;
+  }
+
+  .steer-button--left span {
+    border-right-width: 18px;
+  }
+
+  .steer-button--right span {
+    border-left-width: 18px;
+  }
+
+  .action-button {
+    height: 72px;
+    width: 72px;
+  }
+
+  .action-button span {
+    font-size: 9px;
   }
 }
