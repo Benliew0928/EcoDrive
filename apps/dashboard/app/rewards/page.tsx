@@ -135,39 +135,6 @@ export default function RewardsPage() {
                 );
               })}
             </section>
-
-            <aside className="voucher-panel" aria-label="QR voucher preview">
-              <div className="voucher-heading">
-                <span className="voucher-icon" aria-hidden="true">
-                  <QrCode size={22} />
-                </span>
-                <div>
-                  <p>Demo QR Voucher</p>
-                  <strong>{redeemedReward ? redeemedReward.title : selectedReward.title}</strong>
-                </div>
-              </div>
-
-              <div className="qr-card" aria-label="Demo QR voucher code">
-                {qrCells.map((isDark, index) => (
-                  <span className={isDark ? "qr-cell qr-cell--dark" : "qr-cell"} key={index} />
-                ))}
-              </div>
-
-              <div className="voucher-status-card">
-                <span>{redeemedReward ? "Ready for scan" : "Preview mode"}</span>
-                <p>
-                  {redeemedReward
-                    ? "Voucher generated. Show this QR code at the partner counter during the demo."
-                    : "Select and redeem a reward to generate a QR voucher for judges."}
-                </p>
-                <strong>{redeemedReward ? "ECO-QR-2749" : selectedReward.partner}</strong>
-              </div>
-
-              <div className="voucher-proof">
-                <Leaf size={16} aria-hidden="true" />
-                <span>Proof that Eco-City yield can become a real-world reward.</span>
-              </div>
-            </aside>
           </div>
         </section>
       </main>
@@ -196,10 +163,10 @@ const styleSheet = "" +
   ".rewards-balance-card span, .rewards-balance-card small { color: #8ea5a0; font-size: 12px; font-weight: 800; text-transform: uppercase; }" +
   ".rewards-balance-card strong { color: #37e58f; font-size: 48px; font-weight: 900; line-height: 0.95; }" +
   ".rewards-balance-card small { font-weight: 600; text-transform: none; }" +
-  ".rewards-content-grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr) minmax(300px, 350px); }" +
-  ".reward-grid { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }" +
+  ".rewards-content-grid { display: block;}" +
+  ".reward-grid { display: grid; gap: 20px; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: stretch;}" +
   ".reward-card, .voucher-panel { background: rgba(10, 18, 19, 0.78); border: 1px solid rgba(38, 59, 58, 0.78); border-radius: 8px; box-shadow: 0 18px 48px rgba(0, 0, 0, 0.16); }" +
-  ".reward-card { display: flex; flex-direction: column; gap: 16px; min-height: 250px; padding: 18px; transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease; }" +
+  ".reward-card { display: flex; flex-direction: column; justify-content: space-between; gap: 16px; min-height: 300px; padding: 20px; transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;}" +
   ".reward-card:hover, .reward-card:focus-within { background: rgba(14, 23, 23, 0.92); border-color: rgba(55, 229, 143, 0.44); box-shadow: 0 22px 58px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(55, 229, 143, 0.08); transform: translateY(-2px); }" +
   ".reward-card--selected { border-color: rgba(55, 229, 143, 0.72); box-shadow: 0 22px 58px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(55, 229, 143, 0.12); }" +
   ".reward-select { align-items: flex-start; background: transparent; border: 0; color: #f5fffa; cursor: pointer; display: flex; gap: 14px; padding: 0; text-align: left; width: 100%; }" +
@@ -224,5 +191,5 @@ const styleSheet = "" +
   ".voucher-status-card, .voucher-proof { background: #0e1717; border: 1px solid rgba(38, 59, 58, 0.78); border-radius: 8px; }" +
   ".voucher-status-card { display: grid; gap: 8px; padding: 16px; } .voucher-status-card span { color: #37e58f; font-size: 12px; font-weight: 900; text-transform: uppercase; } .voucher-status-card p { color: #b7c8c3; font-size: 14px; line-height: 1.55; margin: 0; } .voucher-status-card strong { color: #37e58f; font-size: 14px; }" +
   ".voucher-proof { align-items: center; color: #8ea5a0; display: flex; font-size: 13px; gap: 8px; padding: 12px; } .voucher-proof svg { color: #37e58f; flex-shrink: 0; }" +
-  "@media (max-width: 1100px) { .rewards-content-grid, .rewards-hero { grid-template-columns: 1fr; } .voucher-panel { align-self: stretch; } }" +
-  "@media (max-width: 760px) { .rewards-page-shell { padding: 72px 12px 110px; } .rewards-dashboard-frame, .rewards-hero, .voucher-panel, .reward-card { padding: 16px; } .reward-grid { grid-template-columns: 1fr; } .rewards-hero h1 { font-size: 30px; } .rewards-balance-card strong { font-size: 40px; } .reward-card-topline { display: grid; } }";
+  "@media (max-width: 1200px) {.reward-grid { grid-template-columns: repeat(2, 1fr); } .rewards-hero { grid-template-columns: 1fr;}}" +
+  "@media (max-width: 768px) { .rewards-page-shell { padding: 72px 12px 110px; }.rewards-dashboard-frame,.rewards-hero,  .reward-card { padding: 16px;} .reward-grid { grid-template-columns: 1fr;}.rewards-hero h1 {  font-size: 30px; } .rewards-balance-card strong {   font-size: 40px; }.reward-card-topline {display: grid; }}";
