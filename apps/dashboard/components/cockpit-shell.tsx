@@ -34,6 +34,7 @@ export function CockpitShell({ activeMode, children }: CockpitShellProps) {
   const mode = cockpitModes[activeMode];
   const connectionStatus = useDashboardStore((state) => state.connectionStatus);
   const walletCoins = useDashboardStore((state) => state.walletCoins);
+  const globalScore = useDashboardStore((state) => state.globalScore);
   const [clock, setClock] = useState("--:--");
   const [isSimulatorDisplay, setIsSimulatorDisplay] = useState(false);
   const statusLabel =
@@ -76,9 +77,15 @@ export function CockpitShell({ activeMode, children }: CockpitShellProps) {
           </div>
         </div>
 
-        <div className="wallet-pill">
-          <Leaf size={14} />
-          <span>{walletCoins.toLocaleString()} EcoCoins</span>
+        <div className="header-stats-group" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <div className="wallet-pill">
+            <Leaf size={14} />
+            <span>{walletCoins.toLocaleString()} EcoCoins</span>
+          </div>
+          <div className="wallet-pill" style={{ background: "rgba(10, 18, 19, 0.8)", borderColor: "rgba(245, 184, 75, 0.4)", color: "#F5B84B" }}>
+            <Gauge size={14} />
+            <span>Score: {globalScore.toLocaleString()}</span>
+          </div>
         </div>
 
         <div className="status-right">
