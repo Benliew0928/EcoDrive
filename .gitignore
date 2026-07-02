@@ -12,3 +12,4 @@ Thumbs.db
 .vscode/
 dashboard-dev*.log
 simulator-dev*.log
+*-cockpit-dev.log

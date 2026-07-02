@@ -1003,3 +1003,99 @@ h1 {
 .redeem-btn:active:not(:disabled) {
   transform: scale(0.95);
 }
+
+body:has(.cockpit-shell--simulator-display) {
+  background: #050909;
+  overflow: hidden;
+}
+
+.cockpit-shell--simulator-display {
+  height: 760px;
+  min-height: 760px;
+  overflow: hidden;
+  transform: scale(0.38);
+  transform-origin: left top;
+  width: 1360px;
+}
+
+.cockpit-shell--simulator-display .vehicle-status {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  height: 72px;
+  padding: 0 32px;
+  position: absolute;
+}
+
+.cockpit-shell--simulator-display .status-right,
+.cockpit-shell--simulator-display .climate-cluster,
+.cockpit-shell--simulator-display .range-cluster {
+  display: flex;
+}
+
+.cockpit-shell--simulator-display .cockpit-main {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.7fr) minmax(260px, 0.8fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 760px;
+  padding: 96px 28px 118px;
+}
+
+.cockpit-shell--simulator-display .primary-panel {
+  grid-row: span 2;
+  min-height: 0;
+}
+
+.cockpit-shell--simulator-display .metrics-panel {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cockpit-shell--simulator-display .live-surface {
+  display: block;
+  min-height: 520px;
+  padding: 0;
+}
+
+.cockpit-shell--simulator-display .hardware-pod,
+.cockpit-shell--simulator-display .packet-panel,
+.cockpit-shell--simulator-display .energy-readouts,
+.cockpit-shell--simulator-display .empty-state {
+  position: absolute;
+}
+
+.cockpit-shell--simulator-display .hardware-pod,
+.cockpit-shell--simulator-display .empty-state {
+  left: 24px;
+  top: 24px;
+  width: min(300px, 42%);
+}
+
+.cockpit-shell--simulator-display .packet-panel,
+.cockpit-shell--simulator-display .energy-readouts {
+  right: 24px;
+  top: 24px;
+  width: min(330px, 44%);
+}
+
+.cockpit-shell--simulator-display .drive-centerpiece {
+  inset: 50% auto auto 50%;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: min(420px, 72%);
+}
+
+.cockpit-shell--simulator-display .vehicle-dock {
+  display: grid;
+  grid-template-columns: 190px 1fr 150px;
+  height: 94px;
+  padding: 0 28px;
+  position: absolute;
+}
+
+.cockpit-shell--simulator-display .mode-cluster {
+  flex-wrap: nowrap;
+}
+
+.cockpit-shell--simulator-display .mode-chip span {
+  display: inline;
+}

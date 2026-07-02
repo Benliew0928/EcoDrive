@@ -12,8 +12,8 @@ import {
   Mesh,
   Vector3
 } from "three";
-import { useEffect, useMemo, useRef } from "react";
-import { clamp, damp, useGameStore, type GameEvent, type RouteChoice } from "../lib/game-store";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { clamp, damp, useGameStore, type GameEvent, type RouteChoice, type Telemetry } from "../lib/game-store";
 import {
   campusBuildings,
   campusDrive,
@@ -54,8 +54,49 @@ type RoadSample = {
   halfWidth: number;
 };
 
+type DashboardDriveEvent =
+  | "smooth_segment"
+  | "smooth_streak"
+  | "harsh_brake"
+  | "aggressive_acceleration"
+  | "overspeed"
+  | "regen_success"
+  | "route_selected"
+  | "finish_loop"
+  | "launch_ready"
+  | "fast_route_warning"
+  | "idle";
+
+type DashboardTelemetry = {
+  deviceId: string;
+  ecoScore: number;
+  speedKmh: number;
+  event: DashboardDriveEvent;
+  hardBrakes: number;
+  coinsEarned: number;
+  totalCoins: number;
+  energyKwh: number;
+  co2SavedKg: number;
+  ledState: "green" | "amber" | "red" | "blue";
+  timestamp: number;
+  distanceKm: number;
+  batteryPercent: number;
+  rangeKm: number;
+  regenKw: number;
+  motorKw: number;
+  routeChoice: RouteChoice;
+  throttle: number;
+  brake: number;
+  steering: number;
+};
+
+const configuredDashboardAppUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3000";
+const dashboardUrlCandidates = Array.from(
+  new Set([configuredDashboardAppUrl, "http://localhost:3000", "http://localhost:3102", "http://127.0.0.1:3000", "http://127.0.0.1:3102"])
+);
+
 const eventLabels: Record<GameEvent, string> = {
-  launch_ready: "Launch ready. Hold W or press the gas pedal.",
+  launch_ready: "Vehicle ready. Awaiting drive input.",
   route_fork: "Library split ahead. Lake loop saves energy.",
   smooth_segment: "Smooth segment. Eco-score climbing.",
   smooth_streak: "Smooth driving streak. Eco-score bonus is active.",
@@ -68,12 +109,29 @@ const eventLabels: Record<GameEvent, string> = {
   finish_loop: "Campus lap complete. Returning to East Gate."
 };
 
+const dashboardEventMap: Record<GameEvent, DashboardDriveEvent> = {
+  launch_ready: "launch_ready",
+  route_fork: "route_selected",
+  smooth_segment: "smooth_segment",
+  smooth_streak: "smooth_streak",
+  harsh_brake: "harsh_brake",
+  aggressive_acceleration: "aggressive_acceleration",
+  overspeed: "overspeed",
+  regen_success: "regen_success",
+  fast_route_warning: "fast_route_warning",
+  reverse_mode: "idle",
+  finish_loop: "finish_loop"
+};
+
 export function SimulatorGame() {
   useKeyboardInput();
   useGamepadInput();
   const telemetry = useGameStore((state) => state.telemetry);
   const controlMode = useGameStore((state) => state.controlMode);
   const gamepadConnected = useGameStore((state) => state.rawInput.gamepadConnected);
+  const dashboardUrl = useReachableDashboardUrl();
+  const dashboardFrameRef = useRef<HTMLIFrameElement>(null);
+  useDashboardTelemetryBridge(dashboardFrameRef, telemetry, dashboardUrl);
   const speedLabel = Math.round(Math.abs(telemetry.speedKmh));
   const gearLabel = telemetry.speedKmh < -1 ? "R" : telemetry.speedKmh > 1 ? "D" : "P";
   const controlModeLabel = controlMode.replace("-", " ");
@@ -89,87 +147,152 @@ export function SimulatorGame() {
       <div className="canvas-stage">
         <Canvas dpr={[1, 1.65]} gl={{ antialias: true, powerPreference: "high-performance" }}>
           <color attach="background" args={["#030707"]} />
-          <fog attach="fog" args={["#031112", 62, 260]} />
+          <fog attach="fog" args={["#031112", 88, 285]} />
           <SceneContent />
         </Canvas>
       </div>
-      <div className="hud">
-        <section className="top-hud">
-          <div className="brand-lockup">
-            <p>EcoDrive+ simulator</p>
-            <strong>Eco GP Route Chase</strong>
-          </div>
-          <div className="speed-stack">
-            <em>{gearLabel}</em>
-            <strong>{speedLabel}</strong>
-            <span>km/h</span>
-          </div>
-          <div className="status-cluster">
-            <span className="status-pill">Input {controlModeLabel}</span>
-            <span className="status-pill status-pill--muted">{gamepadConnected ? "Controller linked" : "Controller ready"}</span>
-            <span className="status-pill status-pill--muted">ESP32 phase later</span>
-          </div>
-        </section>
-
-        <section className="route-brief">
-          <p>UTAR Kampar campus loop</p>
-          <h1>East Gate, Lake 18, South Gate, return.</h1>
-          <div className="route-sequence">
-            <span>Split</span>
-            <span>Drive consequence</span>
-            <span>Merge score</span>
-          </div>
-          <div className="route-split">
-            <div className="route-choice route-choice--eco">
-              <strong>Lake 18 Eco Loop</strong>
-              <small>Longer scenic line around the lakes, smoother turns, better regen scoring.</small>
-            </div>
-            <div className="route-choice route-choice--fast">
-              <strong>Academic Fast Line</strong>
-              <small>Shorter spine past faculty blocks and workshop slow zones.</small>
-            </div>
-          </div>
-        </section>
-
-        <section className={`event-callout ${isWarning ? "event-callout--warning" : ""}`}>
-          <p>Live driving event</p>
-          <strong>{eventLabels[telemetry.event]}</strong>
-        </section>
-
-        <section className={`bonus-toast ${showBonus ? "bonus-toast--active" : ""}`}>
-          <p>Eco reward window</p>
-          <strong>
-            {telemetry.event === "finish_loop"
-              ? "Loop complete"
-              : telemetry.event === "smooth_streak"
-                ? "Smooth streak score boost"
-                : "+50 EcoCoin regen capture"}
-          </strong>
-        </section>
-
-        <section className="bottom-hud">
-          <div className="meter-stack">
-            <ForceMeter label="Throttle force" value={telemetry.throttle} />
-            <ForceMeter label="Brake / reverse force" value={telemetry.brake} brake />
-          </div>
-          <div className="mode-hint">
-            <p>Active route</p>
-            <strong>{telemetry.routeChoice === "unknown" ? "Approaching fork" : telemetry.routeChoice.toUpperCase()}</strong>
-            <p>{controlMode} | Eco-score {Math.round(telemetry.ecoScore)}</p>
-          </div>
-          <TouchControls />
-        </section>
-      </div>
+      <CockpitOverlay
+        controlModeLabel={controlModeLabel}
+        dashboardFrameRef={dashboardFrameRef}
+        dashboardUrl={dashboardUrl}
+        gearLabel={gearLabel}
+        gamepadConnected={gamepadConnected}
+        isWarning={isWarning}
+        showBonus={showBonus}
+        speedLabel={speedLabel}
+        telemetry={telemetry}
+      />
       <div className={`edge-warning ${isWarning ? "edge-warning--active" : ""}`} />
       <div className="scanlines" />
     </main>
   );
 }
 
+function CockpitOverlay({
+  controlModeLabel,
+  dashboardFrameRef,
+  dashboardUrl,
+  gearLabel,
+  gamepadConnected,
+  isWarning,
+  showBonus,
+  speedLabel,
+  telemetry
+}: {
+  controlModeLabel: string;
+  dashboardFrameRef: RefObject<HTMLIFrameElement | null>;
+  dashboardUrl: string;
+  gearLabel: string;
+  gamepadConnected: boolean;
+  isWarning: boolean;
+  showBonus: boolean;
+  speedLabel: number;
+  telemetry: Telemetry;
+}) {
+  const steeringDegrees = telemetry.steering * 34;
+  const routeLabel = telemetry.routeChoice === "unknown" ? "Fork ahead" : `${telemetry.routeChoice} route`;
+  const eventText =
+    telemetry.event === "finish_loop"
+      ? "Loop complete"
+      : telemetry.event === "smooth_streak"
+        ? "Smooth streak score boost"
+        : "+50 EcoCoin regen capture";
+
+  return (
+    <div className="cockpit-hud">
+      <section className="windshield-strip">
+        <div className="rearview-mirror">
+          <span>EcoDrive+</span>
+          <strong>{routeLabel}</strong>
+        </div>
+        <div className={`drive-event ${isWarning ? "drive-event--warning" : ""}`}>
+          <span>Drive event</span>
+          <strong>{eventLabels[telemetry.event]}</strong>
+        </div>
+        <div className={`reward-flash ${showBonus ? "reward-flash--active" : ""}`}>
+          <span>Reward window</span>
+          <strong>{eventText}</strong>
+        </div>
+      </section>
+
+      <section className="ev-cabin" aria-label="First-person EV cockpit">
+        <div className="roof-liner" />
+        <div className="a-pillar a-pillar--left" />
+        <div className="a-pillar a-pillar--right" />
+        <div className="windshield-glass" />
+        <div className="dashboard-shelf">
+          <div className="dash-ambient dash-ambient--left" />
+          <div className="dash-ambient dash-ambient--right" />
+        </div>
+
+        <div className="driver-cluster">
+          <div className="cluster-topline">
+            <span>{gearLabel}</span>
+            <span>{gamepadConnected ? "Controller linked" : `Input ${controlModeLabel}`}</span>
+          </div>
+          <div className="cluster-speed">
+            <strong>{speedLabel}</strong>
+            <span>km/h</span>
+          </div>
+          <div className="cluster-metrics">
+            <p>
+              <span>Eco</span>
+              <strong>{Math.round(telemetry.ecoScore)}</strong>
+            </p>
+            <p>
+              <span>Route</span>
+              <strong>{telemetry.routeChoice === "unknown" ? "--" : telemetry.routeChoice.toUpperCase()}</strong>
+            </p>
+          </div>
+        </div>
+
+        <div className="center-display">
+          <div className="display-camera" />
+          <div className="display-viewport">
+            <iframe
+              ref={dashboardFrameRef}
+              title="Live EcoDrive dashboard app"
+              src={buildDashboardFrameUrl(dashboardUrl)}
+              sandbox="allow-scripts allow-same-origin allow-forms"
+              scrolling="no"
+            />
+          </div>
+        </div>
+
+        <div className="side-mirror side-mirror--left" />
+        <div className="side-mirror side-mirror--right" />
+
+        <div className="steering-module" style={{ "--wheel-angle": `${steeringDegrees}deg` } as React.CSSProperties}>
+          <div className="steering-wheel">
+            <span className="wheel-hub">E+</span>
+            <span className="wheel-spoke wheel-spoke--left" />
+            <span className="wheel-spoke wheel-spoke--right" />
+            <span className="wheel-spoke wheel-spoke--bottom" />
+          </div>
+        </div>
+
+        <div className="console-bridge">
+          <div className="console-pad" />
+          <div className="console-dial" />
+        </div>
+
+        <div className="footwell-meters">
+          <ForceMeter label="Throttle" value={telemetry.throttle} />
+          <ForceMeter label="Brake / reverse" value={telemetry.brake} brake />
+        </div>
+
+        <div className="touch-control-well">
+          <TouchControls />
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function SceneContent() {
   return (
     <>
-      <PerspectiveCamera makeDefault position={[0, 10, 22]} fov={60} />
+      <PerspectiveCamera makeDefault position={[0, 1.58, 0]} fov={68} />
       <ambientLight intensity={0.38} />
       <directionalLight castShadow intensity={2.6} position={[24, 32, 18]} shadow-mapSize={[1024, 1024]} />
       <pointLight color="#37e58f" intensity={42} position={[-62, 6, -96]} distance={82} />
@@ -765,16 +888,21 @@ function DriveRig() {
     }
 
     const forward = new Vector3(Math.sin(vehicle.yaw), 0, -Math.cos(vehicle.yaw));
+    const right = new Vector3(Math.cos(vehicle.yaw), 0, Math.sin(vehicle.yaw));
     const carPosition = new Vector3(vehicle.x, 0.8, vehicle.z);
     const isReverse = vehicle.speed < -0.45;
+    const cockpitSway = right.clone().multiplyScalar(-vehicle.steering * Math.min(speedAbs / 18, 1) * 0.13);
     const cameraTarget = carPosition
       .clone()
-      .add(forward.clone().multiplyScalar(isReverse ? -5 : 12))
-      .add(new Vector3(0, 1.25, 0));
+      .add(forward.clone().multiplyScalar(isReverse ? -10 : 34))
+      .add(right.clone().multiplyScalar(vehicle.steering * 2.4))
+      .add(new Vector3(0, 1.42 + vehicle.throttle * 0.08 - vehicle.brake * 0.04, 0));
     const cameraPosition = carPosition
       .clone()
-      .add(forward.clone().multiplyScalar(isReverse ? 10 : -15 - clamp(speedAbs / 23.5, 0, 1) * 3.5))
-      .add(new Vector3(0, 8.4 + clamp(speedAbs / 23.5, 0, 1) * 1.8, 0));
+      .add(forward.clone().multiplyScalar(0.9))
+      .add(right.clone().multiplyScalar(0.58))
+      .add(new Vector3(0, 1.62, 0))
+      .add(cockpitSway);
     const shakePower =
       (event === "harsh_brake" ? 0.18 : event === "regen_success" ? 0.055 : 0) +
       Math.min(speedAbs / 42, 1) * 0.018;
@@ -783,7 +911,7 @@ function DriveRig() {
       Math.cos(renderState.clock.elapsedTime * 36) * shakePower * 0.42,
       0
     );
-    camera.position.lerp(cameraPosition.add(shake), 1 - Math.exp(-11 * dt));
+    camera.position.lerp(cameraPosition.add(shake), 1 - Math.exp(-16 * dt));
     camera.lookAt(cameraTarget);
 
     if (renderState.clock.elapsedTime - vehicle.lastHudAt > 0.045) {
@@ -809,40 +937,175 @@ function DriveRig() {
         <ringGeometry args={[1.6, 3.8, 80]} />
         <meshBasicMaterial color="#37e58f" transparent opacity={0.22} side={DoubleSide} />
       </mesh>
-      <EVModel />
+      <EVHood />
     </group>
   );
 }
 
-function EVModel() {
+function EVHood() {
   return (
     <group>
-      <mesh castShadow position={[0, 0.42, 0]}>
-        <boxGeometry args={[2.15, 0.68, 4.4]} />
-        <meshStandardMaterial color="#dffdf1" metalness={0.65} roughness={0.22} emissive="#37e58f" emissiveIntensity={0.03} />
+      <mesh castShadow receiveShadow position={[0, 0.28, -2.35]} rotation={[-0.05, 0, 0]}>
+        <boxGeometry args={[2.55, 0.28, 2.35]} />
+        <meshStandardMaterial color="#dffdf1" metalness={0.72} roughness={0.24} emissive="#37e58f" emissiveIntensity={0.025} />
       </mesh>
-      <mesh castShadow position={[0, 0.88, -0.45]}>
-        <boxGeometry args={[1.45, 0.58, 1.55]} />
-        <meshStandardMaterial color="#12313a" metalness={0.6} roughness={0.18} emissive="#38bdf8" emissiveIntensity={0.12} />
+      <mesh position={[0, 0.5, -3.58]}>
+        <boxGeometry args={[1.9, 0.08, 0.12]} />
+        <meshBasicMaterial color="#37e58f" transparent opacity={0.9} />
       </mesh>
-      <mesh position={[0, 0.5, -2.25]}>
-        <boxGeometry args={[1.55, 0.12, 0.12]} />
-        <meshBasicMaterial color="#37e58f" />
+      <mesh castShadow position={[-1.36, 0.18, -2.42]} rotation={[0, 0, -0.12]}>
+        <boxGeometry args={[0.34, 0.24, 1.95]} />
+        <meshStandardMaterial color="#c9f4e7" metalness={0.68} roughness={0.28} />
       </mesh>
-      <mesh position={[0, 0.43, 2.25]}>
-        <boxGeometry args={[1.7, 0.1, 0.12]} />
-        <meshBasicMaterial color="#38bdf8" />
+      <mesh castShadow position={[1.36, 0.18, -2.42]} rotation={[0, 0, 0.12]}>
+        <boxGeometry args={[0.34, 0.24, 1.95]} />
+        <meshStandardMaterial color="#c9f4e7" metalness={0.68} roughness={0.28} />
       </mesh>
-      {[-1.18, 1.18].map((x) =>
-        [-1.42, 1.42].map((z) => (
-          <mesh castShadow key={`${x}-${z}`} position={[x, 0.18, z]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.34, 0.34, 0.28, 24]} />
-            <meshStandardMaterial color="#050909" roughness={0.44} metalness={0.3} />
-          </mesh>
-        ))
-      )}
+      <mesh position={[0.88, 0.42, -3.55]}>
+        <boxGeometry args={[0.38, 0.06, 0.08]} />
+        <meshBasicMaterial color="#38bdf8" transparent opacity={0.72} />
+      </mesh>
+      <mesh position={[-0.88, 0.42, -3.55]}>
+        <boxGeometry args={[0.38, 0.06, 0.08]} />
+        <meshBasicMaterial color="#38bdf8" transparent opacity={0.72} />
+      </mesh>
     </group>
   );
+}
+
+function useReachableDashboardUrl() {
+  const [dashboardUrl, setDashboardUrl] = useState(configuredDashboardAppUrl);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const resolveDashboardUrl = async () => {
+      for (const candidate of dashboardUrlCandidates) {
+        const isReachable = await canReachLocalUrl(candidate);
+        if (cancelled) return;
+
+        if (isReachable) {
+          setDashboardUrl(candidate);
+          return;
+        }
+      }
+    };
+
+    resolveDashboardUrl();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return dashboardUrl;
+}
+
+async function canReachLocalUrl(url: string) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 900);
+
+  try {
+    await fetch(url, {
+      cache: "no-store",
+      mode: "no-cors",
+      signal: controller.signal
+    });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+function useDashboardTelemetryBridge(frameRef: RefObject<HTMLIFrameElement | null>, telemetry: Telemetry, dashboardUrl: string) {
+  const telemetryRef = useRef(telemetry);
+  const targetOrigin = useMemo(() => readTargetOrigin(dashboardUrl), [dashboardUrl]);
+
+  useEffect(() => {
+    telemetryRef.current = telemetry;
+  }, [telemetry]);
+
+  useEffect(() => {
+    const postTelemetry = () => {
+      const targetWindow = frameRef.current?.contentWindow;
+      if (!targetWindow) return;
+
+      targetWindow.postMessage(
+        {
+          type: "ecodrive:simulator-telemetry",
+          telemetry: buildDashboardTelemetry(telemetryRef.current)
+        },
+        targetOrigin
+      );
+    };
+
+    postTelemetry();
+    const interval = window.setInterval(postTelemetry, 220);
+    return () => window.clearInterval(interval);
+  }, [frameRef, targetOrigin]);
+}
+
+function readTargetOrigin(url: string) {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return "*";
+  }
+}
+
+function buildDashboardFrameUrl(url: string) {
+  try {
+    const frameUrl = new URL(url);
+    frameUrl.searchParams.set("simulatorDisplay", "1");
+    return frameUrl.toString();
+  } catch {
+    return url;
+  }
+}
+
+function buildDashboardTelemetry(telemetry: Telemetry): DashboardTelemetry {
+  const speedAbs = Math.abs(telemetry.speedKmh);
+  const distanceKm = telemetry.distanceMeters / 1000;
+  const smoothnessFactor = clamp(telemetry.ecoScore / 100, 0.35, 1);
+  const driveLoad = telemetry.throttle * 0.055 + Math.abs(telemetry.steering) * 0.012 + (telemetry.routeChoice === "fast" ? 0.025 : 0);
+  const regenKw = telemetry.brake > 0.12 && speedAbs > 8 ? telemetry.brake * 38 : 0;
+  const energyKwh = Math.max(0, distanceKm * (0.145 + driveLoad) - regenKw * 0.00008);
+  const co2SavedKg = distanceKm * 0.171 * smoothnessFactor;
+  const eventBonus =
+    telemetry.event === "regen_success" ? 50 : telemetry.event === "smooth_streak" ? 32 : telemetry.event === "finish_loop" ? 80 : 0;
+  const coinsEarned = Math.max(0, Math.round(distanceKm * 180 + Math.max(0, telemetry.ecoScore - 70) * 1.6 + eventBonus));
+
+  return {
+    deviceId: "simulator-cockpit-01",
+    ecoScore: telemetry.ecoScore,
+    speedKmh: telemetry.speedKmh,
+    event: dashboardEventMap[telemetry.event],
+    hardBrakes: telemetry.event === "harsh_brake" ? 1 : 0,
+    coinsEarned,
+    totalCoins: 1240 + coinsEarned,
+    energyKwh,
+    co2SavedKg,
+    ledState: ledStateForTelemetry(telemetry),
+    timestamp: Date.now(),
+    distanceKm,
+    batteryPercent: clamp(88 - energyKwh * 3.6 + regenKw * 0.012, 42, 98),
+    rangeKm: clamp(418 - distanceKm * 4.2 - energyKwh * 9, 190, 430),
+    regenKw,
+    motorKw: telemetry.throttle * (58 + speedAbs * 0.55) - regenKw * 0.35,
+    routeChoice: telemetry.routeChoice,
+    throttle: telemetry.throttle,
+    brake: telemetry.brake,
+    steering: telemetry.steering
+  };
+}
+
+function ledStateForTelemetry(telemetry: Telemetry): DashboardTelemetry["ledState"] {
+  if (telemetry.event === "harsh_brake" || telemetry.event === "overspeed" || telemetry.event === "aggressive_acceleration") return "red";
+  if (telemetry.event === "fast_route_warning" || telemetry.routeChoice === "fast") return "amber";
+  if (telemetry.event === "launch_ready") return "blue";
+  return "green";
 }
 
 function ForceMeter({ label, value, brake = false }: { label: string; value: number; brake?: boolean }) {

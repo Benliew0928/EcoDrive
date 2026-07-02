@@ -10,6 +10,17 @@ export function useDashboardRuntime() {
   const wsUrl = process.env.NEXT_PUBLIC_ECODRIVE_WS_URL;
 
   useEffect(() => {
+    const receiveSimulatorMessage = (event: MessageEvent) => {
+      const telemetry = parseSimulatorTelemetryMessage(event.data);
+      if (!telemetry) return;
+      receiveTelemetry(telemetry);
+    };
+
+    window.addEventListener("message", receiveSimulatorMessage);
+    return () => window.removeEventListener("message", receiveSimulatorMessage);
+  }, [receiveTelemetry]);
+
+  useEffect(() => {
     if (!wsUrl) {
       setConnectionStatus("not_configured");
       return;
@@ -37,6 +48,15 @@ export function useDashboardRuntime() {
       socket = null;
     };
   }, [receiveTelemetry, setConnectionStatus, wsUrl]);
+}
+
+function parseSimulatorTelemetryMessage(data: unknown): ProcessedTelemetry | null {
+  if (!data || typeof data !== "object") return null;
+
+  const message = data as { type?: unknown; telemetry?: unknown };
+  if (message.type !== "ecodrive:simulator-telemetry") return null;
+
+  return parseTelemetryPacket(message.telemetry);
 }
 
 function parseTelemetryPacket(data: unknown): ProcessedTelemetry | null {

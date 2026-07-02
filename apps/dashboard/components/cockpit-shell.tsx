@@ -44,6 +44,7 @@ export function CockpitShell({ activeMode, children }: CockpitShellProps) {
   const connectionStatus = useDashboardStore((state) => state.connectionStatus);
   const walletCoins = useDashboardStore((state) => state.walletCoins);
   const [clock, setClock] = useState("--:--");
+  const [isSimulatorDisplay, setIsSimulatorDisplay] = useState(false);
   const speed = telemetry?.speedKmh == null ? "--" : Math.round(telemetry.speedKmh).toString();
   const numericSpeed = telemetry?.speedKmh ?? 0;
   const gear = telemetry?.speedKmh == null ? "--" : numericSpeed < -1 ? "R" : numericSpeed > 1 ? "D" : "P";
@@ -74,8 +75,12 @@ export function CockpitShell({ activeMode, children }: CockpitShellProps) {
     return () => window.clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    setIsSimulatorDisplay(new URLSearchParams(window.location.search).get("simulatorDisplay") === "1");
+  }, []);
+
   return (
-    <div className={`cockpit-shell cockpit-shell--${mode.accent}`}>
+    <div className={`cockpit-shell cockpit-shell--${mode.accent} ${isSimulatorDisplay ? "cockpit-shell--simulator-display" : ""}`}>
       <header className="vehicle-status">
         <div className="status-left">
           <span className="clock">{clock}</span>
