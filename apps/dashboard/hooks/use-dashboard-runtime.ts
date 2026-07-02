@@ -4,12 +4,14 @@ import { useEffect } from "react";
 import { useDashboardStore } from "../lib/dashboard-store";
 import type { ProcessedTelemetry } from "../types/dashboard";
 
-export function useDashboardRuntime() {
+export function useDashboardRuntime(enabled = true) {
   const receiveTelemetry = useDashboardStore((state) => state.receiveTelemetry);
   const setConnectionStatus = useDashboardStore((state) => state.setConnectionStatus);
   const wsUrl = process.env.NEXT_PUBLIC_ECODRIVE_WS_URL;
 
   useEffect(() => {
+    if (!enabled) return;
+
     const receiveSimulatorMessage = (event: MessageEvent) => {
       const telemetry = parseSimulatorTelemetryMessage(event.data);
       if (!telemetry) return;
@@ -18,9 +20,11 @@ export function useDashboardRuntime() {
 
     window.addEventListener("message", receiveSimulatorMessage);
     return () => window.removeEventListener("message", receiveSimulatorMessage);
-  }, [receiveTelemetry]);
+  }, [enabled, receiveTelemetry]);
 
   useEffect(() => {
+    if (!enabled) return;
+
     if (!wsUrl) {
       setConnectionStatus("not_configured");
       return;
@@ -47,7 +51,7 @@ export function useDashboardRuntime() {
       socket?.close();
       socket = null;
     };
-  }, [receiveTelemetry, setConnectionStatus, wsUrl]);
+  }, [enabled, receiveTelemetry, setConnectionStatus, wsUrl]);
 }
 
 function parseSimulatorTelemetryMessage(data: unknown): ProcessedTelemetry | null {

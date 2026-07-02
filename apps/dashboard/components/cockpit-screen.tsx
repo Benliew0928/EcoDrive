@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Gauge, Leaf, RadioTower, Route } from "lucide-react";
+import { Gauge, RadioTower } from "lucide-react";
 import { CockpitShell } from "./cockpit-shell";
-import { cockpitModes, type Metric, type ModeId } from "../data/cockpit-content";
+import { cockpitModes, type ModeId } from "../data/cockpit-content";
 import { eventLabel, hardwareFeedbackForTelemetry } from "../lib/dashboard-data";
 import { useDashboardStore } from "../lib/dashboard-store";
 import type { ProcessedTelemetry } from "../types/dashboard";
 import { EcoRouteMap } from "./eco-route-map";
+import { CitySurface } from "./city/city-surface";
 
 type CockpitScreenProps = {
   mode: ModeId;
@@ -18,6 +19,7 @@ export function CockpitScreen({ mode }: CockpitScreenProps) {
   const telemetry = useDashboardStore((state) => state.telemetry);
   const connectionStatus = useDashboardStore((state) => state.connectionStatus);
   const isLive = connectionStatus === "live" && Boolean(telemetry);
+  const packetLabel = mode === "city" ? "Builder active" : isLive ? "Live packet" : "Awaiting simulator";
 
   return (
     <CockpitShell activeMode={mode}>
@@ -28,8 +30,8 @@ export function CockpitScreen({ mode }: CockpitScreenProps) {
               <p className="eyebrow">{screen.label}</p>
               <h1>{screen.headline}</h1>
             </div>
-            <span className={`auto-eco-pill ${isLive ? "auto-eco-pill--live" : ""}`}>
-              {isLive ? "Live packet" : "Awaiting simulator"}
+            <span className={`auto-eco-pill ${isLive || mode === "city" ? "auto-eco-pill--live" : ""}`}>
+              {packetLabel}
             </span>
           </div>
           <ModeVisual mode={mode} telemetry={telemetry} />
@@ -41,7 +43,7 @@ export function CockpitScreen({ mode }: CockpitScreenProps) {
 
 function ModeVisual({ mode, telemetry }: { mode: ModeId; telemetry: ProcessedTelemetry | null }) {
   if (mode === "route") return <RouteSurface telemetry={telemetry} />;
-  if (mode === "city") return <FutureModuleSurface title="Eco-City data model" telemetry={telemetry} />;
+  if (mode === "city") return <CitySurface />;
   if (mode === "rewards") return <RewardsSurface />;
   if (mode === "community") return <CommunitySurface />;
   return <DriveSurface telemetry={telemetry} />;
@@ -165,18 +167,6 @@ function RewardsSurface() {
             </div>
           </div>
         ))}
-      </div>
-    </div>
-  );
-}
-
-function FutureModuleSurface({ title, telemetry }: { title: string; telemetry: ProcessedTelemetry | null }) {
-  return (
-    <div className="live-surface future-surface-clean">
-      <div className="module-shell">
-        <Leaf size={44} />
-        <strong>{title}</strong>
-        <span>{telemetry ? "Telemetry is available. Module logic can be connected next." : "Blank until real simulator data is mapped."}</span>
       </div>
     </div>
   );

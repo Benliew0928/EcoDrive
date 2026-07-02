@@ -53,8 +53,8 @@ export const cockpitModes: Record<ModeId, CockpitMode> = {
     label: "Eco-City",
     shortLabel: "City",
     href: "/city",
-    subtitle: "Future economy layer",
-    headline: "Eco-City",
+    subtitle: "Build impact from every drive",
+    headline: "Eco-City Builder",
     accent: "amber"
   },
   rewards: {

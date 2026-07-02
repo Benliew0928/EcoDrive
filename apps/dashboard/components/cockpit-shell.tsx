@@ -30,7 +30,12 @@ type CockpitShellProps = {
 };
 
 export function CockpitShell({ activeMode, children }: CockpitShellProps) {
-  useDashboardRuntime();
+  useEffect(() => {
+    void useDashboardStore.persist.rehydrate();
+  }, []);
+
+  const hasHydrated = useDashboardStore((state) => state.hasHydrated);
+  useDashboardRuntime(hasHydrated);
   const mode = cockpitModes[activeMode];
   const connectionStatus = useDashboardStore((state) => state.connectionStatus);
   const walletCoins = useDashboardStore((state) => state.walletCoins);
