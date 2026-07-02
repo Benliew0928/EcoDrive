@@ -1,16 +1,7 @@
 "use client";
 
-import {
-  BatteryCharging,
-  CircleGauge,
-  Gauge,
-  Leaf,
-  RadioTower,
-  Route,
-  Signal,
-  Trees
-} from "lucide-react";
 import { useState } from "react";
+import { Gauge, Leaf, RadioTower, Route } from "lucide-react";
 import { CockpitShell } from "./cockpit-shell";
 import { cockpitModes, type Metric, type ModeId } from "../data/cockpit-content";
 import { eventLabel, hardwareFeedbackForTelemetry } from "../lib/dashboard-data";
@@ -55,11 +46,6 @@ export function CockpitScreen({ mode }: CockpitScreenProps) {
             </article>
           ))}
         </aside>
-
-        <section className="advice-panel">
-          <p>Integration status</p>
-          <strong>{buildStatusMessage(mode, telemetry, connectionStatus)}</strong>
-        </section>
 
         <section className="secondary-panel">
           <SecondaryContent telemetry={telemetry} />
@@ -112,29 +98,9 @@ function DriveSurface({ telemetry }: { telemetry: ProcessedTelemetry | null }) {
 }
 
 function RouteSurface({ telemetry }: { telemetry: ProcessedTelemetry | null }) {
-  // If we have live telemetry with a speed > 0, we might want to show the live stats 
-  // instead of the planner, but for the demo, Route mode IS the planner.
   return (
     <div className="live-surface route-surface-clean" style={{ padding: 0 }}>
       <EcoRouteMap onRouteSelect={(route) => console.log("Selected route:", route.id)} />
-    </div>
-  );
-}
-
-function CarbonSurface({ telemetry }: { telemetry: ProcessedTelemetry | null }) {
-  return (
-    <div className="live-surface carbon-surface-clean">
-      <div className="carbon-ring">
-        <Trees size={46} />
-        <strong>{formatUnit(telemetry?.co2SavedKg, "kg", 2)}</strong>
-        <span>CO2 saved</span>
-      </div>
-      <div className="packet-panel">
-        <PacketRow label="Distance" value={formatUnit(telemetry?.distanceKm, "km", 2)} />
-        <PacketRow label="Energy" value={formatUnit(telemetry?.energyKwh, "kWh", 2)} />
-        <PacketRow label="Eco score" value={formatNumber(telemetry?.ecoScore, 0)} />
-      </div>
-      {!telemetry ? <EmptyState icon={Leaf} title="Carbon model waiting for drive data" /> : null}
     </div>
   );
 }
@@ -190,14 +156,9 @@ function FutureModuleSurface({ title, telemetry }: { title: string; telemetry: P
   return (
     <div className="live-surface future-surface-clean">
       <div className="module-shell">
-        <CircleGauge size={44} />
+        <Leaf size={44} />
         <strong>{title}</strong>
         <span>{telemetry ? "Telemetry is available. Module logic can be connected next." : "Blank until real simulator data is mapped."}</span>
-      </div>
-      <div className="packet-panel">
-        <PacketRow label="EcoCoins" value={formatNumber(telemetry?.totalCoins, 0)} />
-        <PacketRow label="CO2 saved" value={formatUnit(telemetry?.co2SavedKg, "kg", 2)} />
-        <PacketRow label="Event" value={telemetry?.event ? eventLabel(telemetry.event) : "--"} />
       </div>
     </div>
   );
@@ -209,9 +170,9 @@ function SecondaryContent({ telemetry }: { telemetry: ProcessedTelemetry | null 
 
   return (
     <>
-      <p>Packet mirror</p>
+      <p>Hardware mirror</p>
       <strong>
-        LED: {feedback.led} | OLED: {feedback.oled} | Buzzer: {feedback.buzzer}
+        LED: {feedback.led} · OLED: {feedback.oled} · Buzzer: {feedback.buzzer}
       </strong>
       <div className="compact-feed">
         {eventFeed.length ? (
@@ -253,11 +214,10 @@ function buildMetrics(mode: ModeId, telemetry: ProcessedTelemetry | null): Metri
     return [
       { label: "Route", value: telemetry?.routeChoice ?? "--", trend: "from simulator packet" },
       { label: "Distance", value: formatUnit(telemetry?.distanceKm, "km", 2), trend: "current trip" },
-      { label: "Steering", value: formatSigned(telemetry?.steering), trend: "normalized input" },
+      { label: "CO2 saved", value: formatUnit(telemetry?.co2SavedKg, "kg", 2), trend: "eco route benefit" },
       { label: "Speed", value: formatUnit(telemetry?.speedKmh, "km/h", 0), trend: "live packet" }
     ];
   }
-
 
   if (mode === "city" || mode === "rewards" || mode === "community") {
     return [
@@ -268,6 +228,7 @@ function buildMetrics(mode: ModeId, telemetry: ProcessedTelemetry | null): Metri
     ];
   }
 
+  // Default: drive mode
   return [
     { label: "Speed", value: formatUnit(telemetry?.speedKmh, "km/h", 0), trend: "live packet" },
     { label: "Eco score", value: formatNumber(telemetry?.ecoScore, 0), trend: telemetry?.event ? telemetry.event.replaceAll("_", " ") : "waiting" },
@@ -283,7 +244,7 @@ function buildStatusMessage(
 ) {
   if (telemetry) return "Rendering only values received from the simulator or telemetry bridge.";
   if (connectionStatus === "connecting") return "Trying to connect to the configured telemetry WebSocket.";
-  if (connectionStatus === "error") return "The telemetry WebSocket reported an error. The dashboard is staying blank instead of using invented values.";
+  if (connectionStatus === "error") return "The telemetry WebSocket reported an error.";
   if (connectionStatus === "disconnected") return "Telemetry disconnected. Waiting for the next real simulator packet.";
   if (mode === "drive") return "No local data loop is running. This cockpit will populate when simulator telemetry is connected.";
   return "This page is intentionally blank until its real simulator data contract is wired.";
@@ -302,11 +263,6 @@ function formatUnit(value: number | undefined | null, unit: string, digits: numb
 function formatPercent(value: number | undefined | null) {
   if (value == null || Number.isNaN(value)) return "--";
   return `${Math.round(value * 100)}%`;
-}
-
-function formatPercentValue(value: number | undefined | null) {
-  if (value == null || Number.isNaN(value)) return "--";
-  return `${Math.round(value)}%`;
 }
 
 function formatSigned(value: number | undefined | null) {

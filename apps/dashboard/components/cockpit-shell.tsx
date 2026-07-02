@@ -3,19 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
-  BatteryCharging,
   Building2,
-  Fan,
   Gauge,
   Gift,
   Leaf,
   Map,
   RadioTower,
-  Snowflake,
-  Sprout,
-  Trees,
-  Users,
-  Wind
+  Users
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cockpitModes, modeLinks, type ModeId } from "../data/cockpit-content";
@@ -38,26 +32,20 @@ type CockpitShellProps = {
 export function CockpitShell({ activeMode, children }: CockpitShellProps) {
   useDashboardRuntime();
   const mode = cockpitModes[activeMode];
-  const telemetry = useDashboardStore((state) => state.telemetry);
   const connectionStatus = useDashboardStore((state) => state.connectionStatus);
   const walletCoins = useDashboardStore((state) => state.walletCoins);
   const [clock, setClock] = useState("--:--");
   const [isSimulatorDisplay, setIsSimulatorDisplay] = useState(false);
-  const speed = telemetry?.speedKmh == null ? "--" : Math.round(telemetry.speedKmh).toString();
-  const numericSpeed = telemetry?.speedKmh ?? 0;
-  const gear = telemetry?.speedKmh == null ? "--" : numericSpeed < -1 ? "R" : numericSpeed > 1 ? "D" : "P";
-  const battery = telemetry?.batteryPercent == null ? "-- battery" : `${Math.round(telemetry.batteryPercent)}% battery`;
-  const range = telemetry?.rangeKm == null ? "-- km" : `${Math.round(telemetry.rangeKm)} km`;
   const statusLabel =
     connectionStatus === "live"
-      ? "Simulator live"
+      ? "ESP32 Live"
       : connectionStatus === "connecting"
-        ? "Connecting"
+        ? "Connecting…"
         : connectionStatus === "error"
-          ? "Connection error"
+          ? "Error"
           : connectionStatus === "disconnected"
             ? "Disconnected"
-            : "Waiting for data";
+            : "Standby";
 
   useEffect(() => {
     const updateClock = () =>
@@ -87,41 +75,23 @@ export function CockpitShell({ activeMode, children }: CockpitShellProps) {
             <p className="mode-subtitle">{mode.subtitle}</p>
           </div>
         </div>
-        <div className="user-profile">
-          <div className="avatar">
-            <img src="https://ui-avatars.com/api/?name=Demo+Driver&background=070E0F&color=38BDF8" alt="Driver" />
-          </div>
-          <div className="user-details">
-            <strong>Driver Profile</strong>
-            <span className="coin-balance">
-              <Gift size={12} />
-              {walletCoins.toLocaleString()} Coins
-            </span>
-          </div>
+
+        <div className="wallet-pill">
+          <Leaf size={14} />
+          <span>{walletCoins.toLocaleString()} EcoCoins</span>
         </div>
-        <div className="speed-readout">
-          <span>{speed}</span>
-          <small>km/h</small>
-          <strong>{gear}</strong>
-        </div>
+
         <div className="status-right">
           <span className={`live-pill live-pill--${connectionStatus}`}>
-            <RadioTower size={15} />
+            <RadioTower size={14} />
             {statusLabel}
           </span>
-          <span className="battery-pill">{battery}</span>
         </div>
       </header>
 
       {children}
 
       <nav className="vehicle-dock" aria-label="Cockpit modes">
-        <div className="climate-cluster">
-          <span>22.5 C</span>
-          <Snowflake size={15} />
-          <Fan size={15} />
-          <Wind size={15} />
-        </div>
         <div className="mode-cluster">
           {modeLinks.map((item) => {
             const Icon = modeIcons[item.id];
@@ -138,10 +108,6 @@ export function CockpitShell({ activeMode, children }: CockpitShellProps) {
               </Link>
             );
           })}
-        </div>
-        <div className="range-cluster">
-          <Leaf size={15} />
-          <span>{range}</span>
         </div>
       </nav>
     </div>
