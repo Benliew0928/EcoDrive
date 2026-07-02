@@ -1,11 +1,9 @@
 export type ModeId =
   | "route"
   | "drive"
-  | "energy"
   | "city"
   | "rewards"
-  | "community"
-  | "fleet";
+  | "community";
 
 export type Metric = {
   label: string;
@@ -26,11 +24,9 @@ export type CockpitMode = {
 export const modeLinks: Array<Pick<CockpitMode, "id" | "label" | "shortLabel" | "href">> = [
   { id: "route", label: "Route Planner", shortLabel: "Route", href: "/route" },
   { id: "drive", label: "Live Telemetry", shortLabel: "Drive", href: "/" },
-  { id: "energy", label: "Energy Flow", shortLabel: "Energy", href: "/energy" },
   { id: "city", label: "Eco-City", shortLabel: "City", href: "/city" },
   { id: "rewards", label: "Marketplace", shortLabel: "Rewards", href: "/rewards" },
-  { id: "community", label: "Leaderboard", shortLabel: "Social", href: "/community" },
-  { id: "fleet", label: "Fleet Connect", shortLabel: "Fleet", href: "/fleet" }
+  { id: "community", label: "Leaderboard", shortLabel: "Social", href: "/community" }
 ];
 
 export const cockpitModes: Record<ModeId, CockpitMode> = {
@@ -51,15 +47,6 @@ export const cockpitModes: Record<ModeId, CockpitMode> = {
     subtitle: "Route state from simulator",
     headline: "Route intelligence",
     accent: "cyan"
-  },
-  energy: {
-    id: "energy",
-    label: "Energy Flow",
-    shortLabel: "Energy",
-    href: "/energy",
-    subtitle: "Battery, regen and motor data",
-    headline: "Energy cockpit",
-    accent: "green"
   },
   city: {
     id: "city",
@@ -87,14 +74,5 @@ export const cockpitModes: Record<ModeId, CockpitMode> = {
     subtitle: "Future group challenge layer",
     headline: "Community",
     accent: "green"
-  },
-  fleet: {
-    id: "fleet",
-    label: "Fleet",
-    shortLabel: "Fleet",
-    href: "/fleet",
-    subtitle: "Future vehicle monitoring layer",
-    headline: "Fleet diagnostics",
-    accent: "red"
   }
 };

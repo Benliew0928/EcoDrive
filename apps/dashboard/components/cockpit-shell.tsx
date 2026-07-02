@@ -25,11 +25,9 @@ import { useDashboardStore } from "../lib/dashboard-store";
 const modeIcons: Record<ModeId, LucideIcon> = {
   drive: Gauge,
   route: Map,
-  energy: BatteryCharging,
   city: Building2,
   rewards: Gift,
-  community: Users,
-  fleet: RadioTower
+  community: Users
 };
 
 type CockpitShellProps = {

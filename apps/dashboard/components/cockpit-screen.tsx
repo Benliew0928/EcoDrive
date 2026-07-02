@@ -72,11 +72,9 @@ export function CockpitScreen({ mode }: CockpitScreenProps) {
 
 function ModeVisual({ mode, telemetry }: { mode: ModeId; telemetry: ProcessedTelemetry | null }) {
   if (mode === "route") return <RouteSurface telemetry={telemetry} />;
-  if (mode === "energy") return <EnergySurface telemetry={telemetry} />;
   if (mode === "city") return <FutureModuleSurface title="Eco-City data model" telemetry={telemetry} />;
   if (mode === "rewards") return <RewardsSurface />;
   if (mode === "community") return <FutureModuleSurface title="Community challenges" telemetry={telemetry} />;
-  if (mode === "fleet") return <FleetSurface telemetry={telemetry} />;
   return <DriveSurface telemetry={telemetry} />;
 }
 
@@ -119,23 +117,6 @@ function RouteSurface({ telemetry }: { telemetry: ProcessedTelemetry | null }) {
   return (
     <div className="live-surface route-surface-clean" style={{ padding: 0 }}>
       <EcoRouteMap onRouteSelect={(route) => console.log("Selected route:", route.id)} />
-    </div>
-  );
-}
-
-function EnergySurface({ telemetry }: { telemetry: ProcessedTelemetry | null }) {
-  return (
-    <div className="live-surface energy-surface-clean">
-      <div className="battery-outline">
-        <span>{formatPercentValue(telemetry?.batteryPercent)}</span>
-      </div>
-      <div className="energy-readouts">
-        <PacketRow label="Range" value={formatUnit(telemetry?.rangeKm, "km", 0)} />
-        <PacketRow label="Regen" value={formatUnit(telemetry?.regenKw, "kW", 0)} />
-        <PacketRow label="Motor" value={formatUnit(telemetry?.motorKw, "kW", 0)} />
-        <PacketRow label="Energy" value={formatUnit(telemetry?.energyKwh, "kWh", 2)} />
-      </div>
-      {!telemetry ? <EmptyState icon={BatteryCharging} title="Energy packets pending" /> : null}
     </div>
   );
 }
@@ -222,20 +203,6 @@ function FutureModuleSurface({ title, telemetry }: { title: string; telemetry: P
   );
 }
 
-function FleetSurface({ telemetry }: { telemetry: ProcessedTelemetry | null }) {
-  return (
-    <div className="live-surface fleet-surface-clean">
-      <div className="packet-panel packet-panel--wide">
-        <PacketRow label="Device" value={telemetry?.deviceId ?? "--"} />
-        <PacketRow label="Last event" value={telemetry?.event ? eventLabel(telemetry.event) : "--"} />
-        <PacketRow label="LED" value={telemetry?.ledState ?? "--"} />
-        <PacketRow label="Hard brakes" value={formatNumber(telemetry?.hardBrakes, 0)} />
-      </div>
-      {!telemetry ? <EmptyState icon={Signal} title="No fleet unit connected" /> : null}
-    </div>
-  );
-}
-
 function SecondaryContent({ telemetry }: { telemetry: ProcessedTelemetry | null }) {
   const feedback = hardwareFeedbackForTelemetry(telemetry);
   const eventFeed = useDashboardStore((state) => state.eventFeed);
@@ -291,15 +258,6 @@ function buildMetrics(mode: ModeId, telemetry: ProcessedTelemetry | null): Metri
     ];
   }
 
-  if (mode === "energy") {
-    return [
-      { label: "Battery", value: formatPercentValue(telemetry?.batteryPercent), trend: "from vehicle state" },
-      { label: "Range", value: formatUnit(telemetry?.rangeKm, "km", 0), trend: "estimated" },
-      { label: "Regen", value: formatUnit(telemetry?.regenKw, "kW", 0), trend: "live draw" },
-      { label: "Motor", value: formatUnit(telemetry?.motorKw, "kW", 0), trend: "live draw" }
-    ];
-  }
-
 
   if (mode === "city" || mode === "rewards" || mode === "community") {
     return [
@@ -307,15 +265,6 @@ function buildMetrics(mode: ModeId, telemetry: ProcessedTelemetry | null): Metri
       { label: "Coins earned", value: formatNumber(telemetry?.coinsEarned, 0), trend: "current packet" },
       { label: "CO2 saved", value: formatUnit(telemetry?.co2SavedKg, "kg", 2), trend: "current drive" },
       { label: "Eco score", value: formatNumber(telemetry?.ecoScore, 0), trend: "current drive" }
-    ];
-  }
-
-  if (mode === "fleet") {
-    return [
-      { label: "Device", value: telemetry?.deviceId ?? "--", trend: "telemetry source" },
-      { label: "Status", value: telemetry ? "Live" : "--", trend: "connection state" },
-      { label: "Hard brakes", value: formatNumber(telemetry?.hardBrakes, 0), trend: "safety signal" },
-      { label: "Last event", value: telemetry?.event ? telemetry.event.replaceAll("_", " ") : "--", trend: "live packet" }
     ];
   }
 
