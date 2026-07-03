@@ -73,54 +73,39 @@ function get2DCartoonAvatar(name: string) {
   return `https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}`;
 }
 
-const EcoCoin = ({ size = 16, className = "", style = {} }: { size?: number; className?: string; style?: React.CSSProperties }) => (
-  <span className={`eco-coin-icon ${className}`} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", ...style }}>
+const PointsIcon = ({ size = 16, className = "", style = {} }: { size?: number; className?: string; style?: React.CSSProperties }) => (
+  <span className={`points-star-icon ${className}`} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", ...style }}>
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ verticalAlign: "middle" }}>
-      {/* Outer Coin Circle with gold gradient */}
-      <circle cx="12" cy="12" r="11" fill="url(#coinOuterGrad)" stroke="#EAB308" strokeWidth="0.5" />
-      
-      {/* Inner Coin Circle with slightly darker gold gradient */}
-      <circle cx="12" cy="12" r="8.5" fill="url(#coinInnerGrad)" stroke="#CA8A04" strokeWidth="0.5" />
-      
-      {/* Leaf Symbol in center with gold gradient */}
-      <g transform="translate(4.5, 4.5) scale(0.62)">
-        <path 
-          d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 8a7 7 0 0 1-9 10Z" 
-          fill="url(#coinLeafGrad)" 
-          stroke="#9A3412" 
-          strokeWidth="1.2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round" 
-        />
-        <path 
-          d="M9 22v-4h-4" 
-          stroke="#9A3412" 
-          strokeWidth="1.2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round" 
-        />
-      </g>
+      {/* 2D stylized glowing gaming star */}
+      <path 
+        d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" 
+        fill="url(#starGrad)" 
+        stroke="#EAB308" 
+        strokeWidth="1.5" 
+        strokeLinejoin="round" 
+      />
+      {/* Inner star accent for 3D/embossed effect */}
+      <path 
+        d="M12 5L13.85 8.76L18 9.37L15 12.29L15.71 16.42L12 14.47L8.29 16.42L9 12.29L6 9.37L10.15 8.76L12 5Z" 
+        fill="url(#innerStarGrad)" 
+        opacity="0.9" 
+      />
       <defs>
-        {/* Gradients */}
-        <linearGradient id="coinOuterGrad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#FDE047" /> {/* Yellow 300 */}
-          <stop offset="50%" stopColor="#EAB308" /> {/* Yellow 500 */}
-          <stop offset="100%" stopColor="#A16207" /> {/* Yellow 700 */}
+        <linearGradient id="starGrad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FFF59D" /> {/* Bright yellow */}
+          <stop offset="50%" stopColor="#FBC02D" /> {/* Gold */}
+          <stop offset="100%" stopColor="#F57F17" /> {/* Orange gold */}
         </linearGradient>
-        <linearGradient id="coinInnerGrad" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#EAB308" />
-          <stop offset="50%" stopColor="#CA8A04" />
-          <stop offset="100%" stopColor="#854D0E" />
-        </linearGradient>
-        <linearGradient id="coinLeafGrad" x1="0" y1="0" x2="20" y2="20" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#FEF08A" /> {/* Yellow 200 */}
-          <stop offset="50%" stopColor="#FDE047" /> {/* Yellow 300 */}
-          <stop offset="100%" stopColor="#CA8A04" /> {/* Yellow 600 */}
+        <linearGradient id="innerStarGrad" x1="6" y1="5" x2="18" y2="17" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FFFFFF" />
+          <stop offset="100%" stopColor="#FBC02D" />
         </linearGradient>
       </defs>
     </svg>
   </span>
 );
+
+const EcoCoin = PointsIcon;
 
 // Deterministic state leaderboard generator based on state name
 function getPlayersForState(stateName: string, globalScore: number, timeframe: "daily" | "monthly") {
@@ -354,28 +339,71 @@ function CommunitySurface() {
           box-shadow: 0 4px 12px rgba(55, 229, 143, 0.08);
         }
 
-        /* Laurels achievers header */
-        .achievers-header {
+        /* EV Styled Header Container */
+        .ev-header-container {
           display: flex;
+          flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 12px;
-          margin-bottom: 24px;
+          margin: 16px 0 28px;
+          text-align: center;
         }
 
-        .achievers-header-title {
-          font-size: 15px;
+        .ev-main-title {
+          font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+          font-size: 32px;
           font-weight: 900;
-          color: #f4fff9;
-          letter-spacing: 1.5px;
           text-transform: uppercase;
+          letter-spacing: 3px;
+          background: linear-gradient(90deg, #10B981 0%, #34D399 50%, #38BDF8 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          filter: drop-shadow(0 2px 10px rgba(56, 189, 248, 0.25));
+          margin: 0 0 8px 0;
+          position: relative;
         }
 
-        .laurel-text {
-          color: #37e58f;
-          opacity: 0.85;
-          font-size: 22px;
-          line-height: 1;
+        .ev-main-title::after {
+          content: '';
+          position: absolute;
+          bottom: -6px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 70px;
+          height: 2.5px;
+          background: linear-gradient(90deg, #34D399, #38BDF8);
+          box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+          border-radius: 2px;
+        }
+
+        .ev-sub-title-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-top: 14px;
+        }
+
+        .ev-sub-title {
+          font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+          font-size: 14px;
+          font-weight: 850;
+          color: #9db3ad;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .ev-lightning {
+          color: #38bdf8;
+          font-size: 16px;
+          animation: evPulse 2s infinite ease-in-out;
+          display: inline-flex;
+          align-items: center;
+        }
+
+        @keyframes evPulse {
+          0%, 100% { opacity: 0.5; filter: drop-shadow(0 0 2px rgba(56, 189, 248, 0.4)); }
+          50% { opacity: 1; filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.8)); }
         }
 
         /* Podium Cards override */
@@ -654,29 +682,32 @@ function CommunitySurface() {
         }
       `}</style>
 
-      {/* Daily / Monthly toggle pill */}
-      <div className="time-toggle-wrapper">
-        <div className="time-toggle-container">
-          <button 
-            onClick={() => setTimeframe("daily")}
-            className={`time-toggle-btn ${timeframe === "daily" ? "time-toggle-btn--active" : ""}`}
-          >
-            Daily
-          </button>
-          <button 
-            onClick={() => setTimeframe("monthly")}
-            className={`time-toggle-btn ${timeframe === "monthly" ? "time-toggle-btn--active" : ""}`}
-          >
-            Monthly
-          </button>
+      {/* EV Styled Leaderboard Header */}
+      <div className="ev-header-container">
+        <h1 className="ev-main-title">EcoDrive Leaderboard</h1>
+        <div className="ev-sub-title-wrapper">
+          <span className="ev-lightning">⚡</span>
+          <span className="ev-sub-title">Overall Top 3 Achievers</span>
+          <span className="ev-lightning">⚡</span>
         </div>
-      </div>
 
-      {/* Achievers Laurels Header */}
-      <div className="achievers-header">
-        <span className="laurel-text">🌿</span>
-        <span className="achievers-header-title">Overall Top 3 Achievers</span>
-        <span className="laurel-text">🌿</span>
+        {/* Daily / Monthly toggle pill */}
+        <div className="time-toggle-wrapper" style={{ marginTop: '16px', marginBottom: '0px' }}>
+          <div className="time-toggle-container">
+            <button 
+              onClick={() => setTimeframe("daily")}
+              className={`time-toggle-btn ${timeframe === "daily" ? "time-toggle-btn--active" : ""}`}
+            >
+              Daily
+            </button>
+            <button 
+              onClick={() => setTimeframe("monthly")}
+              className={`time-toggle-btn ${timeframe === "monthly" ? "time-toggle-btn--active" : ""}`}
+            >
+              Monthly
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Overall Top 3 Podium */}
