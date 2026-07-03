@@ -3,9 +3,58 @@
 import { useEffect, useMemo, useState } from "react";
 import { CockpitShell } from "../../components/cockpit-shell";
 
+const EcoCoin = ({ size = 16, className = "", style = {} }: { size?: number; className?: string; style?: React.CSSProperties }) => (
+  <span className={`eco-coin-icon ${className}`} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", ...style }}>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ verticalAlign: "middle" }}>
+      {/* Outer Coin Circle with gold gradient */}
+      <circle cx="12" cy="12" r="11" fill="url(#coinOuterGrad)" stroke="#EAB308" strokeWidth="0.5" />
+      
+      {/* Inner Coin Circle with slightly darker gold gradient */}
+      <circle cx="12" cy="12" r="8.5" fill="url(#coinInnerGrad)" stroke="#CA8A04" strokeWidth="0.5" />
+      
+      {/* Leaf Symbol in center with gold gradient */}
+      <g transform="translate(4.5, 4.5) scale(0.62)">
+        <path 
+          d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 8a7 7 0 0 1-9 10Z" 
+          fill="url(#coinLeafGrad)" 
+          stroke="#9A3412" 
+          strokeWidth="1.2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round" 
+        />
+        <path 
+          d="M9 22v-4h-4" 
+          stroke="#9A3412" 
+          strokeWidth="1.2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round" 
+        />
+      </g>
+      <defs>
+        {/* Gradients */}
+        <linearGradient id="coinOuterGrad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FDE047" /> {/* Yellow 300 */}
+          <stop offset="50%" stopColor="#EAB308" /> {/* Yellow 500 */}
+          <stop offset="100%" stopColor="#A16207" /> {/* Yellow 700 */}
+        </linearGradient>
+        <linearGradient id="coinInnerGrad" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#EAB308" />
+          <stop offset="50%" stopColor="#CA8A04" />
+          <stop offset="100%" stopColor="#854D0E" />
+        </linearGradient>
+        <linearGradient id="coinLeafGrad" x1="0" y1="0" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FEF08A" /> {/* Yellow 200 */}
+          <stop offset="50%" stopColor="#FDE047" /> {/* Yellow 300 */}
+          <stop offset="100%" stopColor="#CA8A04" /> {/* Yellow 600 */}
+        </linearGradient>
+      </defs>
+    </svg>
+  </span>
+);
+
 type RewardCategory = "Food & Drinks" | "EV Benefits" | "Shopping" | "Eco Impact";
 type CategoryFilter = "All" | RewardCategory;
-type SortOption = "Most Popular" | "Lowest Points" | "Highest Points" | "Newest";
+type SortOption = "Most Popular" | "Lowest EcoCoins" | "Highest EcoCoins" | "Newest";
 
 type Reward = {
   id: string;
@@ -270,8 +319,8 @@ export default function RewardsPage() {
       (!query || reward.title.toLowerCase().includes(query) || reward.partner.toLowerCase().includes(query))
     );
     return [...filtered].sort((first, second) => {
-      if (sortOption === "Lowest Points") return first.cost - second.cost;
-      if (sortOption === "Highest Points") return second.cost - first.cost;
+      if (sortOption === "Lowest EcoCoins") return first.cost - second.cost;
+      if (sortOption === "Highest EcoCoins") return second.cost - first.cost;
       if (sortOption === "Newest") return Number(second.badge === "New") - Number(first.badge === "New");
       return Number(second.badge === "Popular") - Number(first.badge === "Popular") || second.stock - first.stock;
     });
@@ -297,13 +346,22 @@ export default function RewardsPage() {
               <p>Turn every sustainable journey into useful perks, exclusive products, and positive impact.</p>
             </div>
 
-            <div className="marketplace-balance" aria-label="Available Yield Coins">
-              <span className="balance-label">Available Yield Coins</span>
-              <strong>{yieldCoins.toLocaleString()}</strong>
+            <div className="marketplace-balance" aria-label="Available EcoCoins">
+              <span className="balance-label">Available EcoCoins</span>
+              <strong style={{ display: "inline-flex", alignItems: "center", gap: "10px" }}>
+                <EcoCoin size={40} />
+                {yieldCoins.toLocaleString()}
+              </strong>
               <span className="balance-earned">+120 earned this week</span>
               <div className="balance-expiry">
                 <span className="expiry-alert" aria-hidden="true">!</span>
-                <div><small>Expiring Soon</small><b>320 Points expire in 5 days</b></div>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <small>Expiring Soon</small>
+                  <b style={{ display: "inline-flex", alignItems: "center" }}>
+                    <EcoCoin size={12} style={{ marginRight: "4px" }} />
+                    320 EcoCoins expire in 5 days
+                  </b>
+                </div>
               </div>
             </div>
           </header>
@@ -336,8 +394,8 @@ export default function RewardsPage() {
               <span>Sort by</span>
               <select onChange={(event) => setSortOption(event.target.value as SortOption)} value={sortOption}>
                 <option>Most Popular</option>
-                <option>Lowest Points</option>
-                <option>Highest Points</option>
+                <option>Lowest EcoCoins</option>
+                <option>Highest EcoCoins</option>
                 <option>Newest</option>
               </select>
             </label>
@@ -372,10 +430,10 @@ export default function RewardsPage() {
                     </div>
                     <p>{reward.description}</p>
 
-                    <div className="marketplace-price" aria-label={`${reward.cost.toLocaleString()} Yield Coin points`}>
-                      <span className="yield-coin" aria-hidden="true">Y</span>
+                    <div className="marketplace-price" aria-label={`${reward.cost.toLocaleString()} EcoCoins`} style={{ alignItems: "center" }}>
+                      <EcoCoin size={18} />
                       <strong>{reward.cost.toLocaleString()}</strong>
-                      <small>Points</small>
+                      <small>EcoCoins</small>
                     </div>
 
                     <div className="marketplace-meta">
@@ -386,7 +444,7 @@ export default function RewardsPage() {
                     </div>
 
                     <button className="marketplace-redeem" disabled={!canRedeem} onClick={(event) => { event.stopPropagation(); redeemReward(reward); }} type="button">
-                      {canRedeem ? "Redeem now" : "Not enough points"}
+                      {canRedeem ? "Redeem now" : "Not enough EcoCoins"}
                     </button>
                   </div>
                 </article>
@@ -431,7 +489,13 @@ export default function RewardsPage() {
                 {redemptionHistory.map((entry) => (
                   <article className="reward-history-item" key={entry.id}>
                     <div><strong>{entry.reward.title}</strong><span>{formatDate(entry.redeemedAt)}</span></div>
-                    <div><b>-{entry.reward.cost.toLocaleString()} Points</b><span>Completed</span></div>
+                    <div>
+                      <b style={{ display: "inline-flex", alignItems: "center", justifyContent: "flex-end" }}>
+                        -<EcoCoin size={10} style={{ marginLeft: "2px", marginRight: "3px" }} />
+                        {entry.reward.cost.toLocaleString()} EcoCoins
+                      </b>
+                      <span>Completed</span>
+                    </div>
                   </article>
                 ))}
               </div>
@@ -449,11 +513,15 @@ export default function RewardsPage() {
               <span className="reward-detail-partner">{detailReward.partner}</span>
               <h2>{detailReward.title}</h2>
               <p>{detailReward.description}</p>
-              <div className="reward-detail-price"><span className="yield-coin">Y</span><strong>{detailReward.cost.toLocaleString()}</strong><small>Points</small></div>
+              <div className="reward-detail-price" style={{ alignItems: "center" }}>
+                <EcoCoin size={22} />
+                <strong>{detailReward.cost.toLocaleString()}</strong>
+                <small>EcoCoins</small>
+              </div>
               <div className="reward-detail-facts"><span><small>Stock</small><strong>{detailReward.stock} remaining</strong></span><span><small>Expiry</small><strong>{detailReward.expiry}</strong></span></div>
               <div className="reward-terms"><strong>Terms & Conditions</strong><p>One redemption per transaction. Subject to partner availability. Present the generated voucher before its expiry date. Vouchers are non-transferable and cannot be exchanged for cash.</p></div>
               <button className="marketplace-redeem reward-detail-redeem" disabled={yieldCoins < detailReward.cost} onClick={() => redeemReward(detailReward)} type="button">
-                {yieldCoins >= detailReward.cost ? "Redeem reward" : "Not enough points"}
+                {yieldCoins >= detailReward.cost ? "Redeem reward" : "Not enough EcoCoins"}
               </button>
             </div>
           </section>
