@@ -221,7 +221,7 @@ wss://ecodrive-relay.<domain>/ws?session=demo-main&role=bridge
 Optional token:
 
 ```text
-&token=<short-demo-token>
+&token=beauty_and_the_beast
 ```
 
 ### Simulator Input Packet
@@ -351,7 +351,7 @@ Exit criteria:
 | Forward `dashboard.telemetry` to dashboards | Done | Bridge telemetry broadcasts to dashboards and simulator. |
 | Store last telemetry snapshot | Done | New dashboard clients receive latest telemetry. |
 | Add heartbeat/ping handling | Done | `heartbeat` packets are echoed. |
-| Add simple demo token | Done | Optional `DEMO_TOKEN` Worker secret is supported. |
+| Add simple demo token | Done | Optional `DEMO_TOKEN` Worker secret is supported. Demo value: `beauty_and_the_beast`. |
 | Test locally with `wrangler dev` | Not run | Typecheck passes; full session test is part of Phase 6 guide. |
 
 Exit criteria:

@@ -43,7 +43,7 @@ Important: because the Dashboard and Simulator are now configured for static exp
 From PowerShell:
 
 ```powershell
-cd C:\EcoDrive
+cd C:\EcoDriveNew
 npx wrangler login
 ```
 
@@ -54,7 +54,7 @@ Your browser will open. Login to the Cloudflare account you want to use for the 
 Choose a short token for the demo session, for example:
 
 ```text
-ecodrive-demo-2026
+beauty_and_the_beast
 ```
 
 This token is not a high-security secret because it will also be used by public frontend environment variables. Its purpose is mainly to stop random accidental connections.
@@ -62,7 +62,7 @@ This token is not a high-security secret because it will also be used by public 
 Set it on the Worker:
 
 ```powershell
-cd C:\EcoDrive\apps\relay
+cd C:\EcoDriveNew\apps\relay
 npx wrangler secret put DEMO_TOKEN
 ```
 
@@ -73,7 +73,7 @@ If you do not want a token, skip this step and leave all `NEXT_PUBLIC_ECODRIVE_T
 ### 2.3 Deploy The Relay Worker
 
 ```powershell
-cd C:\EcoDrive
+cd C:\EcoDriveNew
 npm run relay:deploy
 ```
 
@@ -203,10 +203,10 @@ Use this first. It proves the public websites and relay work before touching har
 ### 5.1 Start Mock Bridge
 
 ```powershell
-cd C:\EcoDrive
+cd C:\EcoDriveNew
 $env:ECODRIVE_RELAY_WS_URL="wss://ecodrive-relay.<your-account>.workers.dev/ws"
 $env:ECODRIVE_SESSION="demo-main"
-$env:ECODRIVE_TOKEN="ecodrive-demo-2026"
+$env:ECODRIVE_TOKEN="beauty_and_the_beast"
 $env:ECODRIVE_BRIDGE_MOCK="1"
 npm run bridge:cloud
 ```
@@ -251,7 +251,7 @@ Expected result:
 3. Make sure the tested firmware is already flashed:
 
 ```text
-C:\EcoDrive\firmware\src\ecodrive_esp32\ecodrive_esp32.ino
+C:\EcoDriveNew\firmware\src\ecodrive_esp32\ecodrive_esp32.ino
 ```
 
 ### 6.2 Start Real Bridge
@@ -259,11 +259,11 @@ C:\EcoDrive\firmware\src\ecodrive_esp32\ecodrive_esp32.ino
 Close the mock bridge first. Then run:
 
 ```powershell
-cd C:\EcoDrive
+cd C:\EcoDriveNew
 Remove-Item Env:\ECODRIVE_BRIDGE_MOCK -ErrorAction SilentlyContinue
 $env:ECODRIVE_RELAY_WS_URL="wss://ecodrive-relay.<your-account>.workers.dev/ws"
 $env:ECODRIVE_SESSION="demo-main"
-$env:ECODRIVE_TOKEN="ecodrive-demo-2026"
+$env:ECODRIVE_TOKEN="beauty_and_the_beast"
 npm run bridge:cloud -- COM5
 ```
 
@@ -296,10 +296,10 @@ Use this order during judging:
 3. Start bridge:
 
 ```powershell
-cd C:\EcoDrive
+cd C:\EcoDriveNew
 $env:ECODRIVE_RELAY_WS_URL="wss://ecodrive-relay.<your-account>.workers.dev/ws"
 $env:ECODRIVE_SESSION="demo-main"
-$env:ECODRIVE_TOKEN="ecodrive-demo-2026"
+$env:ECODRIVE_TOKEN="beauty_and_the_beast"
 npm run bridge:cloud -- COM5
 ```
 

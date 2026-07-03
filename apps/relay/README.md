@@ -30,3 +30,8 @@ npm --workspace @ecodrive/relay run deploy
 ```
 
 Set `DEMO_TOKEN` as a Cloudflare Worker secret if you want to prevent unknown clients from joining the session.
+For the current demo, use this value:
+
+```text
+beauty_and_the_beast
+```

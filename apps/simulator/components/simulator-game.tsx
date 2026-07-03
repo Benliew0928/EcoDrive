@@ -859,12 +859,17 @@ function DriveRig() {
     vehicle.harshTimer = Math.max(0, vehicle.harshTimer - dt);
     vehicle.aggressiveTimer = Math.max(0, vehicle.aggressiveTimer - dt);
 
-    if (vehicle.brake > 0.72 && accelerationKmhS < -18 && speedAbsKmh > 18) {
-      vehicle.harshTimer = 0.9;
+    const hardBrakeInput = vehicle.brake > 0.64 && speedAbsKmh > 12;
+    const emergencyBrakeInput = vehicle.brake > 0.82 && speedAbsKmh > 7;
+    const hardThrottleInput = vehicle.throttle > 0.78 && vehicle.brake < 0.12 && speedAbsKmh > 3;
+    const launchThrottleInput = vehicle.throttle > 0.9 && vehicle.brake < 0.12;
+
+    if ((hardBrakeInput && accelerationKmhS < -8) || emergencyBrakeInput) {
+      vehicle.harshTimer = 1.08;
     }
 
-    if (vehicle.throttle > 0.84 && accelerationKmhS > 9.5 && speedAbsKmh > 8) {
-      vehicle.aggressiveTimer = 0.75;
+    if ((hardThrottleInput && accelerationKmhS > 4.8) || (launchThrottleInput && speedAbsKmh > 1.5)) {
+      vehicle.aggressiveTimer = 0.92;
     }
 
     let event: GameEvent = "smooth_segment";
@@ -1396,9 +1401,9 @@ function applyDeadzone(value: number, deadzone: number) {
 }
 
 function calculatePedalForce(pedal: ActivePedalState, now: number) {
-  const holdRamp = clamp((now - pedal.startedAt) / 950, 0, 1);
-  const depthForce = 0.18 + pedal.depth * 0.76;
-  const holdForce = 0.24 + holdRamp * 0.58;
+  const holdRamp = clamp((now - pedal.startedAt) / 460, 0, 1);
+  const depthForce = 0.28 + pedal.depth * 0.72;
+  const holdForce = 0.34 + holdRamp * 0.66;
   return clamp(Math.max(pedal.pressure, depthForce, holdForce), 0, 1);
 }
 
