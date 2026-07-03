@@ -11,6 +11,16 @@ import {
   Vector3
 } from "three";
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import {
+  buildRelayWebSocketUrl,
+  createSimulatorInputMessage,
+  defaultSessionId,
+  parseEcoDriveMessage,
+  type DriveEventType as DashboardDriveEvent,
+  type LedState,
+  type ProcessedTelemetry as DashboardTelemetry,
+  type SimulatorInput
+} from "@ecodrive/protocol";
 import { clamp, damp, useGameStore, type GameEvent, type RouteChoice, type Telemetry } from "../lib/game-store";
 import {
   campusBuildings,
@@ -52,46 +62,11 @@ type RoadSample = {
   halfWidth: number;
 };
 
-type DashboardDriveEvent =
-  | "smooth_segment"
-  | "smooth_streak"
-  | "harsh_brake"
-  | "aggressive_acceleration"
-  | "overspeed"
-  | "regen_success"
-  | "route_selected"
-  | "finish_loop"
-  | "launch_ready"
-  | "fast_route_warning"
-  | "idle";
-
-type DashboardTelemetry = {
-  deviceId: string;
-  ecoScore: number;
-  speedKmh: number;
-  event: DashboardDriveEvent;
-  hardBrakes: number;
-  coinsEarned: number;
-  totalCoins: number;
-  energyKwh: number;
-  co2SavedKg: number;
-  ledState: "green" | "amber" | "red" | "blue";
-  timestamp: number;
-  distanceKm: number;
-  batteryPercent: number;
-  rangeKm: number;
-  regenKw: number;
-  motorKw: number;
-  routeChoice: RouteChoice;
-  throttle: number;
-  brake: number;
-  steering: number;
-};
-
-const configuredDashboardAppUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3000";
-const dashboardUrlCandidates = Array.from(
-  new Set([configuredDashboardAppUrl, "http://localhost:3000", "http://localhost:3102", "http://127.0.0.1:3000", "http://127.0.0.1:3102"])
-);
+const blankDashboardFrameUrl = "about:blank";
+const configuredDashboardAppUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? blankDashboardFrameUrl;
+const configuredRelayWsUrl = process.env.NEXT_PUBLIC_ECODRIVE_RELAY_WS_URL ?? process.env.NEXT_PUBLIC_ECODRIVE_WS_URL ?? "";
+const configuredSessionId = process.env.NEXT_PUBLIC_ECODRIVE_SESSION ?? defaultSessionId;
+const configuredRelayToken = process.env.NEXT_PUBLIC_ECODRIVE_TOKEN;
 const dashboardFrameWidth = 1920;
 const dashboardFrameHeight = 1059;
 
@@ -129,12 +104,12 @@ export function SimulatorGame() {
   const telemetry = useGameStore((state) => state.telemetry);
   const controlMode = useGameStore((state) => state.controlMode);
   const gamepadConnected = useGameStore((state) => state.rawInput.gamepadConnected);
-  const dashboardUrl = useReachableDashboardUrl();
+  const dashboardUrl = useDashboardUrl();
   const dashboardFrameRef = useRef<HTMLIFrameElement>(null);
   const [touchControlsVisible, setTouchControlsVisible] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   useDashboardTelemetryBridge(dashboardFrameRef, telemetry, dashboardUrl);
-  useSerialBridge(telemetry);
+  useCloudRelayTelemetry(telemetry);
   const speedLabel = Math.round(Math.abs(telemetry.speedKmh));
   const gearLabel = telemetry.speedKmh < -1 ? "R" : telemetry.speedKmh > 1 ? "D" : "P";
   const controlModeLabel = controlMode.replace("-", " ");
@@ -982,50 +957,8 @@ function DriveRig() {
   return null;
 }
 
-function useReachableDashboardUrl() {
-  const [dashboardUrl, setDashboardUrl] = useState(configuredDashboardAppUrl);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const resolveDashboardUrl = async () => {
-      for (const candidate of dashboardUrlCandidates) {
-        const isReachable = await canReachLocalUrl(candidate);
-        if (cancelled) return;
-
-        if (isReachable) {
-          setDashboardUrl(candidate);
-          return;
-        }
-      }
-    };
-
-    resolveDashboardUrl();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return dashboardUrl;
-}
-
-async function canReachLocalUrl(url: string) {
-  const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), 900);
-
-  try {
-    await fetch(url, {
-      cache: "no-store",
-      mode: "no-cors",
-      signal: controller.signal
-    });
-    return true;
-  } catch {
-    return false;
-  } finally {
-    window.clearTimeout(timeout);
-  }
+function useDashboardUrl() {
+  return configuredDashboardAppUrl || blankDashboardFrameUrl;
 }
 
 function useDashboardTelemetryBridge(frameRef: RefObject<HTMLIFrameElement | null>, telemetry: Telemetry, dashboardUrl: string) {
@@ -1039,7 +972,7 @@ function useDashboardTelemetryBridge(frameRef: RefObject<HTMLIFrameElement | nul
   useEffect(() => {
     const postTelemetry = () => {
       const targetWindow = frameRef.current?.contentWindow;
-      if (!targetWindow) return;
+      if (!targetWindow || dashboardUrl === blankDashboardFrameUrl) return;
 
       targetWindow.postMessage(
         {
@@ -1053,18 +986,21 @@ function useDashboardTelemetryBridge(frameRef: RefObject<HTMLIFrameElement | nul
     postTelemetry();
     const interval = window.setInterval(postTelemetry, 220);
     return () => window.clearInterval(interval);
-  }, [frameRef, targetOrigin]);
+  }, [dashboardUrl, frameRef, targetOrigin]);
 }
 
 function readTargetOrigin(url: string) {
   try {
-    return new URL(url).origin;
+    const origin = new URL(url).origin;
+    return origin === "null" ? "*" : origin;
   } catch {
     return "*";
   }
 }
 
 function buildDashboardFrameUrl(url: string) {
+  if (url === blankDashboardFrameUrl) return url;
+
   try {
     const frameUrl = new URL(url);
     frameUrl.pathname = "/";
@@ -1188,7 +1124,7 @@ function buildDashboardTelemetry(telemetry: Telemetry): DashboardTelemetry {
   };
 }
 
-function ledStateForTelemetry(telemetry: Telemetry): DashboardTelemetry["ledState"] {
+function ledStateForTelemetry(telemetry: Telemetry): LedState {
   if (telemetry.event === "harsh_brake" || telemetry.event === "overspeed" || telemetry.event === "aggressive_acceleration") return "red";
   if (telemetry.event === "fast_route_warning" || telemetry.routeChoice === "fast") return "amber";
   if (telemetry.event === "launch_ready") return "blue";
@@ -1538,26 +1474,46 @@ function distance2D(x: number, z: number, targetX: number, targetZ: number) {
   return Math.sqrt(dx * dx + dz * dz);
 }
 
-const SERIAL_BRIDGE_URL = "ws://localhost:3200";
-
-function useSerialBridge(telemetry: Telemetry) {
+function useCloudRelayTelemetry(telemetry: Telemetry) {
   const wsRef = useRef<WebSocket | null>(null);
-  const lastSentRef = useRef("");
+  const telemetryRef = useRef(telemetry);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    telemetryRef.current = telemetry;
+  }, [telemetry]);
+
+  useEffect(() => {
+    if (!configuredRelayWsUrl) {
+      console.info("[EcoDriveRelay] NEXT_PUBLIC_ECODRIVE_RELAY_WS_URL is not configured; simulator will run offline.");
+      return;
+    }
+
     let disposed = false;
 
     function connect() {
       if (disposed) return;
 
       try {
-        const ws = new WebSocket(SERIAL_BRIDGE_URL);
+        const ws = new WebSocket(
+          buildRelayWebSocketUrl(configuredRelayWsUrl, {
+            role: "simulator",
+            session: configuredSessionId,
+            token: configuredRelayToken
+          })
+        );
 
         ws.onopen = () => {
-          console.log("[SerialBridge] Connected to ESP32 bridge");
+          console.log("[EcoDriveRelay] Simulator connected to public relay.");
           wsRef.current = ws;
-          lastSentRef.current = ""; // Force re-send on reconnect
+          ws.send(
+            JSON.stringify({
+              type: "client.hello",
+              session: configuredSessionId,
+              role: "simulator",
+              sentAt: Date.now()
+            })
+          );
         };
 
         ws.onclose = () => {
@@ -1574,13 +1530,17 @@ function useSerialBridge(telemetry: Telemetry) {
         };
 
         ws.onmessage = (event) => {
-          try {
-            const msg = JSON.parse(event.data);
-            if (msg.type === "bridge:connected") {
-              console.log(`[SerialBridge] ESP32 on ${msg.port}`);
-            }
-          } catch {
-            // ignore
+          const message = parseEcoDriveMessage(event.data);
+          if (!message) return;
+
+          if (message.type === "relay.error") {
+            console.warn(`[EcoDriveRelay] ${message.code}: ${message.message}`);
+          }
+
+          if (message.type === "session.status") {
+            console.log(
+              `[EcoDriveRelay] session ${message.session}: simulator=${message.clients.simulator ?? 0}, dashboard=${message.clients.dashboard ?? 0}, bridge=${message.clients.bridge ?? 0}`
+            );
           }
         };
       } catch {
@@ -1603,15 +1563,31 @@ function useSerialBridge(telemetry: Telemetry) {
     };
   }, []);
 
-  // Send LED state whenever telemetry changes
   useEffect(() => {
-    const ws = wsRef.current;
-    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    if (!configuredRelayWsUrl) return;
 
-    const ledState = ledStateForTelemetry(telemetry);
-    if (ledState !== lastSentRef.current) {
-      ws.send(JSON.stringify({ type: "ledState", state: ledState }));
-      lastSentRef.current = ledState;
-    }
-  }, [telemetry]);
+    const sendTelemetry = () => {
+      const ws = wsRef.current;
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+      ws.send(JSON.stringify(createSimulatorInputMessage(buildSimulatorInput(telemetryRef.current), configuredSessionId)));
+    };
+
+    sendTelemetry();
+    const interval = window.setInterval(sendTelemetry, 160);
+    return () => window.clearInterval(interval);
+  }, []);
+}
+
+function buildSimulatorInput(telemetry: Telemetry): SimulatorInput {
+  return {
+    throttle: telemetry.throttle,
+    brake: telemetry.brake,
+    steering: telemetry.steering,
+    speedKmh: telemetry.speedKmh,
+    ecoScore: telemetry.ecoScore,
+    routeChoice: telemetry.routeChoice,
+    event: telemetry.event,
+    distanceMeters: telemetry.distanceMeters
+  };
 }

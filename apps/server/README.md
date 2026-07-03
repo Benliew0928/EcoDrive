@@ -1,13 +1,32 @@
-# EcoDrive+ Local Relay Server
+# EcoDrive+ Bridge Server
 
-This app will host the local WebSocket relay for the pitch demo.
+This app contains laptop-side bridge scripts for the EcoDrive+ demo.
 
-Planned responsibilities:
+## Public Demo Bridge
 
-- receive processed telemetry from the ESP32,
-- broadcast telemetry to the dashboard,
-- keep seeded demo state for city, rewards, leaderboard and fleet views,
-- optionally coordinate the dashboard start button with the iPad simulator.
+`cloud-bridge.mjs` connects the public Cloudflare relay to the ESP32 over USB serial:
 
-No server runtime has been implemented yet.
+```text
+Public Simulator -> Cloudflare relay -> laptop bridge -> ESP32
+ESP32/laptop bridge -> Cloudflare relay -> Public Dashboard
+```
 
+Run after building the protocol package:
+
+```bash
+npm --workspace @ecodrive/protocol run build
+set ECODRIVE_RELAY_WS_URL=wss://ecodrive-relay.<domain>/ws
+set ECODRIVE_SESSION=demo-main
+npm --workspace @ecodrive/server run bridge:cloud -- COM5
+```
+
+For cloud-only testing before plugging in ESP32:
+
+```bash
+set ECODRIVE_BRIDGE_MOCK=1
+npm --workspace @ecodrive/server run bridge:cloud
+```
+
+## Legacy Local Bridge
+
+`serial-bridge.mjs` is the old local-only bridge that listens on `ws://localhost:3200` and writes `G/R/A/B/X` to the ESP32. Keep it as a fallback tool, but it is not the main public-demo transport anymore.

@@ -1,0 +1,15 @@
+{
+  "name": "@ecodrive/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bridge:cloud": "node cloud-bridge.mjs",
+    "bridge:local": "node serial-bridge.mjs"
+  },
+  "dependencies": {
+    "@ecodrive/protocol": "file:../../packages/protocol",
+    "serialport": "^13.0.0",
+    "ws": "^8.21.0"
+  }
+}

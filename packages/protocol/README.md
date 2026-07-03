@@ -1,11 +1,24 @@
 # EcoDrive+ Protocol Package
 
-Shared protocol types will live here later.
+Shared message contracts for the public hardware-in-the-loop demo.
 
-Planned contracts:
+This package defines the WebSocket messages used by:
 
-- simulator input packet,
-- ESP32 processed telemetry packet,
-- route selection command,
-- demo state snapshots for city, rewards, leaderboard and fleet screens.
+- the public Simulator,
+- the public Dashboard,
+- the Cloudflare relay Worker/Durable Object,
+- the presenter laptop bridge that connects to the ESP32 by USB serial.
 
+Core packet types:
+
+- `sim.input` - simulator controls and local driving state,
+- `dashboard.telemetry` - processed telemetry shown in the dashboard,
+- `bridge.hardware` - ESP32 bridge/serial/LED status,
+- `session.status` - connected client counts for the live demo session,
+- `relay.error` - recoverable relay errors.
+
+Build with:
+
+```bash
+npm --workspace @ecodrive/protocol run build
+```

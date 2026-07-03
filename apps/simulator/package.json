@@ -7,6 +7,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@ecodrive/protocol": "file:../../packages/protocol",
     "@react-three/drei": "latest",
     "@react-three/fiber": "latest",
     "@react-three/rapier": "latest",

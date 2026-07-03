@@ -6,10 +6,16 @@
     "packages/*"
   ],
   "scripts": {
+    "protocol:build": "npm --workspace @ecodrive/protocol run build",
     "dashboard:dev": "npm --workspace @ecodrive/dashboard run dev",
-    "dashboard:build": "npm --workspace @ecodrive/dashboard run build",
+    "dashboard:build": "npm run protocol:build && npm --workspace @ecodrive/dashboard run build",
     "simulator:dev": "npm --workspace @ecodrive/simulator run dev",
-    "simulator:build": "npm --workspace @ecodrive/simulator run build"
+    "simulator:build": "npm run protocol:build && npm --workspace @ecodrive/simulator run build",
+    "relay:dev": "npm run protocol:build && npm --workspace @ecodrive/relay run dev",
+    "relay:deploy": "npm run protocol:build && npm --workspace @ecodrive/relay run deploy",
+    "relay:typecheck": "npm run protocol:build && npm --workspace @ecodrive/relay run typecheck",
+    "bridge:cloud": "npm run protocol:build && npm --workspace @ecodrive/server run bridge:cloud",
+    "bridge:local": "npm --workspace @ecodrive/server run bridge:local"
   },
   "dependencies": {
     "serialport": "^13.0.0",

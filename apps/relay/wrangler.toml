@@ -1,0 +1,14 @@
+name = "ecodrive-relay"
+main = "src/index.ts"
+compatibility_date = "2026-07-03"
+
+[vars]
+ALLOWED_ORIGINS = "*"
+
+[[durable_objects.bindings]]
+name = "ECODRIVE_SESSION"
+class_name = "EcoDriveSession"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["EcoDriveSession"]

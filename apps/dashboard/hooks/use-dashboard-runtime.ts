@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
+import {
+  buildRelayWebSocketUrl,
+  defaultSessionId,
+  parseEcoDriveMessage,
+  parseTelemetry
+} from "@ecodrive/protocol";
 import { useDashboardStore } from "../lib/dashboard-store";
 import type { ProcessedTelemetry } from "../types/dashboard";
 
@@ -8,6 +14,8 @@ export function useDashboardRuntime(enabled = true) {
   const receiveTelemetry = useDashboardStore((state) => state.receiveTelemetry);
   const setConnectionStatus = useDashboardStore((state) => state.setConnectionStatus);
   const wsUrl = process.env.NEXT_PUBLIC_ECODRIVE_WS_URL;
+  const sessionId = process.env.NEXT_PUBLIC_ECODRIVE_SESSION ?? defaultSessionId;
+  const relayToken = process.env.NEXT_PUBLIC_ECODRIVE_TOKEN;
 
   useEffect(() => {
     if (!enabled) return;
@@ -30,28 +38,62 @@ export function useDashboardRuntime(enabled = true) {
       return;
     }
 
-    let socket: WebSocket | null = new WebSocket(wsUrl);
+    let socket: WebSocket | null = new WebSocket(
+      buildRelayWebSocketUrl(wsUrl, {
+        role: "dashboard",
+        session: sessionId,
+        token: relayToken
+      })
+    );
     setConnectionStatus("connecting");
 
-    socket.addEventListener("open", () => setConnectionStatus("live"));
+    socket.addEventListener("open", () => {
+      setConnectionStatus("connecting");
+      socket?.send(
+        JSON.stringify({
+          type: "client.hello",
+          session: sessionId,
+          role: "dashboard",
+          sentAt: Date.now()
+        })
+      );
+    });
     socket.addEventListener("error", () => setConnectionStatus("error"));
     socket.addEventListener("close", () => setConnectionStatus("disconnected"));
     socket.addEventListener("message", (message) => {
-      const telemetry = parseTelemetryPacket(message.data);
+      const packet = parseEcoDriveMessage(message.data);
 
-      if (!telemetry) {
-        console.warn("Ignored malformed EcoDrive telemetry packet.");
+      if (!packet) {
+        console.warn("Ignored malformed EcoDrive relay packet.");
         return;
       }
 
-      receiveTelemetry(telemetry);
+      if (packet.type === "dashboard.telemetry") {
+        receiveTelemetry(packet.telemetry);
+        return;
+      }
+
+      if (packet.type === "session.status") {
+        setConnectionStatus((packet.clients.bridge ?? 0) > 0 ? "live" : "connecting");
+        return;
+      }
+
+      if (packet.type === "bridge.hardware") {
+        setConnectionStatus(packet.hardware.connected ? "live" : "disconnected");
+        return;
+      }
+
+      if (packet.type === "relay.error") {
+        setConnectionStatus("error");
+        console.warn(`EcoDrive relay error: ${packet.code} - ${packet.message}`);
+      }
     });
 
     return () => {
       socket?.close();
       socket = null;
     };
-  }, [enabled, receiveTelemetry, setConnectionStatus, wsUrl]);
+  }, [enabled, receiveTelemetry, relayToken, sessionId, setConnectionStatus, wsUrl]);
 }
 
 function parseSimulatorTelemetryMessage(data: unknown): ProcessedTelemetry | null {
@@ -64,39 +106,5 @@ function parseSimulatorTelemetryMessage(data: unknown): ProcessedTelemetry | nul
 }
 
 function parseTelemetryPacket(data: unknown): ProcessedTelemetry | null {
-  try {
-    const parsed = typeof data === "string" ? JSON.parse(data) : data;
-    if (!isTelemetryPacket(parsed)) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-function isTelemetryPacket(value: unknown): value is ProcessedTelemetry {
-  if (!value || typeof value !== "object") return false;
-
-  const packet = value as ProcessedTelemetry;
-  return (
-    hasOptionalNumber(packet.ecoScore) &&
-    hasOptionalNumber(packet.speedKmh) &&
-    hasOptionalNumber(packet.hardBrakes) &&
-    hasOptionalNumber(packet.coinsEarned) &&
-    hasOptionalNumber(packet.totalCoins) &&
-    hasOptionalNumber(packet.energyKwh) &&
-    hasOptionalNumber(packet.co2SavedKg) &&
-    hasOptionalNumber(packet.timestamp) &&
-    hasOptionalNumber(packet.distanceKm) &&
-    hasOptionalNumber(packet.batteryPercent) &&
-    hasOptionalNumber(packet.rangeKm) &&
-    hasOptionalNumber(packet.regenKw) &&
-    hasOptionalNumber(packet.motorKw) &&
-    hasOptionalNumber(packet.throttle) &&
-    hasOptionalNumber(packet.brake) &&
-    hasOptionalNumber(packet.steering)
-  );
-}
-
-function hasOptionalNumber(value: unknown) {
-  return value === undefined || typeof value === "number";
+  return parseTelemetry(data);
 }

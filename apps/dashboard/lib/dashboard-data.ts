@@ -18,7 +18,8 @@ const hardwareCopy: Record<NonNullable<ProcessedTelemetry["ledState"]>, { led: s
   green: { led: "Green", oled: "Eco OK", buzzer: "Silent", color: "green" },
   amber: { led: "Amber", oled: "Caution", buzzer: "Soft alert", color: "amber" },
   red: { led: "Red", oled: "Correct driving", buzzer: "Warning beep", color: "red" },
-  blue: { led: "Blue", oled: "System ready", buzzer: "Silent", color: "blue" }
+  blue: { led: "Blue", oled: "System ready", buzzer: "Silent", color: "blue" },
+  off: { led: "Off", oled: "Bridge offline", buzzer: "Silent", color: "blue" }
 };
 
 export function createDashboardEvent(event: DriveEventType, timestamp = Date.now()): DashboardEvent {
