@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+
 import { CockpitShell } from "../../components/cockpit-shell";
 
 type RewardCategory = "Food & Drinks" | "EV Benefits" | "Shopping" | "Eco Impact";
