@@ -73,6 +73,55 @@ function get2DCartoonAvatar(name: string) {
   return `https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}`;
 }
 
+const EcoCoin = ({ size = 16, className = "", style = {} }: { size?: number; className?: string; style?: React.CSSProperties }) => (
+  <span className={`eco-coin-icon ${className}`} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", ...style }}>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ verticalAlign: "middle" }}>
+      {/* Outer Coin Circle with gold gradient */}
+      <circle cx="12" cy="12" r="11" fill="url(#coinOuterGrad)" stroke="#EAB308" strokeWidth="0.5" />
+      
+      {/* Inner Coin Circle with slightly darker gold gradient */}
+      <circle cx="12" cy="12" r="8.5" fill="url(#coinInnerGrad)" stroke="#CA8A04" strokeWidth="0.5" />
+      
+      {/* Leaf Symbol in center with gold gradient */}
+      <g transform="translate(4.5, 4.5) scale(0.62)">
+        <path 
+          d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 8a7 7 0 0 1-9 10Z" 
+          fill="url(#coinLeafGrad)" 
+          stroke="#9A3412" 
+          strokeWidth="1.2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round" 
+        />
+        <path 
+          d="M9 22v-4h-4" 
+          stroke="#9A3412" 
+          strokeWidth="1.2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round" 
+        />
+      </g>
+      <defs>
+        {/* Gradients */}
+        <linearGradient id="coinOuterGrad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FDE047" /> {/* Yellow 300 */}
+          <stop offset="50%" stopColor="#EAB308" /> {/* Yellow 500 */}
+          <stop offset="100%" stopColor="#A16207" /> {/* Yellow 700 */}
+        </linearGradient>
+        <linearGradient id="coinInnerGrad" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#EAB308" />
+          <stop offset="50%" stopColor="#CA8A04" />
+          <stop offset="100%" stopColor="#854D0E" />
+        </linearGradient>
+        <linearGradient id="coinLeafGrad" x1="0" y1="0" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FEF08A" /> {/* Yellow 200 */}
+          <stop offset="50%" stopColor="#FDE047" /> {/* Yellow 300 */}
+          <stop offset="100%" stopColor="#CA8A04" /> {/* Yellow 600 */}
+        </linearGradient>
+      </defs>
+    </svg>
+  </span>
+);
+
 // Deterministic state leaderboard generator based on state name
 function getPlayersForState(stateName: string, globalScore: number, timeframe: "daily" | "monthly") {
   const userScore = globalScore - 24500 + 128450;
@@ -645,7 +694,7 @@ function CommunitySurface() {
             <h3 className="podium-name">{overallTop3[1].name}</h3>
             <p className="podium-subtext">Earn {overallTop3[1].earn.toLocaleString()} points</p>
             <div className="podium-score-pill">
-              <span className="score-diamond">💎</span>
+              <EcoCoin size={14} className="score-coin" />
               <span>{overallTop3[1].score.toLocaleString()}</span>
             </div>
           </div>
@@ -667,7 +716,7 @@ function CommunitySurface() {
             <h3 className="podium-name">{overallTop3[0].name}</h3>
             <p className="podium-subtext">Earn {overallTop3[0].earn.toLocaleString()} points</p>
             <div className="podium-score-pill">
-              <span className="score-diamond">💎</span>
+              <EcoCoin size={14} className="score-coin" />
               <span>{overallTop3[0].score.toLocaleString()}</span>
             </div>
           </div>
@@ -686,7 +735,7 @@ function CommunitySurface() {
             <h3 className="podium-name">{overallTop3[2].name}</h3>
             <p className="podium-subtext">Earn {overallTop3[2].earn.toLocaleString()} points</p>
             <div className="podium-score-pill">
-              <span className="score-diamond">💎</span>
+              <EcoCoin size={14} className="score-coin" />
               <span>{overallTop3[2].score.toLocaleString()}</span>
             </div>
           </div>
@@ -744,7 +793,7 @@ function CommunitySurface() {
                     </span>
                   </div>
                   <div className="score-group-v2">
-                    <span className="score-diamond">💎</span>
+                    <EcoCoin size={14} className="row-coin" />
                     <span className="score-v2">{player.score.toLocaleString()}</span>
                   </div>
                 </div>
@@ -786,7 +835,7 @@ function CommunitySurface() {
                     </span>
                   </div>
                   <div className="score-group-v2">
-                    <span className="score-diamond">💎</span>
+                    <EcoCoin size={14} className="row-coin" />
                     <span className="score-v2">{friend.score.toLocaleString()}</span>
                   </div>
                 </div>
@@ -798,7 +847,7 @@ function CommunitySurface() {
 
       {/* Footer banner */}
       <div className="leaderboard-footer">
-        You earned <span className="footer-highlight">💎 50</span> today and are ranked <span className="footer-highlight">#18</span> out of <strong>2,789</strong> users
+        You earned <span className="footer-highlight" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><EcoCoin size={13} className="footer-coin" /> 50</span> today and are ranked <span className="footer-highlight">#18</span> out of <strong>2,789</strong> users
       </div>
     </div>
   );
