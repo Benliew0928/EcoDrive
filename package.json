@@ -10,5 +10,9 @@
     "dashboard:build": "npm --workspace @ecodrive/dashboard run build",
     "simulator:dev": "npm --workspace @ecodrive/simulator run dev",
     "simulator:build": "npm --workspace @ecodrive/simulator run build"
+  },
+  "dependencies": {
+    "serialport": "^13.0.0",
+    "ws": "^8.21.0"
   }
 }

@@ -134,6 +134,7 @@ export function SimulatorGame() {
   const [touchControlsVisible, setTouchControlsVisible] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   useDashboardTelemetryBridge(dashboardFrameRef, telemetry, dashboardUrl);
+  useSerialBridge(telemetry);
   const speedLabel = Math.round(Math.abs(telemetry.speedKmh));
   const gearLabel = telemetry.speedKmh < -1 ? "R" : telemetry.speedKmh > 1 ? "D" : "P";
   const controlModeLabel = controlMode.replace("-", " ");
@@ -1535,4 +1536,82 @@ function distance2D(x: number, z: number, targetX: number, targetZ: number) {
   const dx = x - targetX;
   const dz = z - targetZ;
   return Math.sqrt(dx * dx + dz * dz);
+}
+
+const SERIAL_BRIDGE_URL = "ws://localhost:3200";
+
+function useSerialBridge(telemetry: Telemetry) {
+  const wsRef = useRef<WebSocket | null>(null);
+  const lastSentRef = useRef("");
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    let disposed = false;
+
+    function connect() {
+      if (disposed) return;
+
+      try {
+        const ws = new WebSocket(SERIAL_BRIDGE_URL);
+
+        ws.onopen = () => {
+          console.log("[SerialBridge] Connected to ESP32 bridge");
+          wsRef.current = ws;
+          lastSentRef.current = ""; // Force re-send on reconnect
+        };
+
+        ws.onclose = () => {
+          wsRef.current = null;
+          if (!disposed) {
+            // Silent reconnect every 3 seconds
+            reconnectTimerRef.current = setTimeout(connect, 3000);
+          }
+        };
+
+        ws.onerror = () => {
+          // Suppress errors — the bridge may not be running
+          ws.close();
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === "bridge:connected") {
+              console.log(`[SerialBridge] ESP32 on ${msg.port}`);
+            }
+          } catch {
+            // ignore
+          }
+        };
+      } catch {
+        // WebSocket constructor can throw if URL is invalid
+        if (!disposed) {
+          reconnectTimerRef.current = setTimeout(connect, 3000);
+        }
+      }
+    }
+
+    connect();
+
+    return () => {
+      disposed = true;
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
+  }, []);
+
+  // Send LED state whenever telemetry changes
+  useEffect(() => {
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+    const ledState = ledStateForTelemetry(telemetry);
+    if (ledState !== lastSentRef.current) {
+      ws.send(JSON.stringify({ type: "ledState", state: ledState }));
+      lastSentRef.current = ledState;
+    }
+  }, [telemetry]);
 }
