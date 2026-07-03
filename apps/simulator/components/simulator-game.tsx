@@ -8,8 +8,6 @@ import {
   Color,
   DoubleSide,
   Float32BufferAttribute,
-  Group,
-  Mesh,
   Vector3
 } from "three";
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
@@ -94,6 +92,8 @@ const configuredDashboardAppUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http
 const dashboardUrlCandidates = Array.from(
   new Set([configuredDashboardAppUrl, "http://localhost:3000", "http://localhost:3102", "http://127.0.0.1:3000", "http://127.0.0.1:3102"])
 );
+const dashboardFrameWidth = 1920;
+const dashboardFrameHeight = 1059;
 
 const eventLabels: Record<GameEvent, string> = {
   launch_ready: "Vehicle ready. Awaiting drive input.",
@@ -211,6 +211,8 @@ function CockpitOverlay({
   telemetry: Telemetry;
   touchControlsVisible: boolean;
 }) {
+  const dashboardViewportRef = useRef<HTMLDivElement>(null);
+  const dashboardFrameStyle = useDashboardFrameStyle(dashboardViewportRef);
   const steeringDegrees = telemetry.steering * 34;
   const routeLabel = telemetry.routeChoice === "unknown" ? "Fork ahead" : `${telemetry.routeChoice} route`;
   const eventText =
@@ -291,13 +293,14 @@ function CockpitOverlay({
 
         <div className="center-display">
           <div className="display-camera" />
-          <div className="display-viewport">
+          <div className="display-viewport" ref={dashboardViewportRef}>
             <iframe
               ref={dashboardFrameRef}
               title="Live EcoDrive dashboard app"
               src={buildDashboardFrameUrl(dashboardUrl)}
               sandbox="allow-scripts allow-same-origin allow-forms"
               scrolling="no"
+              style={dashboardFrameStyle}
             />
           </div>
         </div>
@@ -722,8 +725,6 @@ function RouteSigns() {
 }
 
 function DriveRig() {
-  const carRef = useRef<Group>(null);
-  const auraRef = useRef<Mesh>(null);
   const roadSamples = useMemo(
     () =>
       routePaths.flatMap((path) =>
@@ -933,20 +934,6 @@ function DriveRig() {
       (event === "harsh_brake" ? 16 : 0);
     vehicle.ecoScore = damp(vehicle.ecoScore, clamp(scoreTarget, 38, 99), 1.7, dt);
 
-    if (carRef.current) {
-      carRef.current.position.set(vehicle.x, 0.58, vehicle.z);
-      carRef.current.rotation.set(
-        vehicle.brake > 0.65 && vehicle.speed > 0 ? -0.035 : vehicle.throttle * 0.015,
-        vehicle.yaw,
-        -vehicle.steering * Math.min(speedAbs / 26, 1) * 0.055
-      );
-    }
-
-    if (auraRef.current) {
-      const pulse = 0.85 + Math.sin(renderState.clock.elapsedTime * 5.2) * 0.1;
-      auraRef.current.scale.setScalar(event === "harsh_brake" ? 1.4 : pulse);
-    }
-
     const forward = new Vector3(Math.sin(vehicle.yaw), 0, -Math.cos(vehicle.yaw));
     const right = new Vector3(Math.cos(vehicle.yaw), 0, Math.sin(vehicle.yaw));
     const carPosition = new Vector3(vehicle.x, 0.8, vehicle.z);
@@ -991,46 +978,7 @@ function DriveRig() {
     vehicle.previousSpeed = vehicle.speed;
   });
 
-  return (
-    <group ref={carRef}>
-      <mesh ref={auraRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.47, 0]}>
-        <ringGeometry args={[1.6, 3.8, 80]} />
-        <meshBasicMaterial color="#37e58f" transparent opacity={0.22} side={DoubleSide} />
-      </mesh>
-      <EVHood />
-    </group>
-  );
-}
-
-function EVHood() {
-  return (
-    <group>
-      <mesh castShadow receiveShadow position={[0, 0.28, -2.35]} rotation={[-0.05, 0, 0]}>
-        <boxGeometry args={[2.55, 0.28, 2.35]} />
-        <meshStandardMaterial color="#dffdf1" metalness={0.72} roughness={0.24} emissive="#37e58f" emissiveIntensity={0.025} />
-      </mesh>
-      <mesh position={[0, 0.5, -3.58]}>
-        <boxGeometry args={[1.9, 0.08, 0.12]} />
-        <meshBasicMaterial color="#37e58f" transparent opacity={0.9} />
-      </mesh>
-      <mesh castShadow position={[-1.36, 0.18, -2.42]} rotation={[0, 0, -0.12]}>
-        <boxGeometry args={[0.34, 0.24, 1.95]} />
-        <meshStandardMaterial color="#c9f4e7" metalness={0.68} roughness={0.28} />
-      </mesh>
-      <mesh castShadow position={[1.36, 0.18, -2.42]} rotation={[0, 0, 0.12]}>
-        <boxGeometry args={[0.34, 0.24, 1.95]} />
-        <meshStandardMaterial color="#c9f4e7" metalness={0.68} roughness={0.28} />
-      </mesh>
-      <mesh position={[0.88, 0.42, -3.55]}>
-        <boxGeometry args={[0.38, 0.06, 0.08]} />
-        <meshBasicMaterial color="#38bdf8" transparent opacity={0.72} />
-      </mesh>
-      <mesh position={[-0.88, 0.42, -3.55]}>
-        <boxGeometry args={[0.38, 0.06, 0.08]} />
-        <meshBasicMaterial color="#38bdf8" transparent opacity={0.72} />
-      </mesh>
-    </group>
-  );
+  return null;
 }
 
 function useReachableDashboardUrl() {
@@ -1118,11 +1066,49 @@ function readTargetOrigin(url: string) {
 function buildDashboardFrameUrl(url: string) {
   try {
     const frameUrl = new URL(url);
+    frameUrl.pathname = "/";
+    frameUrl.search = "";
+    frameUrl.hash = "";
     frameUrl.searchParams.set("simulatorDisplay", "1");
     return frameUrl.toString();
   } catch {
     return url;
   }
+}
+
+function useDashboardFrameStyle(viewportRef: RefObject<HTMLDivElement | null>) {
+  const [scale, setScale] = useState(0.216);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const updateScale = () => {
+      const bounds = viewport.getBoundingClientRect();
+      const nextScale = Math.min(bounds.width / dashboardFrameWidth, bounds.height / dashboardFrameHeight);
+      setScale(Number.isFinite(nextScale) && nextScale > 0 ? nextScale : 0.216);
+    };
+
+    updateScale();
+    const observer = new ResizeObserver(updateScale);
+    observer.observe(viewport);
+    window.addEventListener("resize", updateScale);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateScale);
+    };
+  }, [viewportRef]);
+
+  return useMemo(
+    () =>
+      ({
+        "--dashboard-frame-height": `${dashboardFrameHeight}px`,
+        "--dashboard-frame-scale": scale,
+        "--dashboard-frame-width": `${dashboardFrameWidth}px`
+      }) as React.CSSProperties,
+    [scale]
+  );
 }
 
 function buildDashboardTelemetry(telemetry: Telemetry): DashboardTelemetry {

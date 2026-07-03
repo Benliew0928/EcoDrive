@@ -108,11 +108,12 @@ export function CockpitShell({ activeMode, children }: CockpitShellProps) {
           {modeLinks.map((item) => {
             const Icon = modeIcons[item.id];
             const isActive = item.id === activeMode;
+            const href = buildModeHref(item.href, isSimulatorDisplay);
 
             return (
               <Link
                 className={`mode-chip ${isActive ? "mode-chip--active" : ""}`}
-                href={item.href}
+                href={href}
                 key={item.id}
               >
                 <Icon size={16} />
@@ -124,4 +125,9 @@ export function CockpitShell({ activeMode, children }: CockpitShellProps) {
       </nav>
     </div>
   );
+}
+
+function buildModeHref(href: string, isSimulatorDisplay: boolean) {
+  if (!isSimulatorDisplay) return href;
+  return `${href}${href.includes("?") ? "&" : "?"}simulatorDisplay=1`;
 }
