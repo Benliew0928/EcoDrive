@@ -184,6 +184,7 @@ function CommunitySurface() {
   const [selectedState, setSelectedState] = useState("All States");
   const [timeframe, setTimeframe] = useState<"daily" | "monthly">("daily");
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [activeLeaderboardTab, setActiveLeaderboardTab] = useState<"top3" | "state" | "friends">("top3");
 
   const states = [
     "All States", "Johor", "Kedah", "Kelantan", "Melaka", "Negeri Sembilan", 
@@ -192,45 +193,34 @@ function CommunitySurface() {
     "Putrajaya", "Labuan"
   ];
 
-  // Overall Top 3 Podium
-  const baseTop3 = [
-    {
-      rank: 1,
-      name: "Joie Joie",
-      earn: 2500,
-      score: 100000,
-      avatar: get2DCartoonAvatar("Joie Joie"),
-      flag: "https://upload.wikimedia.org/wikipedia/commons/5/5a/Flag_of_Johor.svg",
-      stateName: "Johor"
-    },
-    {
-      rank: 2,
-      name: "Brian Ng",
-      earn: 2000,
-      score: 50000,
-      avatar: get2DCartoonAvatar("Brian Ng"),
-      flag: "https://upload.wikimedia.org/wikipedia/commons/0/0c/Flag_of_Selangor.svg",
-      stateName: "Selangor"
-    },
-    {
-      rank: 3,
-      name: "David Do",
-      earn: 1500,
-      score: 20000,
-      avatar: get2DCartoonAvatar("David Do"),
-      flag: "https://upload.wikimedia.org/wikipedia/commons/d/d4/Flag_of_Penang_%28Malaysia%29.svg",
-      stateName: "Penang"
-    }
-  ];
-
+  // Dynamically calculate Overall Top 3 Achievers from combined state pools
   const overallTop3 = useMemo(() => {
-    const factor = timeframe === "daily" ? 1 : 12;
-    return baseTop3.map(p => ({
-      ...p,
-      earn: p.earn * factor,
-      score: p.score * factor
+    const listStates = [
+      "Johor", "Kedah", "Kelantan", "Melaka", "Negeri Sembilan", 
+      "Pahang", "Perak", "Perlis", "Pulau Pinang", "Sabah", 
+      "Sarawak", "Selangor", "Terengganu", "Kuala Lumpur", 
+      "Putrajaya", "Labuan"
+    ];
+    let pool: Array<{ name: string; score: number; avatar: string; state: string; flag: string; isReal: boolean }> = [];
+    listStates.forEach(stName => {
+      const players = getPlayersForState(stName, globalScore, timeframe);
+      pool = [...pool, ...players];
+    });
+    // Remove duplicates by name if any
+    const uniquePool = pool.filter((v, i, a) => a.findIndex(t => t.name === v.name) === i);
+    // Sort descending
+    uniquePool.sort((a, b) => b.score - a.score);
+    // Return top 3
+    return uniquePool.slice(0, 3).map((p, idx) => ({
+      rank: idx + 1,
+      name: p.name,
+      earn: Math.round(p.score * 0.025), // dynamic earn points calculation
+      score: p.score,
+      avatar: p.avatar,
+      flag: p.flag,
+      stateName: p.state
     }));
-  }, [timeframe]);
+  }, [globalScore, timeframe]);
 
   // Friends Leaderboard Data
   const baseFriends = [
@@ -301,11 +291,11 @@ function CommunitySurface() {
           object-fit: cover;
         }
 
-        /* Time frame toggle button group */
+        /* Compact time frame toggle button group shifted upward */
         .time-toggle-wrapper {
           display: flex;
           justify-content: center;
-          margin-bottom: 8px;
+          margin-bottom: 2px;
           width: 100%;
         }
 
@@ -314,7 +304,7 @@ function CommunitySurface() {
           background: rgba(255, 255, 255, 0.03);
           border: 1px solid rgba(255, 255, 255, 0.06);
           border-radius: 999px;
-          padding: 4px;
+          padding: 3px;
           gap: 4px;
         }
 
@@ -323,9 +313,9 @@ function CommunitySurface() {
           border: none;
           border-radius: 999px;
           color: #9db3ad;
-          font-size: 11px;
+          font-size: 9px;
           font-weight: 800;
-          padding: 6px 18px;
+          padding: 3px 10px;
           cursor: pointer;
           transition: all 0.2s ease;
           text-transform: uppercase;
@@ -339,63 +329,63 @@ function CommunitySurface() {
           box-shadow: 0 4px 12px rgba(55, 229, 143, 0.08);
         }
 
-        /* EV Styled Header Container */
+        /* Compact EV Styled Header Container shifted upward */
         .ev-header-container {
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          margin: 16px 0 28px;
+          margin: 0px 0 4px;
           text-align: center;
         }
 
         .ev-main-title {
           font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
-          font-size: 32px;
+          font-size: 22px;
           font-weight: 900;
           text-transform: uppercase;
-          letter-spacing: 3px;
+          letter-spacing: 2px;
           background: linear-gradient(90deg, #10B981 0%, #34D399 50%, #38BDF8 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
-          filter: drop-shadow(0 2px 10px rgba(56, 189, 248, 0.25));
-          margin: 0 0 8px 0;
+          filter: drop-shadow(0 2px 6px rgba(56, 189, 248, 0.25));
+          margin: 0;
           position: relative;
         }
 
         .ev-main-title::after {
           content: '';
           position: absolute;
-          bottom: -6px;
+          bottom: -5px;
           left: 50%;
           transform: translateX(-50%);
-          width: 70px;
-          height: 2.5px;
+          width: 55px;
+          height: 2px;
           background: linear-gradient(90deg, #34D399, #38BDF8);
-          box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+          box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
           border-radius: 2px;
         }
 
         .ev-sub-title-wrapper {
           display: flex;
           align-items: center;
-          gap: 8px;
-          margin-top: 14px;
+          gap: 6px;
+          margin-top: 4px;
         }
 
         .ev-sub-title {
           font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
-          font-size: 14px;
+          font-size: 12px;
           font-weight: 850;
           color: #9db3ad;
           text-transform: uppercase;
-          letter-spacing: 2px;
-          text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+          letter-spacing: 1.5px;
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .ev-lightning {
           color: #38bdf8;
-          font-size: 16px;
+          font-size: 14px;
           animation: evPulse 2s infinite ease-in-out;
           display: inline-flex;
           align-items: center;
@@ -406,124 +396,411 @@ function CommunitySurface() {
           50% { opacity: 1; filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.8)); }
         }
 
-        /* Podium Cards override */
-        .podium-card {
-          min-height: 200px;
-          padding-top: 30px;
+        /* 3-Column layout grid containing Tab bar + Dynamic Panels */
+        .leaderboards-tabbed-layout {
+          display: grid !important;
+          grid-template-columns: 220px 1fr !important;
+          gap: 16px !important;
+          width: 100% !important;
+          flex: 1 !important;
+          min-height: 0 !important;
+          margin-top: -24px !important;
         }
 
-        .podium-card--1st {
-          min-height: 240px;
+        /* Vertical Tabs container centered vertically in the side column */
+        .leaderboards-tab-nav {
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 8px !important;
+          background: rgba(10, 18, 19, 0.4) !important;
+          border: 1px solid rgba(38, 59, 58, 0.4) !important;
+          border-radius: 12px !important;
+          padding: 10px !important;
+          height: fit-content !important;
+          margin-top: auto !important;
+          margin-bottom: auto !important;
         }
 
-        /* Custom Rank Badges visually matching image */
-        .podium-rank-badge-v3 {
+        .leaderboard-tab-btn {
+          display: flex !important;
+          align-items: center !important;
+          gap: 8px !important;
+          width: 100% !important;
+          padding: 8px 12px !important;
+          background: rgba(255, 255, 255, 0.02) !important;
+          border: 1px solid rgba(255, 255, 255, 0.04) !important;
+          border-radius: 8px !important;
+          color: #9db3ad !important;
+          cursor: pointer !important;
+          transition: all 0.2s ease !important;
+          text-align: left !important;
+        }
+
+        .leaderboard-tab-btn:hover {
+          background: rgba(255, 255, 255, 0.05) !important;
+          color: #f4fff9 !important;
+          transform: translateX(2px);
+        }
+
+        .leaderboard-tab-btn--active {
+          background: rgba(55, 229, 143, 0.08) !important;
+          border-color: rgba(55, 229, 143, 0.3) !important;
+          color: #37e58f !important;
+          box-shadow: 0 4px 15px rgba(55, 229, 143, 0.08) !important;
+        }
+
+        .tab-icon {
+          font-size: 14px !important;
+        }
+
+        .tab-label {
+          font-family: 'Montserrat', system-ui, sans-serif !important;
+          font-size: 10px !important;
+          font-weight: 800 !important;
+          letter-spacing: 0.5px !important;
+          text-transform: uppercase !important;
+        }
+
+        .leaderboards-tab-content {
+          display: flex !important;
+          flex-direction: column !important;
+          height: 100% !important;
+          min-height: 0 !important;
+        }
+
+        .leaderboard-rows {
+          max-height: calc(100vh - 290px) !important;
+          overflow-y: auto !important;
+        }
+
+        @keyframes goldGlow {
+          0%, 100% { box-shadow: 0 4px 20px rgba(250, 204, 21, 0.2), inset 0 0 10px rgba(250, 204, 21, 0.05); }
+          50% { box-shadow: 0 4px 35px rgba(250, 204, 21, 0.45), inset 0 0 20px rgba(250, 204, 21, 0.15); }
+        }
+
+        @keyframes floatCrown {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-5px) rotate(3deg); }
+        }
+
+        .podium-section-horizontal {
+          display: flex !important;
+          align-items: flex-end !important;
+          justify-content: center !important;
+          gap: 12px !important;
+          width: 100% !important;
+          height: 100% !important;
+          max-width: 600px !important;
+          margin: 0 auto !important;
+          padding-bottom: 5px !important;
+        }
+
+        .podium-card-h {
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          padding: 10px 8px !important;
+          background: linear-gradient(180deg, rgba(14, 25, 26, 0.65), rgba(6, 12, 13, 0.9));
+          border: 1px solid rgba(38, 59, 58, 0.68);
+          border-radius: 16px;
+          position: relative;
+          width: 160px !important;
+          transition: all 0.2s ease;
+        }
+
+        .podium-card-h--1st {
+          height: 210px !important;
+          border: 2px solid rgba(250, 204, 21, 0.5) !important;
+          animation: goldGlow 4s infinite ease-in-out;
+          background: linear-gradient(180deg, rgba(250, 204, 21, 0.08), rgba(6, 12, 13, 0.95)) !important;
+          z-index: 10;
+        }
+
+        .podium-card-h--2nd {
+          height: 180px !important;
+          border: 1.5px solid rgba(156, 163, 175, 0.3) !important;
+          background: linear-gradient(180deg, rgba(156, 163, 175, 0.03), rgba(6, 12, 13, 0.9)) !important;
+        }
+
+        .podium-card-h--3rd {
+          height: 160px !important;
+          border: 1.5px solid rgba(217, 119, 6, 0.25) !important;
+          background: linear-gradient(180deg, rgba(217, 119, 6, 0.02), rgba(6, 12, 13, 0.9)) !important;
+        }
+
+        .podium-h-rank-badge {
           position: absolute;
-          width: 28px;
-          height: 28px;
+          width: 20px;
+          height: 20px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 13px;
+          font-size: 9.5px;
           font-weight: 900;
-          border: 2.5px solid #060c0d;
+          border: 1.5px solid #060c0d;
           z-index: 12;
         }
 
-        .podium-card--1st .podium-rank-badge-v3 {
-          top: -14px;
+        .podium-h-rank-badge--1st {
+          top: -10px;
           left: 50%;
           transform: translateX(-50%);
           background: #FCD34D;
           color: #050c0d;
-          box-shadow: 0 4px 10px rgba(245, 184, 75, 0.4);
+          box-shadow: 0 2px 6px rgba(245, 184, 75, 0.4);
         }
 
-        .podium-card--2nd .podium-rank-badge-v3 {
-          top: 14px;
-          left: 14px;
+        .podium-h-rank-badge--2nd {
+          top: 8px;
+          left: 8px;
           background: #9CA3AF;
           color: #050c0d;
-          box-shadow: 0 4px 10px rgba(156, 163, 175, 0.3);
+          box-shadow: 0 2px 6px rgba(156, 163, 175, 0.3);
         }
 
-        .podium-card--3rd .podium-rank-badge-v3 {
-          top: 14px;
-          left: 14px;
+        .podium-h-rank-badge--3rd {
+          top: 8px;
+          left: 8px;
           background: #D97706;
           color: #ffffff;
-          box-shadow: 0 4px 10px rgba(217, 119, 6, 0.3);
+          box-shadow: 0 2px 6px rgba(217, 119, 6, 0.3);
         }
 
-        /* Override avatar sizes for premium Memoji visual */
-        .podium-avatar-wrapper {
-          width: 86px !important;
-          height: 86px !important;
+        .podium-h-avatar-wrapper {
+          width: 48px !important;
+          height: 48px !important;
+          border-radius: 50%;
+          position: relative;
           background: rgba(255, 255, 255, 0.03);
           border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .podium-card--1st .podium-avatar-wrapper {
-          width: 102px !important;
-          height: 102px !important;
-          background: linear-gradient(135deg, rgba(245, 184, 75, 0.15), rgba(180, 83, 9, 0.15));
-          border-color: rgba(245, 184, 75, 0.38);
-        }
-
-        /* Avatar styling tweaks for premium 3D look */
-        .podium-avatar-wrapper .podium-avatar {
-          background: transparent;
-          border: none;
-          width: 90%;
-          height: 90%;
-        }
-
-        /* Subtext Earn Points styling */
-        .podium-subtext {
-          font-size: 11px;
-          color: #78908a;
-          margin: 4px 0 8px;
-          text-align: center;
-        }
-
-        /* Premium Score Pill */
-        .podium-score-pill {
           display: flex;
           align-items: center;
-          gap: 6px;
+          justify-content: center;
+          flex-shrink: 0;
+          margin-top: 10px;
+        }
+
+        .podium-card-h--1st .podium-h-avatar-wrapper {
+          width: 60px !important;
+          height: 60px !important;
+          border-color: rgba(255, 255, 255, 0.2);
+          background: linear-gradient(135deg, rgba(245, 184, 75, 0.15), rgba(180, 83, 9, 0.15));
+        }
+
+        .podium-h-avatar {
+          width: 85%;
+          height: 85%;
+          object-fit: contain;
+          border-radius: 50%;
+        }
+
+        .podium-h-crown-container {
+          position: absolute;
+          top: -16px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 10;
+          animation: floatCrown 3s infinite ease-in-out;
+        }
+
+        .podium-h-info {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          margin-top: 8px;
+          width: 100%;
+        }
+
+        .podium-h-name {
+          font-size: 10.5px;
+          font-weight: 750;
+          color: #f4fff9;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100%;
+        }
+
+        .podium-card-h--1st .podium-h-name {
+          color: #FCD34D;
+        }
+
+        .podium-h-subtext {
+          font-size: 8.5px;
+          color: #78908a;
+          margin: 2px 0 6px;
+        }
+
+        .podium-h-score-pill {
+          display: flex;
+          align-items: center;
+          gap: 5px;
           background: rgba(255, 255, 255, 0.02);
           border: 1px solid rgba(255, 255, 255, 0.05);
           border-radius: 999px;
-          padding: 4px 14px;
-          font-size: 13.5px;
+          padding: 3px 8px;
+          font-size: 9.5px;
           font-weight: 800;
           color: #f4fff9;
         }
 
-        .podium-card--1st .podium-score-pill {
+        .podium-card-h--1st .podium-h-score-pill {
           background: rgba(55, 229, 143, 0.08);
-          border-color: rgba(55, 229, 143, 0.2);
+          border-color: rgba(255, 229, 143, 0.2);
           color: #37e58f;
         }
 
-        .score-diamond {
-          color: #38BDF8;
-          font-size: 11px;
-          display: inline-flex;
+        /* 2-Column Split Featured Layout */
+        .split-leaderboard-layout {
+          display: grid !important;
+          grid-template-columns: 180px 1fr !important;
+          gap: 12px !important;
+          width: 100% !important;
+          height: 100% !important;
+          min-height: 0 !important;
+        }
+
+        .featured-winner-column {
+          display: flex !important;
+          flex-direction: column !important;
+          height: 100% !important;
+          min-height: 0 !important;
+          justify-content: center !important;
+        }
+
+        .featured-winner-card {
+          background: linear-gradient(180deg, rgba(250, 204, 21, 0.08), rgba(6, 12, 13, 0.95)) !important;
+          border: 2px solid rgba(250, 204, 21, 0.45) !important;
+          animation: goldGlow 4s infinite ease-in-out;
+          border-radius: 12px !important;
+          padding: 14px 10px !important;
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          text-align: center !important;
+          position: relative !important;
+          height: 100% !important;
+          justify-content: center !important;
+        }
+
+        .featured-header {
+          font-family: 'Montserrat', system-ui, sans-serif !important;
+          font-size: 9.5px !important;
+          font-weight: 850 !important;
+          color: #FCD34D !important;
+          letter-spacing: 1.5px !important;
+          margin-bottom: 8px !important;
+          display: flex !important;
+          align-items: center !important;
+          gap: 4px !important;
+        }
+
+        .featured-winner-avatar-wrapper {
+          width: 58px !important;
+          height: 58px !important;
+          border-radius: 50%;
+          position: relative !important;
+          border-color: rgba(255, 255, 255, 0.2) !important;
+          background: linear-gradient(135deg, rgba(245, 184, 75, 0.15), rgba(180, 83, 9, 0.15)) !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          margin-bottom: 8px !important;
+          border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .featured-winner-avatar {
+          width: 85%;
+          height: 85%;
+          object-fit: contain;
+          border-radius: 50%;
+        }
+
+        .featured-winner-flag-badge {
+          position: absolute;
+          top: 0px;
+          right: 0px;
+          width: 24px;
+          height: 16px;
+          border-radius: 3px;
+          overflow: hidden;
+          border: 1.5px solid #050c0d;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+          display: flex;
           align-items: center;
+          justify-content: center;
+          background: #050c0d;
         }
 
-        .podium-card--1st .score-diamond {
-          color: #37e58f;
+        .featured-winner-flag-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .featured-winner-info {
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          width: 100% !important;
+        }
+
+        .featured-winner-name {
+          font-size: 11.5px !important;
+          font-weight: 800 !important;
+          color: #FCD34D !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          margin: 0 !important;
+        }
+
+        .featured-winner-state {
+          font-size: 8.5px !important;
+          color: #78908a !important;
+          margin: 2px 0 8px 0 !important;
+        }
+
+        .featured-winner-score-badge {
+          display: flex !important;
+          align-items: center !important;
+          gap: 6px !important;
+          background: rgba(55, 229, 143, 0.08) !important;
+          border: 1px solid rgba(55, 229, 143, 0.2) !important;
+          border-radius: 999px !important;
+          padding: 3px 8px !important;
+          font-size: 10px !important;
+          font-weight: 850 !important;
+          color: #37e58f !important;
+        }
+
+        .list-column {
+          display: flex !important;
+          flex-direction: column !important;
+          height: 100% !important;
+          min-height: 0 !important;
+        }
+
+        .leaderboard-row-v2--gold {
+          background: linear-gradient(90deg, rgba(250, 204, 21, 0.12), rgba(250, 204, 21, 0.02)) !important;
+          border-color: rgba(250, 204, 21, 0.45) !important;
+          box-shadow: 0 4px 15px rgba(250, 204, 21, 0.08);
+        }
+
+        .leaderboard-row-v2--gold:hover {
+          background: linear-gradient(90deg, rgba(250, 204, 21, 0.18), rgba(250, 204, 21, 0.04)) !important;
+          border-color: rgba(250, 204, 21, 0.65) !important;
+          box-shadow: 0 6px 20px rgba(250, 204, 21, 0.12);
         }
 
         /* Rows styling visually matching screenshot */
         .leaderboard-row-v2 {
-          padding: 8px 14px;
+          padding: 4px 8px;
           background: rgba(255, 255, 255, 0.01);
           border: 1px solid rgba(255, 255, 255, 0.03);
-          border-radius: 12px;
+          border-radius: 8px;
         }
 
         /* Row highlights (green theme glow) */
@@ -543,7 +820,7 @@ function CommunitySurface() {
           width: 20px;
           color: #78908a;
           font-weight: 800;
-          font-size: 12.5px;
+          font-size: 11px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -580,8 +857,8 @@ function CommunitySurface() {
 
         /* Avatar circular frame matching image */
         .avatar-v2-wrapper {
-          width: 32px;
-          height: 32px;
+          width: 26px;
+          height: 26px;
           border-radius: 50%;
           background: rgba(255, 255, 255, 0.05);
           display: flex;
@@ -604,7 +881,7 @@ function CommunitySurface() {
         }
 
         .name-v2 {
-          font-size: 13px;
+          font-size: 11px;
           font-weight: 650;
           color: #f4fff9;
           white-space: nowrap;
@@ -626,7 +903,7 @@ function CommunitySurface() {
         }
 
         .score-v2 {
-          font-size: 13px;
+          font-size: 11px;
           font-weight: 800;
           color: #f4fff9;
         }
@@ -644,12 +921,20 @@ function CommunitySurface() {
           background: rgba(255, 255, 255, 0.02);
           border: 1px solid rgba(255, 255, 255, 0.05);
           border-radius: 999px;
-          padding: 8px 20px;
-          font-size: 12px;
+          padding: 5px 12px;
+          font-size: 10.5px;
           color: #9db3ad;
-          margin-top: 18px;
+          margin-top: 4px;
           width: fit-content;
           box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .leaderboard-card-header {
+          padding: 6px 12px !important;
+        }
+
+        .leaderboard-card-title {
+          font-size: 12px !important;
         }
 
         .footer-diamond {
@@ -662,22 +947,67 @@ function CommunitySurface() {
           font-weight: 700;
         }
 
-        @media (max-width: 640px) {
-          .podium-avatar-wrapper {
-            width: 72px !important;
-            height: 72px !important;
+        @media (max-width: 1023px) {
+          .leaderboards-tabbed-layout {
+            grid-template-columns: 1fr !important;
+            grid-template-rows: auto 1fr !important;
+            gap: 14px !important;
+            height: 100% !important;
           }
-          .podium-card--1st .podium-avatar-wrapper {
-            width: 86px !important;
-            height: 86px !important;
+          .leaderboards-tab-nav {
+            flex-direction: row !important;
+            padding: 8px !important;
+            gap: 8px !important;
+            width: 100% !important;
+            overflow-x: auto !important;
           }
-          .podium-flag-badge {
-            width: 22px;
-            height: 15px;
+          .leaderboard-tab-btn {
+            padding: 8px 12px !important;
+            font-size: 12px !important;
+            justify-content: center !important;
+            flex: 1 !important;
+            white-space: nowrap !important;
           }
-          .podium-card--1st .podium-flag-badge {
-            width: 26px;
-            height: 17px;
+          .podium-section-horizontal {
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+            height: auto !important;
+            padding-bottom: 10px !important;
+          }
+          .podium-card-h {
+            width: 30% !important;
+            min-width: 100px !important;
+            height: auto !important;
+            min-height: 170px !important;
+          }
+          .podium-card-h--1st {
+            order: 1 !important;
+            height: auto !important;
+            min-height: 195px !important;
+          }
+          .podium-card-h--2nd {
+            order: 0 !important;
+          }
+          .podium-card-h--3rd {
+            order: 2 !important;
+          }
+          .leaderboard-rows {
+            max-height: calc(100vh - 290px) !important;
+          }
+          
+          /* Split Layout Responsive overrides */
+          .split-leaderboard-layout {
+            grid-template-columns: 1fr !important;
+            grid-template-rows: auto 1fr !important;
+            gap: 14px !important;
+            height: 100% !important;
+          }
+          .featured-winner-column {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: 100% !important;
+            margin-bottom: 8px !important;
           }
         }
       `}</style>
@@ -687,192 +1017,289 @@ function CommunitySurface() {
         <h1 className="ev-main-title">EcoDrive Leaderboard</h1>
         <div className="ev-sub-title-wrapper">
           <span className="ev-lightning">⚡</span>
-          <span className="ev-sub-title">Overall Top 3 Achievers</span>
+          <span className="ev-sub-title">
+            {activeLeaderboardTab === "top3" && "overall top 3 achiever"}
+            {activeLeaderboardTab === "state" && "state leaderboard"}
+            {activeLeaderboardTab === "friends" && "friends leaderboard"}
+          </span>
           <span className="ev-lightning">⚡</span>
         </div>
+      </div>
 
-        {/* Daily / Monthly toggle pill */}
-        <div className="time-toggle-wrapper" style={{ marginTop: '16px', marginBottom: '0px' }}>
-          <div className="time-toggle-container">
-            <button 
-              onClick={() => setTimeframe("daily")}
-              className={`time-toggle-btn ${timeframe === "daily" ? "time-toggle-btn--active" : ""}`}
-            >
-              Daily
-            </button>
-            <button 
-              onClick={() => setTimeframe("monthly")}
-              className={`time-toggle-btn ${timeframe === "monthly" ? "time-toggle-btn--active" : ""}`}
-            >
-              Monthly
-            </button>
-          </div>
+      {/* Daily / Monthly toggle pill */}
+      <div className="time-toggle-wrapper">
+        <div className="time-toggle-container">
+          <button 
+            onClick={() => setTimeframe("daily")}
+            className={`time-toggle-btn ${timeframe === "daily" ? "time-toggle-btn--active" : ""}`}
+          >
+            Daily
+          </button>
+          <button 
+            onClick={() => setTimeframe("monthly")}
+            className={`time-toggle-btn ${timeframe === "monthly" ? "time-toggle-btn--active" : ""}`}
+          >
+            Monthly
+          </button>
         </div>
       </div>
 
-      {/* Overall Top 3 Podium */}
-      <div className="podium-section">
-        {/* Rank 2 - Left */}
-        <div className="podium-card podium-card--2nd">
-          <span className="podium-rank-badge-v3">2</span>
-          <div className="podium-avatar-wrapper">
-            <img src={overallTop3[1].avatar} alt={overallTop3[1].name} className="podium-avatar" />
-            <div className="podium-flag-badge" title={overallTop3[1].stateName}>
-              <img src={overallTop3[1].flag} alt={`${overallTop3[1].stateName} flag`} className="podium-flag-img" />
-            </div>
-          </div>
-          <div className="podium-info">
-            <h3 className="podium-name">{overallTop3[1].name}</h3>
-            <p className="podium-subtext">Earn {overallTop3[1].earn.toLocaleString()} points</p>
-            <div className="podium-score-pill">
-              <EcoCoin size={14} className="score-coin" />
-              <span>{overallTop3[1].score.toLocaleString()}</span>
-            </div>
-          </div>
+      <div className="leaderboards-tabbed-layout">
+        {/* Left Column: Fixed Navigation Buttons Stacked vertically, centered vertically */}
+        <div className="leaderboards-tab-nav">
+          <button 
+            onClick={() => setActiveLeaderboardTab("top3")}
+            className={`leaderboard-tab-btn ${activeLeaderboardTab === "top3" ? "leaderboard-tab-btn--active" : ""}`}
+          >
+            <span className="tab-icon">🏆</span>
+            <span className="tab-label">Top Achievers</span>
+          </button>
+          <button 
+            onClick={() => setActiveLeaderboardTab("state")}
+            className={`leaderboard-tab-btn ${activeLeaderboardTab === "state" ? "leaderboard-tab-btn--active" : ""}`}
+          >
+            <span className="tab-icon">🗺️</span>
+            <span className="tab-label">State Leaderboard</span>
+          </button>
+          <button 
+            onClick={() => setActiveLeaderboardTab("friends")}
+            className={`leaderboard-tab-btn ${activeLeaderboardTab === "friends" ? "leaderboard-tab-btn--active" : ""}`}
+          >
+            <span className="tab-icon">👥</span>
+            <span className="tab-label">Friends Leaderboard</span>
+          </button>
         </div>
 
-        {/* Rank 1 - Center (Elevated, Glowing) */}
-        <div className="podium-card podium-card--1st">
-          <div className="podium-crown-container">
-            <Crown className="podium-crown-icon" size={26} fill="#FCD34D" />
-          </div>
-          <span className="podium-rank-badge-v3">1</span>
-          <div className="podium-avatar-wrapper">
-            <img src={overallTop3[0].avatar} alt={overallTop3[0].name} className="podium-avatar" />
-            <div className="podium-flag-badge" title={overallTop3[0].stateName}>
-              <img src={overallTop3[0].flag} alt={`${overallTop3[0].stateName} flag`} className="podium-flag-img" />
-            </div>
-          </div>
-          <div className="podium-info">
-            <h3 className="podium-name">{overallTop3[0].name}</h3>
-            <p className="podium-subtext">Earn {overallTop3[0].earn.toLocaleString()} points</p>
-            <div className="podium-score-pill">
-              <EcoCoin size={14} className="score-coin" />
-              <span>{overallTop3[0].score.toLocaleString()}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Rank 3 - Right */}
-        <div className="podium-card podium-card--3rd">
-          <span className="podium-rank-badge-v3">3</span>
-          <div className="podium-avatar-wrapper">
-            <img src={overallTop3[2].avatar} alt={overallTop3[2].name} className="podium-avatar" />
-            <div className="podium-flag-badge" title={overallTop3[2].stateName}>
-              <img src={overallTop3[2].flag} alt={`${overallTop3[2].stateName} flag`} className="podium-flag-img" />
-            </div>
-          </div>
-          <div className="podium-info">
-            <h3 className="podium-name">{overallTop3[2].name}</h3>
-            <p className="podium-subtext">Earn {overallTop3[2].earn.toLocaleString()} points</p>
-            <div className="podium-score-pill">
-              <EcoCoin size={14} className="score-coin" />
-              <span>{overallTop3[2].score.toLocaleString()}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Grid containing State and Friends leaderboards */}
-      <div className="leaderboards-grid">
-        {/* State Leaderboard */}
-        <div className="leaderboard-card">
-          <div className="leaderboard-card-header">
-            <h3 className="leaderboard-card-title">
-              <Award size={16} /> State Leaderboard
-            </h3>
-            <div className="state-select-container">
-              <select 
-                value={selectedState} 
-                onChange={(e) => handleStateChange(e.target.value)}
-                className="state-select-dropdown"
-              >
-                {states.map(state => (
-                  <option key={state} value={state}>{state}</option>
-                ))}
-              </select>
-              <ChevronDown size={12} className="state-select-chevron" />
-            </div>
-          </div>
-
-          <div className={`leaderboard-rows ${isTransitioning ? "leaderboard-rows--fade" : ""}`}>
-            {statePlayers.map((player, index) => {
-              const isFirst = index === 0;
-              return (
-                <div 
-                  key={player.name} 
-                  className={`leaderboard-row-v2 ${isFirst ? "leaderboard-row-v2--highlighted" : ""}`}
-                >
-                  <span className="rank-v2">
-                    {isFirst ? (
-                      <Trophy size={14} className="trophy-badge" fill="#F5B84B" />
-                    ) : (
-                      index + 1
-                    )}
-                  </span>
-                  <div className="row-flag-badge" title={player.state}>
-                    <img src={player.flag} alt={player.state} className="row-flag-img" />
-                  </div>
-                  <div className="avatar-v2-wrapper">
-                    <img src={player.avatar} alt={player.name} className="avatar-v2" />
-                  </div>
-                  <div className="info-v2">
-                    <span className="name-v2">
-                      {player.name}
-                      <span className="state-v2">({player.state})</span>
-                      {player.isReal && <span className="me-badge">You</span>}
-                    </span>
-                  </div>
-                  <div className="score-group-v2">
-                    <EcoCoin size={14} className="row-coin" />
-                    <span className="score-v2">{player.score.toLocaleString()}</span>
+        {/* Right Column: Dynamic Content Area */}
+        <div className="leaderboards-tab-content">
+          {activeLeaderboardTab === "top3" && (
+            <div className="podium-section-horizontal">
+              {/* Rank 2 - Left */}
+              <div className="podium-card-h podium-card-h--2nd">
+                <span className="podium-h-rank-badge podium-h-rank-badge--2nd">2</span>
+                <div className="podium-h-avatar-wrapper">
+                  <img src={overallTop3[1].avatar} alt={overallTop3[1].name} className="podium-h-avatar" />
+                  <div className="podium-flag-badge" title={overallTop3[1].stateName}>
+                    <img src={overallTop3[1].flag} alt={`${overallTop3[1].stateName} flag`} className="podium-flag-img" />
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Friends Leaderboard */}
-        <div className="leaderboard-card">
-          <div className="leaderboard-card-header">
-            <h3 className="leaderboard-card-title">
-              <Users size={16} /> Friends Leaderboard
-            </h3>
-          </div>
-
-          <div className="leaderboard-rows">
-            {friends.map((friend, index) => {
-              const isFirst = index === 0;
-              return (
-                <div 
-                  key={friend.name} 
-                  className={`leaderboard-row-v2 ${isFirst ? "leaderboard-row-v2--highlighted" : ""}`}
-                >
-                  <span className="rank-v2">
-                    {isFirst ? (
-                      <Trophy size={14} className="trophy-badge" fill="#F5B84B" />
-                    ) : (
-                      index + 1
-                    )}
-                  </span>
-                  <div className="avatar-v2-wrapper">
-                    <img src={friend.avatar} alt={friend.name} className="avatar-v2" />
-                  </div>
-                  <div className="info-v2">
-                    <span className="name-v2">
-                      {friend.name}
-                      {friend.isReal && <span className="me-badge">You</span>}
-                    </span>
-                  </div>
-                  <div className="score-group-v2">
-                    <EcoCoin size={14} className="row-coin" />
-                    <span className="score-v2">{friend.score.toLocaleString()}</span>
+                <div className="podium-h-info">
+                  <h3 className="podium-h-name">{overallTop3[1].name}</h3>
+                  <p className="podium-h-subtext">Earned {overallTop3[1].score.toLocaleString()} pts</p>
+                  <div className="podium-h-score-pill">
+                    <EcoCoin size={13} className="score-coin" />
+                    <span>{overallTop3[1].score.toLocaleString()}</span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+
+              {/* Rank 1 - Center */}
+              <div className="podium-card-h podium-card-h--1st">
+                <div className="podium-h-crown-container">
+                  <Crown className="podium-crown-icon" size={24} fill="#FCD34D" stroke="#FCD34D" />
+                </div>
+                <span className="podium-h-rank-badge podium-h-rank-badge--1st">1</span>
+                <div className="podium-h-avatar-wrapper">
+                  <img src={overallTop3[0].avatar} alt={overallTop3[0].name} className="podium-h-avatar" />
+                  <div className="podium-flag-badge" title={overallTop3[0].stateName}>
+                    <img src={overallTop3[0].flag} alt={`${overallTop3[0].stateName} flag`} className="podium-flag-img" />
+                  </div>
+                </div>
+                <div className="podium-h-info">
+                  <h3 className="podium-h-name" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    {overallTop3[0].name}
+                    <Trophy size={13} fill="#FCD34D" stroke="#FCD34D" style={{ verticalAlign: 'middle' }} />
+                  </h3>
+                  <p className="podium-h-subtext">Earned {overallTop3[0].score.toLocaleString()} pts</p>
+                  <div className="podium-h-score-pill">
+                    <EcoCoin size={13} className="score-coin" />
+                    <span>{overallTop3[0].score.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rank 3 - Right */}
+              <div className="podium-card-h podium-card-h--3rd">
+                <span className="podium-h-rank-badge podium-h-rank-badge--3rd">3</span>
+                <div className="podium-h-avatar-wrapper">
+                  <img src={overallTop3[2].avatar} alt={overallTop3[2].name} className="podium-h-avatar" />
+                  <div className="podium-flag-badge" title={overallTop3[2].stateName}>
+                    <img src={overallTop3[2].flag} alt={`${overallTop3[2].stateName} flag`} className="podium-flag-img" />
+                  </div>
+                </div>
+                <div className="podium-h-info">
+                  <h3 className="podium-h-name">{overallTop3[2].name}</h3>
+                  <p className="podium-h-subtext">Earned {overallTop3[2].score.toLocaleString()} pts</p>
+                  <div className="podium-h-score-pill">
+                    <EcoCoin size={13} className="score-coin" />
+                    <span>{overallTop3[2].score.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeLeaderboardTab === "state" && (
+            <div className="split-leaderboard-layout">
+              {/* Left Column: Featured State Winner */}
+              {statePlayers[0] && (
+                <div className="featured-winner-column">
+                  <div className="podium-card-h podium-card-h--1st" style={{ margin: '0 auto' }}>
+                    <div className="podium-h-crown-container">
+                      <Crown className="podium-crown-icon" size={24} fill="#FCD34D" stroke="#FCD34D" />
+                    </div>
+                    <span className="podium-h-rank-badge podium-h-rank-badge--1st">1</span>
+                    <div className="podium-h-avatar-wrapper">
+                      <img src={statePlayers[0].avatar} alt={statePlayers[0].name} className="podium-h-avatar" />
+                      <div className="podium-flag-badge" title={statePlayers[0].state}>
+                        <img src={statePlayers[0].flag} alt={`${statePlayers[0].state} flag`} className="podium-flag-img" />
+                      </div>
+                    </div>
+                    <div className="podium-h-info">
+                      <h3 className="podium-h-name" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        {statePlayers[0].name}
+                        <Trophy size={13} fill="#FCD34D" stroke="#FCD34D" style={{ verticalAlign: 'middle' }} />
+                      </h3>
+                      <p className="podium-h-subtext">State Champion ({statePlayers[0].state})</p>
+                      <div className="podium-h-score-pill">
+                        <EcoCoin size={13} className="score-coin" />
+                        <span>{statePlayers[0].score.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Right Column: Ranked State List */}
+              <div className="list-column">
+                <div className="leaderboard-card">
+                  <div className="leaderboard-card-header">
+                    <h3 className="leaderboard-card-title">
+                      <Award size={16} /> State Leaderboard
+                    </h3>
+                    <div className="state-select-container">
+                      <select 
+                        value={selectedState} 
+                        onChange={(e) => handleStateChange(e.target.value)}
+                        className="state-select-dropdown"
+                      >
+                        {states.map(state => (
+                          <option key={state} value={state}>{state}</option>
+                        ))}
+                      </select>
+                      <ChevronDown size={12} className="state-select-chevron" />
+                    </div>
+                  </div>
+
+                  <div className={`leaderboard-rows ${isTransitioning ? "leaderboard-rows--fade" : ""}`}>
+                    {statePlayers.slice(0, 6).map((player, index) => {
+                      const isFirst = index === 0;
+                      return (
+                        <div 
+                          key={player.name} 
+                          className={`leaderboard-row-v2 ${isFirst ? "leaderboard-row-v2--gold" : ""}`}
+                        >
+                          <span className="rank-v2">
+                            {isFirst ? (
+                              <Trophy size={14} className="trophy-badge" fill="#FCD34D" stroke="#FCD34D" />
+                            ) : (
+                              index + 1
+                            )}
+                          </span>
+                          <div className="avatar-v2-wrapper">
+                            <img src={player.avatar} alt={player.name} className="avatar-v2" />
+                          </div>
+                          <div className="info-v2" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span className="name-v2" style={{ color: isFirst ? '#FCD34D' : '#f4fff9' }}>
+                              {player.name} <span className="state-muted" style={{ fontSize: '11px', color: '#78908a', marginLeft: '4px', fontWeight: 'normal' }}>({player.state})</span>
+                            </span>
+                            <div className="row-flag-badge" title={player.state} style={{ width: '18px', height: '12px', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', display: 'inline-flex' }}>
+                              <img src={player.flag} alt={player.state} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </div>
+                          </div>
+                          <div className="score-group-v2">
+                            <EcoCoin size={14} className="row-coin" />
+                            <span className="score-v2">{player.score.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeLeaderboardTab === "friends" && (
+            <div className="split-leaderboard-layout">
+              {/* Left Column: Featured Friends Winner */}
+              {friends[0] && (
+                <div className="featured-winner-column">
+                  <div className="podium-card-h podium-card-h--1st" style={{ margin: '0 auto' }}>
+                    <div className="podium-h-crown-container">
+                      <Crown className="podium-crown-icon" size={24} fill="#FCD34D" stroke="#FCD34D" />
+                    </div>
+                    <span className="podium-h-rank-badge podium-h-rank-badge--1st">1</span>
+                    <div className="podium-h-avatar-wrapper">
+                      <img src={friends[0].avatar} alt={friends[0].name} className="podium-h-avatar" />
+                    </div>
+                    <div className="podium-h-info">
+                      <h3 className="podium-h-name" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        {friends[0].name}
+                        <Trophy size={13} fill="#FCD34D" stroke="#FCD34D" style={{ verticalAlign: 'middle' }} />
+                      </h3>
+                      <p className="podium-h-subtext">Top Friend</p>
+                      <div className="podium-h-score-pill">
+                        <EcoCoin size={13} className="score-coin" />
+                        <span>{friends[0].score.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Right Column: Friends ranked list */}
+              <div className="list-column">
+                <div className="leaderboard-card">
+                  <div className="leaderboard-card-header">
+                    <h3 className="leaderboard-card-title">
+                      <Users size={16} /> Friends Leaderboard
+                    </h3>
+                  </div>
+
+                  <div className="leaderboard-rows">
+                    {friends.slice(0, 6).map((friend, index) => {
+                      const isFirst = index === 0;
+                      return (
+                        <div 
+                          key={friend.name} 
+                          className={`leaderboard-row-v2 ${isFirst ? "leaderboard-row-v2--gold" : ""}`}
+                        >
+                          <span className="rank-v2">
+                            {isFirst ? (
+                              <Trophy size={14} className="trophy-badge" fill="#FCD34D" stroke="#FCD34D" />
+                            ) : (
+                              index + 1
+                            )}
+                          </span>
+                          <div className="avatar-v2-wrapper">
+                            <img src={friend.avatar} alt={friend.name} className="avatar-v2" />
+                          </div>
+                          <div className="info-v2">
+                            <span className="name-v2" style={{ color: isFirst ? '#FCD34D' : '#f4fff9' }}>{friend.name}</span>
+                          </div>
+                          <div className="score-group-v2">
+                            <EcoCoin size={14} className="row-coin" />
+                            <span className="score-v2">{friend.score.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
