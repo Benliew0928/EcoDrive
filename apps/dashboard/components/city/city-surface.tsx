@@ -11,8 +11,8 @@ import {
   RotateCw,
   ShoppingBag,
   Sparkles,
-  Trash2,
   TrendingUp,
+  Warehouse,
   X
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -33,22 +33,26 @@ type PlacementMessage = {
 
 const BUILDING_DRAG_TYPE = "application/x-ecodrive-building";
 const INFRASTRUCTURE_DRAG_TYPE = "application/x-ecodrive-infrastructure";
+const WAREHOUSE_DRAG_TYPE = "application/x-ecodrive-warehouse";
 
 export function CitySurface() {
   const walletCoins = useDashboardStore((state) => state.walletCoins);
   const walletHasHydrated = useDashboardStore((state) => state.hasHydrated);
   const spendCoins = useDashboardStore((state) => state.spendCoins);
   const infrastructure = useCityStore((state) => state.infrastructure);
+  const warehouse = useCityStore((state) => state.warehouse);
   const cityHasHydrated = useCityStore((state) => state.hasHydrated);
   const placeInfrastructure = useCityStore((state) => state.placeInfrastructure);
+  const placeFromWarehouse = useCityStore((state) => state.placeFromWarehouse);
   const moveInfrastructure = useCityStore((state) => state.moveInfrastructure);
   const rotateInfrastructure = useCityStore((state) => state.rotateInfrastructure);
-  const removeInfrastructure = useCityStore((state) => state.removeInfrastructure);
+  const moveToWarehouse = useCityStore((state) => state.moveToWarehouse);
   const fieldRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
   const terrainDragRef = useRef({ active: false, startX: 0, startY: 0, startYaw: 0, startPitch: 55 });
   const [selectedBuildingId, setSelectedBuildingId] = useState<CityBuildingId>("solar");
   const [selectedInfrastructureId, setSelectedInfrastructureId] = useState<string | null>(null);
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [terrainYaw, setTerrainYaw] = useState(0);
   const [terrainPitch, setTerrainPitch] = useState(55);
@@ -90,6 +94,14 @@ export function CitySurface() {
     setMessage({ kind: "success", text: `${building.name} purchased and added to your district.` });
   };
 
+  const restoreFromWarehouse = (id: string, x: number, y: number) => {
+    const storedItem = warehouse.find((item) => item.id === id);
+    if (!storedItem) return;
+    placeFromWarehouse(id, x, y);
+    setSelectedWarehouseId(null);
+    setMessage({ kind: "success", text: `${cityBuildingMap[storedItem.buildingId].name} restored from your warehouse.` });
+  };
+
   const readFieldPosition = (clientX: number, clientY: number) => {
     const bounds = worldRef.current?.getBoundingClientRect();
     if (!bounds) return { x: 50, y: 50 };
@@ -105,11 +117,17 @@ export function CitySurface() {
     if (!isEditing) return;
     const position = readFieldPosition(event.clientX, event.clientY);
     const infrastructureId = event.dataTransfer.getData(INFRASTRUCTURE_DRAG_TYPE);
+    const warehouseId = event.dataTransfer.getData(WAREHOUSE_DRAG_TYPE);
     const buildingId = event.dataTransfer.getData(BUILDING_DRAG_TYPE) as CityBuildingId;
 
     if (infrastructureId) {
       moveInfrastructure(infrastructureId, position.x, position.y);
       setMessage({ kind: "success", text: "Infrastructure repositioned. Your layout has been saved." });
+      return;
+    }
+
+    if (warehouseId) {
+      restoreFromWarehouse(warehouseId, position.x, position.y);
       return;
     }
 
@@ -120,6 +138,10 @@ export function CitySurface() {
     if (!isEditing) return;
     if ((event.target as HTMLElement).closest("[data-infrastructure-id]")) return;
     const position = readFieldPosition(event.clientX, event.clientY);
+    if (selectedWarehouseId) {
+      restoreFromWarehouse(selectedWarehouseId, position.x, position.y);
+      return;
+    }
     purchaseAndPlace(selectedBuildingId, position.x, position.y);
   };
 
@@ -175,6 +197,7 @@ export function CitySurface() {
                 onClick={() => {
                   setIsEditing((current) => !current);
                   setSelectedInfrastructureId(null);
+                  setSelectedWarehouseId(null);
                   setMessage({ kind: "success", text: isEditing ? "Store closed. Terrain controls unlocked." : "Store open. Add, move, rotate or remove infrastructure." });
                 }}
                 type="button"
@@ -191,7 +214,7 @@ export function CitySurface() {
             onDragEnter={() => setFieldIsActive(true)}
             onDragOver={(event) => {
               event.preventDefault();
-              event.dataTransfer.dropEffect = event.dataTransfer.types.includes(INFRASTRUCTURE_DRAG_TYPE) ? "move" : "copy";
+              event.dataTransfer.dropEffect = event.dataTransfer.types.includes(INFRASTRUCTURE_DRAG_TYPE) || event.dataTransfer.types.includes(WAREHOUSE_DRAG_TYPE) ? "move" : "copy";
               setFieldIsActive(true);
             }}
             onDrop={handleDrop}
@@ -243,14 +266,14 @@ export function CitySurface() {
                 <strong>{cityBuildingMap[selectedInfrastructure.buildingId].name}</strong>
                 <button onClick={() => rotateInfrastructure(selectedInfrastructure.id)} type="button"><RotateCw size={13} /> Rotate</button>
                 <button
-                  className="city-edit-toolbar-remove"
+                  className="city-edit-toolbar-store"
                   onClick={() => {
-                    removeInfrastructure(selectedInfrastructure.id);
+                    moveToWarehouse(selectedInfrastructure.id);
                     setSelectedInfrastructureId(null);
-                    setMessage({ kind: "success", text: "Infrastructure removed. Purchases are non-refundable." });
+                    setMessage({ kind: "success", text: "Infrastructure moved to your warehouse." });
                   }}
                   type="button"
-                ><Trash2 size={13} /> Remove</button>
+                ><Warehouse size={13} /> Warehouse</button>
               </div>
             ) : null}
 
@@ -274,6 +297,50 @@ export function CitySurface() {
             <Leaf size={21} />
           </div>
 
+          <section className="city-warehouse" aria-label="Infrastructure warehouse">
+            <div className="city-warehouse-heading">
+              <div><Warehouse size={16} /><strong>Warehouse</strong></div>
+              <span>{warehouse.length} stored</span>
+            </div>
+            {warehouse.length ? (
+              <div className="city-warehouse-list">
+                {warehouse.map((item) => {
+                  const building = cityBuildingMap[item.buildingId];
+                  const Icon = building.Icon;
+                  const selected = item.id === selectedWarehouseId;
+                  return (
+                    <button
+                      aria-pressed={selected}
+                      className={`city-warehouse-card ${selected ? "city-warehouse-card--selected" : ""}`}
+                      draggable
+                      key={item.id}
+                      onClick={() => {
+                        setSelectedWarehouseId(item.id);
+                        setSelectedInfrastructureId(null);
+                        setMessage({ kind: "success", text: `${building.name} selected. Tap the terrain or drag it out to place it.` });
+                      }}
+                      onDragEnd={() => setFieldIsActive(false)}
+                      onDragStart={(event) => {
+                        event.dataTransfer.effectAllowed = "move";
+                        event.dataTransfer.setData(WAREHOUSE_DRAG_TYPE, item.id);
+                        setSelectedWarehouseId(item.id);
+                      }}
+                      style={{ "--building-color": building.color } as React.CSSProperties}
+                      type="button"
+                    >
+                      <span className="city-warehouse-model"><Icon size={19} /></span>
+                      <span><strong>{building.name}</strong><small>Owned · place free</small></span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="city-warehouse-empty">Removed infrastructure will be stored here for reuse.</p>
+            )}
+          </section>
+
+          <div className="city-shop-label"><ShoppingBag size={14} /><strong>Buy infrastructure</strong></div>
+
           <div className="city-catalog-list">
             {cityBuildings.map((building) => {
               const Icon = building.Icon;
@@ -285,12 +352,16 @@ export function CitySurface() {
                   className={`city-catalog-card ${selected ? "city-catalog-card--selected" : ""}`}
                   draggable={affordable && storesReady}
                   key={building.id}
-                  onClick={() => setSelectedBuildingId(building.id)}
+                  onClick={() => {
+                    setSelectedBuildingId(building.id);
+                    setSelectedWarehouseId(null);
+                  }}
                   onDragEnd={() => setFieldIsActive(false)}
                   onDragStart={(event) => {
                     event.dataTransfer.effectAllowed = "copy";
                     event.dataTransfer.setData(BUILDING_DRAG_TYPE, building.id);
                     setSelectedBuildingId(building.id);
+                    setSelectedWarehouseId(null);
                   }}
                   style={{ "--building-color": building.color } as React.CSSProperties}
                   type="button"
