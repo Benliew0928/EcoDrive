@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CockpitShell } from "../../components/cockpit-shell";
 
 type RewardCategory = "Food & Drinks" | "EV Benefits" | "Shopping" | "Eco Impact";
 type CategoryFilter = "All" | RewardCategory;
+type SortOption = "Most Popular" | "Lowest Points" | "Highest Points" | "Newest";
 
 type Reward = {
   id: string;
@@ -18,6 +19,14 @@ type Reward = {
   image: string;
   expiry: string;
   expiryUrgent?: boolean;
+};
+
+type RedeemedEntry = {
+  id: string;
+  reward: Reward;
+  redeemedAt: Date;
+  expiresAt: Date;
+  status: "Unused";
 };
 
 const categories: CategoryFilter[] = ["All", "Food & Drinks", "EV Benefits", "Shopping", "Eco Impact"];
@@ -227,6 +236,12 @@ export default function RewardsPage() {
   const [selectedReward, setSelectedReward] = useState(rewards[0]);
   const [redeemedReward, setRedeemedReward] = useState<Reward | null>(null);
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOption, setSortOption] = useState<SortOption>("Most Popular");
+  const [detailReward, setDetailReward] = useState<Reward | null>(null);
+  const [myRewardsOpen, setMyRewardsOpen] = useState(false);
+  const [myRewardsTab, setMyRewardsTab] = useState<"Rewards" | "History">("Rewards");
+  const [redemptionHistory, setRedemptionHistory] = useState<RedeemedEntry[]>([]);
 
   const qrCells = useMemo(() => {
     const seed = selectedReward.id.length + selectedReward.cost;
@@ -236,9 +251,31 @@ export default function RewardsPage() {
     );
   }, [selectedReward]);
 
-  const visibleRewards = activeCategory === "All"
-    ? rewards
-    : rewards.filter((reward) => reward.category === activeCategory);
+  useEffect(() => {
+    if (!redeemedReward) return;
+    const redeemedAt = new Date();
+    setRedemptionHistory((current) => [{
+      id: `${redeemedReward.id}-${yieldCoins}-${redeemedAt.getTime()}`,
+      reward: redeemedReward,
+      redeemedAt,
+      expiresAt: new Date(redeemedAt.getTime() + 30 * 86_400_000),
+      status: "Unused"
+    }, ...current]);
+  }, [redeemedReward, yieldCoins]);
+
+  const visibleRewards = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const filtered = rewards.filter((reward) =>
+      (activeCategory === "All" || reward.category === activeCategory) &&
+      (!query || reward.title.toLowerCase().includes(query) || reward.partner.toLowerCase().includes(query))
+    );
+    return [...filtered].sort((first, second) => {
+      if (sortOption === "Lowest Points") return first.cost - second.cost;
+      if (sortOption === "Highest Points") return second.cost - first.cost;
+      if (sortOption === "Newest") return Number(second.badge === "New") - Number(first.badge === "New");
+      return Number(second.badge === "Popular") - Number(first.badge === "Popular") || second.stock - first.stock;
+    });
+  }, [activeCategory, searchQuery, sortOption]);
 
   function redeemReward(reward: Reward) {
     if (yieldCoins < reward.cost) return;
@@ -247,7 +284,6 @@ export default function RewardsPage() {
     setRedeemedReward(reward);
   }
 
-  void redeemedReward;
   void qrCells;
 
   return (
@@ -272,19 +308,40 @@ export default function RewardsPage() {
             </div>
           </header>
 
-          <nav className="marketplace-categories" aria-label="Reward categories">
-            {categories.map((category) => (
-              <button
-                aria-pressed={activeCategory === category}
-                className={activeCategory === category ? "category-pill category-pill--active" : "category-pill"}
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                type="button"
-              >
-                {category}
-              </button>
-            ))}
-          </nav>
+          <div className="marketplace-category-row">
+            <nav className="marketplace-categories" aria-label="Reward categories">
+              {categories.map((category) => (
+                <button
+                  aria-pressed={activeCategory === category}
+                  className={activeCategory === category ? "category-pill category-pill--active" : "category-pill"}
+                  key={category}
+                  onClick={() => setActiveCategory(category)}
+                  type="button"
+                >
+                  {category}
+                </button>
+              ))}
+            </nav>
+            <button className="my-rewards-button" onClick={() => setMyRewardsOpen(true)} type="button">
+              My Rewards <span>{redemptionHistory.length}</span>
+            </button>
+          </div>
+
+          <div className="marketplace-tools">
+            <label className="marketplace-search">
+              <span>Search</span>
+              <input onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search rewards..." type="search" value={searchQuery} />
+            </label>
+            <label className="marketplace-sort">
+              <span>Sort by</span>
+              <select onChange={(event) => setSortOption(event.target.value as SortOption)} value={sortOption}>
+                <option>Most Popular</option>
+                <option>Lowest Points</option>
+                <option>Highest Points</option>
+                <option>Newest</option>
+              </select>
+            </label>
+          </div>
 
           <div className="marketplace-section-heading">
             <div><span>{activeCategory}</span><h2>{activeCategory === "All" ? "Explore all rewards" : `${activeCategory} rewards`}</h2></div>
@@ -297,7 +354,11 @@ export default function RewardsPage() {
               const isSelected = selectedReward.id === reward.id;
 
               return (
-                <article className={isSelected ? "marketplace-card marketplace-card--selected" : "marketplace-card"} key={reward.id}>
+                <article
+                  className={isSelected ? "marketplace-card marketplace-card--selected" : "marketplace-card"}
+                  key={reward.id}
+                  onClick={() => { setSelectedReward(reward); setDetailReward(reward); }}
+                >
                   <button className="marketplace-image-button" onClick={() => setSelectedReward(reward)} type="button">
                     <img alt={reward.title} loading="lazy" referrerPolicy="no-referrer" src={reward.image} />
                     <span className={badgeClassName(reward.badge)}>{reward.badge}</span>
@@ -324,7 +385,7 @@ export default function RewardsPage() {
                       </span>
                     </div>
 
-                    <button className="marketplace-redeem" disabled={!canRedeem} onClick={() => redeemReward(reward)} type="button">
+                    <button className="marketplace-redeem" disabled={!canRedeem} onClick={(event) => { event.stopPropagation(); redeemReward(reward); }} type="button">
                       {canRedeem ? "Redeem now" : "Not enough points"}
                     </button>
                   </div>
@@ -332,12 +393,80 @@ export default function RewardsPage() {
               );
             })}
           </section>
+
+          {!visibleRewards.length ? (
+            <div className="marketplace-empty"><strong>No rewards found</strong><span>Try another title, partner, or category.</span></div>
+          ) : null}
         </section>
       </main>
+
+      {myRewardsOpen ? (
+        <div className="marketplace-overlay" onClick={() => setMyRewardsOpen(false)} role="presentation">
+          <section aria-label="My Rewards" className="my-rewards-panel" onClick={(event) => event.stopPropagation()}>
+            <header className="marketplace-modal-header">
+              <div><span>Your collection</span><h2>My Rewards</h2></div>
+              <button aria-label="Close My Rewards" onClick={() => setMyRewardsOpen(false)} type="button">×</button>
+            </header>
+            <div className="my-rewards-tabs" role="tablist">
+              <button aria-selected={myRewardsTab === "Rewards"} className={myRewardsTab === "Rewards" ? "active" : ""} onClick={() => setMyRewardsTab("Rewards")} role="tab" type="button">Rewards</button>
+              <button aria-selected={myRewardsTab === "History"} className={myRewardsTab === "History" ? "active" : ""} onClick={() => setMyRewardsTab("History")} role="tab" type="button">History</button>
+            </div>
+            {!redemptionHistory.length ? (
+              <div className="my-rewards-empty"><strong>No rewards redeemed yet.</strong><span>Your redeemed vouchers and history will appear here.</span></div>
+            ) : myRewardsTab === "Rewards" ? (
+              <div className="my-rewards-list">
+                {redemptionHistory.map((entry) => (
+                  <article className="owned-reward" key={entry.id}>
+                    <img alt={entry.reward.title} src={entry.reward.image} />
+                    <div className="owned-reward-copy">
+                      <h3>{entry.reward.title}</h3>
+                      <dl><div><dt>Redeemed</dt><dd>{formatDate(entry.redeemedAt)}</dd></div><div><dt>Status</dt><dd className="status-unused">{entry.status}</dd></div><div><dt>Expires</dt><dd>{formatDate(entry.expiresAt)}</dd></div></dl>
+                      <button onClick={() => { setMyRewardsOpen(false); setDetailReward(entry.reward); }} type="button">View Voucher</button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="reward-history-list">
+                {redemptionHistory.map((entry) => (
+                  <article className="reward-history-item" key={entry.id}>
+                    <div><strong>{entry.reward.title}</strong><span>{formatDate(entry.redeemedAt)}</span></div>
+                    <div><b>-{entry.reward.cost.toLocaleString()} Points</b><span>Completed</span></div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      ) : null}
+
+      {detailReward ? (
+        <div className="marketplace-overlay marketplace-overlay--center" onClick={() => setDetailReward(null)} role="presentation">
+          <section aria-label={`${detailReward.title} details`} className="reward-detail-modal" onClick={(event) => event.stopPropagation()}>
+            <button aria-label="Close reward details" className="reward-detail-close" onClick={() => setDetailReward(null)} type="button">×</button>
+            <div className="reward-detail-image"><img alt={detailReward.title} src={detailReward.image} /><span className={badgeClassName(detailReward.badge)}>{detailReward.badge}</span></div>
+            <div className="reward-detail-content">
+              <span className="reward-detail-partner">{detailReward.partner}</span>
+              <h2>{detailReward.title}</h2>
+              <p>{detailReward.description}</p>
+              <div className="reward-detail-price"><span className="yield-coin">Y</span><strong>{detailReward.cost.toLocaleString()}</strong><small>Points</small></div>
+              <div className="reward-detail-facts"><span><small>Stock</small><strong>{detailReward.stock} remaining</strong></span><span><small>Expiry</small><strong>{detailReward.expiry}</strong></span></div>
+              <div className="reward-terms"><strong>Terms & Conditions</strong><p>One redemption per transaction. Subject to partner availability. Present the generated voucher before its expiry date. Vouchers are non-transferable and cannot be exchanged for cash.</p></div>
+              <button className="marketplace-redeem reward-detail-redeem" disabled={yieldCoins < detailReward.cost} onClick={() => redeemReward(detailReward)} type="button">
+                {yieldCoins >= detailReward.cost ? "Redeem reward" : "Not enough points"}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
 
       <style>{styleSheet}</style>
     </CockpitShell>
   );
+}
+
+function formatDate(date: Date) {
+  return new Intl.DateTimeFormat("en-MY", { day: "2-digit", month: "short", year: "numeric" }).format(date);
 }
 
 function badgeClassName(badge: Reward["badge"]) {
@@ -364,19 +493,29 @@ const styleSheet = `
   .balance-expiry div { display: grid; gap: 2px; }
   .balance-expiry small { color: #f5a623; font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
   .balance-expiry b { color: #ffcf78; font-size: 11px; }
-  .marketplace-categories { display: flex; gap: 9px; margin: 22px 0; overflow-x: auto; padding: 2px 1px 8px; scrollbar-width: none; }
+  .marketplace-category-row { align-items: center; display: flex; gap: 14px; margin: 22px 0 14px; }
+  .marketplace-categories { display: flex; flex: 1; gap: 9px; min-width: 0; overflow-x: auto; padding: 2px 1px 8px; scrollbar-width: none; }
   .marketplace-categories::-webkit-scrollbar { display: none; }
   .category-pill { background: #151f1f; border: 1px solid rgba(117,143,137,.16); border-radius: 999px; color: #91a49f; cursor: pointer; flex: 0 0 auto; font-size: 12px; font-weight: 800; padding: 10px 17px; transition: background .2s ease, border-color .2s ease, color .2s ease, transform .2s ease; }
   .category-pill:hover { border-color: rgba(55,229,143,.36); color: #d8e9e4; transform: translateY(-1px); }
   .category-pill--active { background: rgba(55,229,143,.14); border-color: rgba(55,229,143,.7); color: #37e58f; box-shadow: 0 8px 22px rgba(55,229,143,.08); }
-  .category-pill:focus-visible, .marketplace-image-button:focus-visible, .marketplace-redeem:focus-visible { outline: 2px solid #37e58f; outline-offset: 3px; }
+  .my-rewards-button { align-items: center; background: linear-gradient(145deg,rgba(55,229,143,.16),rgba(55,229,143,.08)); border: 1px solid rgba(55,229,143,.5); border-radius: 999px; color: #b8f9d4; cursor: pointer; display: flex; flex: 0 0 auto; font-size: 11px; font-weight: 900; gap: 8px; padding: 9px 13px; }
+  .my-rewards-button span { align-items: center; background: #37e58f; border-radius: 50%; color: #04120c; display: flex; font-size: 8px; height: 19px; justify-content: center; min-width: 19px; padding: 0 4px; }
+  .category-pill:focus-visible, .marketplace-image-button:focus-visible, .marketplace-redeem:focus-visible, .my-rewards-button:focus-visible { outline: 2px solid #37e58f; outline-offset: 3px; }
+  .marketplace-tools { align-items: end; background: rgba(13,24,23,.7); border: 1px solid rgba(86,113,107,.2); border-radius: 13px; display: grid; gap: 12px; grid-template-columns: minmax(220px,1fr) minmax(180px,240px); margin-bottom: 20px; padding: 10px; }
+  .marketplace-search,.marketplace-sort { display: grid; gap: 5px; }
+  .marketplace-search > span,.marketplace-sort > span { color: #7f958f; font-size: 8px; font-weight: 900; letter-spacing: .08em; padding-left: 3px; text-transform: uppercase; }
+  .marketplace-search input,.marketplace-sort select { background: #0b1716; border: 1px solid rgba(105,134,127,.28); border-radius: 9px; color: #eafff5; font: inherit; font-size: 11px; height: 42px; outline: 0; padding: 0 13px; transition: border-color .18s ease,box-shadow .18s ease; width: 100%; }
+  .marketplace-search input::placeholder { color: #60736e; }
+  .marketplace-search input:focus,.marketplace-sort select:focus { border-color: rgba(55,229,143,.68); box-shadow: 0 0 0 3px rgba(55,229,143,.08); }
+  .marketplace-sort select { cursor: pointer; }
   .marketplace-section-heading { align-items: end; display: flex; gap: 18px; justify-content: space-between; margin: 2px 1px 18px; }
   .marketplace-section-heading div { display: grid; gap: 4px; }
   .marketplace-section-heading span { color: #37e58f; font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
   .marketplace-section-heading h2 { color: #f4fff9; font-size: 24px; letter-spacing: -.025em; margin: 0; }
   .marketplace-section-heading > small { color: #78908a; font-size: 11px; }
   .marketplace-grid { align-items: stretch; display: grid; gap: 18px; grid-template-columns: repeat(4,minmax(0,1fr)); }
-  .marketplace-card { background: linear-gradient(180deg, rgba(18,30,29,.98), rgba(9,18,18,.98)); border: 1px solid rgba(91,119,112,.24); border-radius: 17px; box-shadow: 0 17px 44px rgba(0,0,0,.22); display: flex; flex-direction: column; min-width: 0; overflow: hidden; transition: border-color .24s ease, box-shadow .24s ease, transform .24s ease; }
+  .marketplace-card { background: linear-gradient(180deg, rgba(18,30,29,.98), rgba(9,18,18,.98)); border: 1px solid rgba(91,119,112,.24); border-radius: 17px; box-shadow: 0 17px 44px rgba(0,0,0,.22); cursor: pointer; display: flex; flex-direction: column; min-width: 0; overflow: hidden; transition: border-color .24s ease, box-shadow .24s ease, transform .24s ease; }
   .marketplace-card:hover, .marketplace-card:focus-within { border-color: rgba(55,229,143,.48); box-shadow: 0 25px 64px rgba(0,0,0,.36), 0 0 0 1px rgba(55,229,143,.07); transform: translateY(-5px); }
   .marketplace-card--selected { border-color: rgba(55,229,143,.66); }
   .marketplace-image-button { background: #12201e; border: 0; cursor: pointer; display: block; height: 190px; overflow: hidden; padding: 0; position: relative; width: 100%; }
@@ -405,6 +544,27 @@ const styleSheet = `
   .marketplace-redeem:not(:disabled) { background: #37e58f; box-shadow: 0 12px 28px rgba(55,229,143,.14); color: #03120b; cursor: pointer; }
   .marketplace-redeem:not(:disabled):hover { background: #54f0a3; box-shadow: 0 16px 34px rgba(55,229,143,.22); transform: translateY(-1px); }
   .marketplace-redeem:disabled { background: #202d2b; color: #667a75; cursor: not-allowed; }
+  .marketplace-empty { align-items: center; background: rgba(15,27,26,.72); border: 1px dashed rgba(105,134,127,.3); border-radius: 14px; display: grid; gap: 5px; justify-items: center; margin-top: 18px; padding: 42px 20px; text-align: center; }
+  .marketplace-empty strong { color: #eafff5; font-size: 16px; }.marketplace-empty span { color: #81968f; font-size: 11px; }
+  .marketplace-overlay { align-items: stretch; background: rgba(2,8,8,.76); backdrop-filter: blur(10px); display: flex; inset: 0; justify-content: flex-end; padding: 0; position: fixed; z-index: 1000; }
+  .my-rewards-panel { background: radial-gradient(circle at 100% 0,rgba(55,229,143,.11),transparent 28%),#091514; border-left: 1px solid rgba(93,124,116,.32); box-shadow: -28px 0 80px rgba(0,0,0,.46); display: flex; flex-direction: column; max-width: 480px; overflow-y: auto; padding: 23px; width: min(92vw,480px); }
+  .marketplace-modal-header { align-items: flex-start; display: flex; gap: 16px; justify-content: space-between; }
+  .marketplace-modal-header span { color: #37e58f; font-size: 9px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+  .marketplace-modal-header h2 { color: #f4fff9; font-size: 30px; letter-spacing: -.04em; margin: 5px 0 0; }
+  .marketplace-modal-header button,.reward-detail-close { background: rgba(126,153,146,.1); border: 1px solid rgba(126,153,146,.22); border-radius: 50%; color: #b9cbc6; cursor: pointer; font-size: 22px; height: 36px; line-height: 1; width: 36px; }
+  .my-rewards-tabs { background: #0d1c1a; border: 1px solid rgba(93,124,116,.2); border-radius: 10px; display: grid; gap: 4px; grid-template-columns: 1fr 1fr; margin: 22px 0 16px; padding: 4px; }
+  .my-rewards-tabs button { background: transparent; border: 0; border-radius: 7px; color: #7e928c; cursor: pointer; font-size: 10px; font-weight: 900; height: 36px; }.my-rewards-tabs button.active { background: rgba(55,229,143,.13); color: #37e58f; }
+  .my-rewards-empty { align-content: center; display: grid; flex: 1; gap: 6px; justify-items: center; min-height: 280px; text-align: center; }.my-rewards-empty strong { color: #eafff5; font-size: 15px; }.my-rewards-empty span { color: #7d918b; font-size: 10px; }
+  .my-rewards-list,.reward-history-list { display: grid; gap: 10px; }
+  .owned-reward { background: linear-gradient(145deg,rgba(17,31,29,.96),rgba(9,19,18,.96)); border: 1px solid rgba(93,124,116,.23); border-radius: 13px; display: grid; gap: 12px; grid-template-columns: 105px minmax(0,1fr); overflow: hidden; padding: 9px; }
+  .owned-reward > img { border-radius: 9px; height: 100%; min-height: 142px; object-fit: cover; width: 105px; }.owned-reward-copy h3 { color: #f4fff9; font-size: 14px; margin: 2px 0 8px; }.owned-reward-copy dl { display: grid; gap: 5px; margin: 0; }.owned-reward-copy dl div { align-items: center; display: flex; justify-content: space-between; }.owned-reward-copy dt { color: #728780; font-size: 8px; }.owned-reward-copy dd { color: #bdcec9; font-size: 9px; font-weight: 800; margin: 0; }.owned-reward-copy .status-unused { color: #f5b84b; }.owned-reward-copy button { background: rgba(55,229,143,.12); border: 1px solid rgba(55,229,143,.38); border-radius: 7px; color: #37e58f; cursor: pointer; font-size: 9px; font-weight: 900; margin-top: 10px; padding: 7px 9px; width: 100%; }
+  .reward-history-item { align-items: center; background: rgba(14,27,25,.9); border: 1px solid rgba(93,124,116,.2); border-radius: 11px; display: flex; gap: 12px; justify-content: space-between; padding: 13px; }.reward-history-item > div { display: grid; gap: 4px; }.reward-history-item > div:last-child { text-align: right; }.reward-history-item strong { color: #eefcf6; font-size: 11px; }.reward-history-item span { color: #778d86; font-size: 8px; }.reward-history-item b { color: #37e58f; font-size: 10px; }
+  .marketplace-overlay--center { align-items: center; justify-content: center; padding: 20px; }
+  .reward-detail-modal { background: #091514; border: 1px solid rgba(94,126,118,.34); border-radius: 18px; box-shadow: 0 35px 100px rgba(0,0,0,.55); display: grid; grid-template-columns: minmax(280px,.92fr) minmax(330px,1.08fr); max-height: min(760px,90vh); max-width: 900px; overflow: hidden; position: relative; width: min(94vw,900px); }
+  .reward-detail-close { position: absolute; right: 14px; top: 14px; z-index: 4; }.reward-detail-image { min-height: 540px; overflow: hidden; position: relative; }.reward-detail-image img { height: 100%; object-fit: cover; width: 100%; }.reward-detail-image::after { background: linear-gradient(90deg,transparent,rgba(9,21,20,.32)); content:""; inset:0; position:absolute; }.reward-detail-image .marketplace-badge { z-index: 3; }
+  .reward-detail-content { align-self: center; max-height: 90vh; overflow-y: auto; padding: 34px; }.reward-detail-partner { color: #37e58f; font-size: 10px; font-weight: 900; letter-spacing: .05em; }.reward-detail-content h2 { color: #f4fff9; font-size: 32px; letter-spacing: -.035em; line-height: 1.05; margin: 7px 0 0; }.reward-detail-content > p { color: #9db1ab; font-size: 12px; line-height: 1.55; margin: 12px 0 18px; }.reward-detail-price { align-items: baseline; color: #37e58f; display: flex; gap: 7px; }.reward-detail-price strong { font-size: 36px; letter-spacing: -.045em; }.reward-detail-price small { color: #769b8d; font-size: 10px; font-weight: 900; text-transform: uppercase; }
+  .reward-detail-facts { display: grid; gap: 9px; grid-template-columns: 1fr 1fr; margin: 19px 0; }.reward-detail-facts > span { background: rgba(17,30,28,.82); border: 1px solid rgba(91,119,112,.2); border-radius: 9px; display: grid; gap: 4px; padding: 10px; }.reward-detail-facts small { color: #71857f; font-size: 8px; text-transform: uppercase; }.reward-detail-facts strong { color: #d8e9e4; font-size: 10px; }
+  .reward-terms { border-top: 1px solid rgba(92,120,113,.2); padding-top: 16px; }.reward-terms strong { color: #dcebe7; font-size: 10px; }.reward-terms p { color: #748983; font-size: 9px; line-height: 1.55; margin: 6px 0 0; }.reward-detail-redeem { height: 48px; margin-top: 18px; }
   @media (max-width: 1199px) { .marketplace-hero { grid-template-columns: 1fr; } .marketplace-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
-  @media (max-width: 640px) { .rewards-page-shell { padding: 72px 11px 108px; } .marketplace-frame { border-radius: 13px; padding: 13px; } .marketplace-hero { border-radius: 13px; padding: 18px; } .marketplace-hero h1 { font-size: 34px; } .marketplace-balance > strong { font-size: 56px; } .marketplace-categories { margin-left: -13px; margin-right: -13px; padding-left: 13px; padding-right: 13px; } .marketplace-section-heading { align-items: start; flex-direction: column; gap: 6px; } .marketplace-grid { grid-template-columns: 1fr; } .marketplace-image-button { height: 220px; } }
+  @media (max-width: 640px) { .rewards-page-shell { padding: 72px 11px 108px; } .marketplace-frame { border-radius: 13px; padding: 13px; } .marketplace-hero { border-radius: 13px; padding: 18px; } .marketplace-hero h1 { font-size: 34px; } .marketplace-balance > strong { font-size: 56px; } .marketplace-category-row { align-items: stretch; flex-direction: column; } .marketplace-categories { margin-left: -13px; margin-right: -13px; padding-left: 13px; padding-right: 13px; } .my-rewards-button { align-self: flex-start; } .marketplace-tools { grid-template-columns: 1fr; } .marketplace-section-heading { align-items: start; flex-direction: column; gap: 6px; } .marketplace-grid { grid-template-columns: 1fr; } .marketplace-image-button { height: 220px; } .reward-detail-modal { display: block; max-height: 92vh; overflow-y: auto; } .reward-detail-image { height: 260px; min-height: 0; } .reward-detail-content { max-height: none; padding: 23px 18px; } .reward-detail-content h2 { font-size: 27px; } .reward-detail-facts { grid-template-columns: 1fr; } .my-rewards-panel { padding: 18px; } }
 `;
