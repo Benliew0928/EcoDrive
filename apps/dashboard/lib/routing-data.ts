@@ -5,6 +5,7 @@ export type RoutePath = {
   label: string;
   distanceKm: number;
   timeMins: number;
+  energyKwh: number;
   carbonEmissionKg: number;
   carbonSavedKg: number;
   ecoCoinsBonus: number;
@@ -13,23 +14,73 @@ export type RoutePath = {
   isEco: boolean;
 };
 
+export const UTAR_KAMPAR: [number, number] = [4.3394, 101.1437];
+
 export type GeocodeSuggestion = {
   displayName: string;
   lat: number;
   lon: number;
 };
 
-// ── Constants ──
+// ── EV Physics-Based Carbon Emission Model ──
+// Derived from longitudinal vehicle dynamics (Fiori et al., Renewable & Sustainable
+// Energy Reviews, 2016) and validated against the U-shaped energy-speed curve
+// documented in MDPI Energies (2021).
+//
+// Total tractive force:  F_total = F_roll + F_aero + F_inertia
+//   F_roll  = m · g · Cr                        (rolling resistance)
+//   F_aero  = 0.5 · ρ · Cd · A · v²             (aerodynamic drag)
+//   F_inertia = m · a                            (acceleration force, ~0 at cruise)
+//
+// Power at wheels:  P = F_total · v
+// Energy per km:    E = P / v  →  F_total  (in N, then convert to kWh/km)
+// CO₂ per km:       CO₂ = E / η_powertrain × GEF_Malaysia
+//
+// Malaysia Grid Emission Factor (GEF): 0.740 kg CO₂/kWh
+// (Source: Energy Commission of Malaysia / Suruhanjaya Tenaga, 2024)
 
-export const UTAR_KAMPAR: [number, number] = [4.3394, 101.1437];
+// ── Vehicle Constants (typical mid-size EV, e.g. BYD Atto 3 / Tesla Model 3) ──
+const EV_MASS       = 1800;     // kg (vehicle + driver)
+const GRAVITY       = 9.81;     // m/s²
+const C_ROLLING     = 0.011;    // rolling resistance coefficient (low rolling resistance tyres)
+const AIR_DENSITY   = 1.164;    // kg/m³ (tropical Malaysia, ~30°C)
+const C_DRAG        = 0.23;     // aerodynamic drag coefficient
+const FRONTAL_AREA  = 2.22;     // m² (frontal cross-section)
+const ETA_POWERTRAIN = 0.85;    // motor + inverter + driveline efficiency
+const AUX_POWER_KW  = 0.8;     // auxiliary loads (A/C, lights, electronics) in kW
+const GEF_MALAYSIA   = 0.740;   // kg CO₂ per kWh (Peninsular Malaysia grid, 2024)
 
-// ── Carbon Emission Model ──
-// Based on EV physics: stop-and-go wastes regen cycles, high speed = aero drag
-function emissionFactorForSpeed(avgSpeedKmh: number): number {
-  if (avgSpeedKmh < 30) return 0.22;   // city crawl, stop-and-go
-  if (avgSpeedKmh <= 60) return 0.16;   // optimal EV range
-  if (avgSpeedKmh <= 90) return 0.19;   // suburban
-  return 0.24;                           // highway, aerodynamic drag
+/**
+ * Calculate CO₂ emission (kg) for a route, using physics-based EV energy model.
+ *
+ * @param distanceKm   Total route distance in km
+ * @param avgSpeedKmh  Average speed over the route in km/h
+ * @returns            CO₂ emission in kg
+ */
+export function calculateRouteCO2(distanceKm: number, avgSpeedKmh: number): number {
+  const v = avgSpeedKmh / 3.6; // convert km/h → m/s
+
+  // Force components at constant cruise (a ≈ 0 for route-level estimation)
+  const F_roll = EV_MASS * GRAVITY * C_ROLLING;
+  const F_aero = 0.5 * AIR_DENSITY * C_DRAG * FRONTAL_AREA * v * v;
+  const F_total = F_roll + F_aero;  // Newtons
+
+  // Power at wheels (kW)
+  const P_traction_kW = (F_total * v) / 1000;
+
+  // Total power including auxiliaries, divided by powertrain efficiency
+  const P_total_kW = (P_traction_kW / ETA_POWERTRAIN) + AUX_POWER_KW;
+
+  // Energy consumption rate (kWh per km)
+  const energyPerKm = P_total_kW / avgSpeedKmh;
+
+  // Total energy for the route (kWh)
+  const totalEnergyKwh = energyPerKm * distanceKm;
+
+  // Convert grid electricity to CO₂
+  const co2Kg = totalEnergyKwh * GEF_MALAYSIA;
+
+  return parseFloat(co2Kg.toFixed(2));
 }
 
 // ── OSRM Polyline Decoder ──
@@ -147,14 +198,21 @@ export async function fetchRoutes(
 
     let points = decodePolyline(route.geometry);
     const avgSpeed = distanceKm / (timeMins / 60);
-    const factor = emissionFactorForSpeed(avgSpeed);
-    const carbonEmissionKg = parseFloat((distanceKm * factor).toFixed(2));
+    const carbonEmissionKg = calculateRouteCO2(distanceKm, avgSpeed);
+
+    // Also compute energy for display (same formula, without GEF multiplication)
+    const v = avgSpeed / 3.6;
+    const F_roll = 1800 * 9.81 * 0.011;
+    const F_aero = 0.5 * 1.164 * 0.23 * 2.22 * v * v;
+    const P_kW = ((F_roll + F_aero) * v / 1000 / 0.85) + 0.8;
+    const energyKwh = parseFloat(((P_kW / avgSpeed) * distanceKm).toFixed(2));
 
     validRoutes.push({
       id: `route-${i}`,
       label: "",
       distanceKm: parseFloat(distanceKm.toFixed(1)),
       timeMins: Math.round(timeMins),
+      energyKwh,
       carbonEmissionKg,
       carbonSavedKg: 0,
       ecoCoinsBonus: 0,

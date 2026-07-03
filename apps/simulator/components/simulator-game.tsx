@@ -1115,10 +1115,50 @@ function buildDashboardTelemetry(telemetry: Telemetry): DashboardTelemetry {
   const speedAbs = Math.abs(telemetry.speedKmh);
   const distanceKm = telemetry.distanceMeters / 1000;
   const smoothnessFactor = clamp(telemetry.ecoScore / 100, 0.35, 1);
-  const driveLoad = telemetry.throttle * 0.055 + Math.abs(telemetry.steering) * 0.012 + (telemetry.routeChoice === "fast" ? 0.025 : 0);
-  const regenKw = telemetry.brake > 0.12 && speedAbs > 8 ? telemetry.brake * 38 : 0;
-  const energyKwh = Math.max(0, distanceKm * (0.145 + driveLoad) - regenKw * 0.00008);
-  const co2SavedKg = distanceKm * 0.171 * smoothnessFactor;
+
+  // ── Physics-based energy model (same as route planner) ──
+  // Vehicle constants (mid-size EV)
+  const m = 1800;         // kg
+  const g = 9.81;         // m/s²
+  const Cr = 0.011;       // rolling resistance
+  const rho = 1.164;      // kg/m³ (tropical Malaysia)
+  const Cd = 0.23;        // drag coefficient
+  const A = 2.22;         // frontal area m²
+  const eta = 0.85;       // powertrain efficiency
+  const Paux = 0.8;       // kW auxiliary loads
+  const GEF = 0.740;      // kg CO₂/kWh (Malaysia grid 2024)
+
+  const v = speedAbs / 3.6; // m/s
+
+  // Tractive forces
+  const F_roll = m * g * Cr;                       // ~194 N
+  const F_aero = 0.5 * rho * Cd * A * v * v;       // grows with v²
+  // Acceleration force: penalise harsh throttle (inertial loss)
+  const accelG = telemetry.throttle * 2.5;          // approx m/s² from throttle
+  const F_inertia = m * accelG * telemetry.throttle; // only when actively accelerating
+
+  const F_total = F_roll + F_aero + F_inertia;
+
+  // Instantaneous power (kW)
+  const P_traction = (F_total * Math.max(v, 0.5)) / 1000;
+  const P_total = (P_traction / eta) + Paux;
+
+  // Regenerative braking: recover kinetic energy when braking gently at speed
+  // Motor can recover up to ~40 kW; gentle braking = higher recovery ratio
+  const regenKw = (telemetry.brake > 0.12 && speedAbs > 8)
+    ? clamp(telemetry.brake * 38, 0, 40) * smoothnessFactor
+    : 0;
+
+  // Net energy consumed (kWh) over the trip so far
+  const energyRate = speedAbs > 1 ? (P_total / speedAbs) : 0; // kWh/km instantaneous
+  const energyKwh = Math.max(0, distanceKm * energyRate - regenKw * 0.00012);
+
+  // CO₂ saved = difference between a baseline ICE car and our EV
+  // Baseline ICE: ~0.171 kg CO₂/km (average petrol car in Malaysia)
+  // Our EV: energyRate * GEF  kg CO₂/km
+  const evCo2PerKm = energyRate * GEF;
+  const iceCo2PerKm = 0.171; // avg Malaysian petrol car
+  const co2SavedKg = Math.max(0, distanceKm * (iceCo2PerKm - evCo2PerKm) * smoothnessFactor);
   const eventBonus =
     telemetry.event === "regen_success" ? 50 : telemetry.event === "smooth_streak" ? 32 : telemetry.event === "finish_loop" ? 80 : 0;
   const coinsEarned = Math.max(0, Math.round(distanceKm * 180 + Math.max(0, telemetry.ecoScore - 70) * 1.6 + eventBonus));
