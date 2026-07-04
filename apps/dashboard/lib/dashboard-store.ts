@@ -24,7 +24,7 @@ const initialState: DashboardState = {
   eventFeed: [],
   lastPacketAt: null,
   lastActionMessage: "Waiting for simulator telemetry.",
-  walletCoins: 1250, // Give them some starting coins for the demo
+  walletCoins: 12500, // Match the rewards page EcoCoins balance
   globalScore: 24500 // Demo global ranking score
 };
 
@@ -80,7 +80,7 @@ export const useDashboardStore = create<DashboardState & DashboardActions & Dash
       clearTelemetry: () => set({ ...initialState, spentCoins: 0 })
     }),
     {
-      name: "ecodrive-wallet-v2",
+      name: "ecodrive-wallet-v3",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         walletCoins: state.walletCoins,
