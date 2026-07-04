@@ -1086,7 +1086,14 @@ function getSunTimes(date: Date, latitude: number, longitude: number) {
     --face-front: #ffde83;
     box-shadow: 0 0 12px #ffc95b;
   }
-  .city3d-page--night .lowpoly{filter:drop-shadow(0 9px 8px rgba(0,0,0,.45)) brightness(.9) saturate(.92)}.city3d-page--day .lowpoly{filter:drop-shadow(-8px 10px 6px rgba(0,0,0,.25)) brightness(1.1) saturate(1.08)}
+  .city3d-page--night .model-face::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(12, 28, 34, 0.24);
+    pointer-events: none;
+    z-index: 10;
+  }
   .city3d-edit-toolbar{align-items:center;background:rgba(4,13,13,.94);border:1px solid rgba(55,229,143,.35);border-radius:10px;display:flex;gap:6px;left:50%;padding:7px;position:absolute;top:12px;transform:translateX(-50%);z-index:180}.city3d-edit-toolbar strong{color:#f4fff9;font-size:9px;padding:0 5px}.city3d-edit-toolbar button{background:rgba(55,229,143,.1);border:1px solid rgba(55,229,143,.3);border-radius:6px;color:#37e58f;cursor:pointer;font-size:8px;font-weight:900;padding:6px 8px}.city3d-edit-toolbar .city3d-warehouse-action{border-color:rgba(245,184,75,.35);color:#f5b84b}.city3d-edit-toolbar .city3d-sell-action{background:rgba(255,92,78,.1);border-color:rgba(255,92,78,.48);color:#ff796c}.city3d-edit-toolbar .city3d-done-action{background:rgba(55,229,143,.22);border-color:rgba(55,229,143,.7);color:#37e58f}
   .city3d-sell-overlay{align-items:center;background:rgba(2,8,9,.48);backdrop-filter:blur(2px);display:flex;inset:0;justify-content:center;padding:12px;position:fixed;z-index:1200}.city3d-sell-dialog{background:#0a1615;border:1px solid rgba(255,111,94,.3);border-radius:10px;box-shadow:0 14px 38px rgba(0,0,0,.46);max-width:310px;padding:14px;width:min(86vw,310px)}.city3d-sell-dialog h2{color:#f5fff9;font-size:16px;letter-spacing:-.02em;margin:0}.city3d-sell-dialog p{color:#91a59f;font-size:9px;line-height:1.4;margin:6px 0 12px}.city3d-sell-dialog p strong{color:#f5b84b}.city3d-sell-dialog-actions{display:grid;gap:7px;grid-template-columns:1fr 1fr}.city3d-sell-dialog-actions button{background:#142220;border:1px solid rgba(113,142,135,.28);border-radius:7px;color:#b4c7c1;cursor:pointer;font-size:9px;font-weight:900;height:31px}.city3d-sell-dialog-actions .city3d-sell-confirm{background:#df5849;border-color:#ff796c;color:#fff}.city3d-sell-dialog-actions .city3d-sell-confirm:hover{background:#f36b5b}
   @keyframes city3d-sell-away{to{opacity:0;transform:translate(-50%,-96%) scale(.08) rotate(8deg)}}
