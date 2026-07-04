@@ -2992,7 +2992,7 @@ select {
 .drive-surface-clean {
   display: grid;
   gap: 26px;
-  grid-template-columns: minmax(240px, 0.86fr) minmax(340px, 1.2fr) minmax(280px, 0.94fr);
+  grid-template-columns: 1fr minmax(340px, 1.2fr) 1fr;
   padding: 28px;
 }
 

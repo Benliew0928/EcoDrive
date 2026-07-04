@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Gauge, RadioTower, Crown, Trophy, Users, Award, ChevronDown, X } from "lucide-react";
 import { CockpitShell } from "./cockpit-shell";
 import { cockpitModes, type ModeId } from "../data/cockpit-content";
-import { eventLabel, hardwareFeedbackForTelemetry } from "../lib/dashboard-data";
+import { eventLabel } from "../lib/dashboard-data";
 import { useDashboardStore } from "../lib/dashboard-store";
 import type { ProcessedTelemetry } from "../types/dashboard";
 import { EcoRouteMap } from "./eco-route-map";
@@ -1500,18 +1500,13 @@ function LeaderboardListRow({ entry, index }: { entry: LeaderboardEntry; index: 
 }
 
 function DriveSurface({ telemetry }: { telemetry: ProcessedTelemetry | null }) {
-  const feedback = hardwareFeedbackForTelemetry(telemetry);
   const speed = telemetry?.speedKmh ?? null;
   const ecoScore = telemetry?.ecoScore ?? null;
 
   return (
     <div className="live-surface drive-surface-clean">
       <div className="surface-grid" />
-      <div className={`hardware-pod hardware-pod--${feedback.color}`}>
-        <RadioTower size={18} />
-        <strong>LED {feedback.led}</strong>
-        <span>OLED {feedback.oled}</span>
-      </div>
+      <div className="drive-spacer-left" />
       <div className="drive-centerpiece">
         <div className="speed-orb">
           <span>{formatNumber(speed, 0)}</span>
