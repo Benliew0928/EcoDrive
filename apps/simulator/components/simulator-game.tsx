@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Html, PerspectiveCamera, Stars } from "@react-three/drei";
+import { Html, PerspectiveCamera, Sky } from "@react-three/drei";
 import {
   BufferGeometry,
   CatmullRomCurve3,
@@ -63,7 +63,10 @@ type RoadSample = {
 };
 
 const blankDashboardFrameUrl = "about:blank";
-const configuredDashboardAppUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? blankDashboardFrameUrl;
+const configuredDashboardAppUrl =
+  (process.env.NEXT_PUBLIC_DASHBOARD_URL && process.env.NEXT_PUBLIC_DASHBOARD_URL !== "undefined")
+    ? process.env.NEXT_PUBLIC_DASHBOARD_URL
+    : (process.env.NODE_ENV === "development" ? "http://localhost:3000" : blankDashboardFrameUrl);
 const configuredRelayWsUrl = process.env.NEXT_PUBLIC_ECODRIVE_RELAY_WS_URL ?? process.env.NEXT_PUBLIC_ECODRIVE_WS_URL ?? "";
 const configuredSessionId = process.env.NEXT_PUBLIC_ECODRIVE_SESSION ?? defaultSessionId;
 const configuredRelayToken = process.env.NEXT_PUBLIC_ECODRIVE_TOKEN;
@@ -129,8 +132,8 @@ export function SimulatorGame() {
     <main className="simulator-shell">
       <div className="canvas-stage">
         <Canvas dpr={[1, 1.65]} gl={{ antialias: true, powerPreference: "high-performance" }}>
-          <color attach="background" args={["#030707"]} />
-          <fog attach="fog" args={["#031112", 88, 285]} />
+          <color attach="background" args={["#8fd4f1"]} />
+          <fog attach="fog" args={["#c1e5ef", 120, 390]} />
           <SceneContent />
         </Canvas>
       </div>
@@ -298,9 +301,11 @@ function CockpitOverlay({
           <div className="console-dial" />
         </div>
 
-        <div className={`touch-control-well ${touchControlsVisible ? "touch-control-well--visible" : "touch-control-well--hidden"}`}>
-          <TouchControls />
-        </div>
+        {touchControlsVisible ? (
+          <div className="touch-control-well touch-control-well--visible">
+            <TouchControls />
+          </div>
+        ) : null}
       </section>
     </div>
   );
@@ -332,13 +337,14 @@ function SceneContent() {
   return (
     <>
       <PerspectiveCamera makeDefault position={[0, 1.65, 0]} fov={73} />
-      <ambientLight intensity={0.38} />
-      <directionalLight castShadow intensity={2.6} position={[24, 32, 18]} shadow-mapSize={[1024, 1024]} />
+      <DayAtmosphere />
+      <ambientLight intensity={0.72} />
+      <hemisphereLight args={["#dff5ff", "#55785a", 1.25]} />
+      <directionalLight castShadow color="#fff0cf" intensity={3.2} position={[72, 96, -34]} shadow-mapSize={[1024, 1024]} />
       <pointLight color="#37e58f" intensity={42} position={[-62, 6, -96]} distance={82} />
       <pointLight color="#0ea5e9" intensity={36} position={[-16, 5, -56]} distance={110} />
       <pointLight color="#ff5b5b" intensity={28} position={[78, 6, -238]} distance={72} />
       <pointLight color="#38bdf8" intensity={38} position={[82, 6, 88]} distance={76} />
-      <Stars count={1100} depth={130} factor={4} fade speed={0.18} />
       <GroundPlane />
       <RoadNetwork />
       <CampusEnvironment />
@@ -346,6 +352,51 @@ function SceneContent() {
       <RouteSigns />
       <DriveRig />
     </>
+  );
+}
+
+function DayAtmosphere() {
+  return (
+    <>
+      <Sky
+        distance={450000}
+        mieCoefficient={0.004}
+        mieDirectionalG={0.82}
+        rayleigh={1.9}
+        sunPosition={[110, 82, -300]}
+        turbidity={7}
+      />
+      <mesh position={[112, 84, -318]}>
+        <sphereGeometry args={[13, 32, 32]} />
+        <meshBasicMaterial color="#fff2a8" fog={false} toneMapped={false} />
+      </mesh>
+      <CloudCluster position={[35, 31, -74]} scale={0.78} />
+      <CloudCluster position={[-48, 43, -138]} scale={1.08} />
+      <CloudCluster position={[93, 37, -188]} scale={0.9} />
+      <CloudCluster position={[-6, 51, -282]} scale={1.3} />
+      <CloudCluster position={[76, 58, -355]} scale={1.1} />
+    </>
+  );
+}
+
+function CloudCluster({ position, scale }: { position: [number, number, number]; scale: number }) {
+  const puffs: Array<{ position: [number, number, number]; scale: [number, number, number] }> = [
+    { position: [-11, 0, 0], scale: [1.2, 0.72, 0.8] },
+    { position: [-3, 3.5, 0], scale: [1.05, 1, 0.92] },
+    { position: [5, 1.4, 0], scale: [1.35, 0.84, 0.88] },
+    { position: [13, -0.4, 0], scale: [1.08, 0.66, 0.76] },
+    { position: [3, -2.2, 0], scale: [1.7, 0.58, 0.82] }
+  ];
+
+  return (
+    <group position={position} scale={scale}>
+      {puffs.map((puff, index) => (
+        <mesh key={index} position={puff.position} scale={puff.scale}>
+          <sphereGeometry args={[7, 18, 14]} />
+          <meshBasicMaterial color="#ffffff" depthWrite={false} fog={false} opacity={0.82} transparent />
+        </mesh>
+      ))}
+    </group>
   );
 }
 

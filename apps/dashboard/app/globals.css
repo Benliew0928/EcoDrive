@@ -3987,3 +3987,153 @@ select {
     min-height: 240px;
   }
 }
+
+/* ──── Cockpit Simulator Display Sizing Upgrades (High Pressability) ──── */
+.cockpit-shell--simulator-display {
+  --dock-height: 120px;
+}
+
+.cockpit-shell--simulator-display .vehicle-dock {
+  height: var(--dock-height, 120px) !important;
+  padding: 0 40px !important;
+  background: rgba(5, 9, 9, 0.96) !important;
+}
+
+.cockpit-shell--simulator-display .mode-cluster {
+  gap: 16px !important;
+  width: 100% !important;
+  max-width: 1200px !important;
+}
+
+.cockpit-shell--simulator-display .mode-chip {
+  height: 90px !important;
+  padding: 0 32px !important;
+  font-size: 24px !important;
+  font-weight: 900 !important;
+  border-radius: 14px !important;
+  border-width: 2px !important;
+}
+
+.cockpit-shell--simulator-display .mode-chip svg {
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.cockpit-shell--simulator-display .cockpit-main {
+  padding: 68px 0 var(--dock-height, 120px) !important;
+}
+
+/* Route Page Inputs & Search */
+.cockpit-shell--simulator-display .route-control-panel {
+  padding: 36px !important;
+  gap: 24px !important;
+}
+
+.cockpit-shell--simulator-display .route-mode-heading span {
+  font-size: 18px !important;
+}
+
+.cockpit-shell--simulator-display .route-mode-heading strong {
+  font-size: 46px !important;
+}
+
+.cockpit-shell--simulator-display .route-search-card input {
+  height: 90px !important;
+  font-size: 28px !important;
+  border-radius: 12px !important;
+  border-width: 3px !important;
+}
+
+.cockpit-shell--simulator-display .route-origin-toggle {
+  padding: 6px !important;
+  border-radius: 12px !important;
+}
+
+.cockpit-shell--simulator-display .route-origin-toggle-btn {
+  min-height: 60px !important;
+  font-size: 20px !important;
+  border-radius: 10px !important;
+}
+
+.cockpit-shell--simulator-display .suggestion-item {
+  min-height: 100px !important;
+  padding: 20px 24px !important;
+}
+
+.cockpit-shell--simulator-display .suggestion-name {
+  font-size: 24px !important;
+}
+
+.cockpit-shell--simulator-display .suggestion-detail {
+  font-size: 18px !important;
+}
+
+/* Route Cards & Toggles */
+.cockpit-shell--simulator-display .route-card {
+  min-height: 220px !important;
+  padding: 24px !important;
+  border-radius: 14px !important;
+  border-width: 2px !important;
+}
+
+.cockpit-shell--simulator-display .route-card-title {
+  font-size: 22px !important;
+}
+
+.cockpit-shell--simulator-display .route-card-header h3 {
+  font-size: 34px !important;
+}
+
+.cockpit-shell--simulator-display .eco-tag,
+.cockpit-shell--simulator-display .eco-bonus {
+  font-size: 18px !important;
+  padding: 10px 14px !important;
+  border-radius: 8px !important;
+}
+
+.cockpit-shell--simulator-display .route-stats .stat span {
+  font-size: 18px !important;
+}
+
+.cockpit-shell--simulator-display .route-stats .stat strong {
+  font-size: 32px !important;
+}
+
+/* Action Buttons */
+.cockpit-shell--simulator-display .route-start-drive-btn,
+.cockpit-shell--simulator-display .route-stop-drive-btn {
+  min-height: 110px !important;
+  font-size: 36px !important;
+  border-radius: 14px !important;
+  padding: 0 36px !important;
+  letter-spacing: 0.02em !important;
+}
+
+.cockpit-shell--simulator-display .route-compact-location {
+  min-height: 130px !important;
+  padding: 24px !important;
+  border-radius: 14px !important;
+}
+
+.cockpit-shell--simulator-display .route-compact-location strong {
+  font-size: 32px !important;
+}
+
+.cockpit-shell--simulator-display .route-compact-location span {
+  font-size: 18px !important;
+}
+
+.cockpit-shell--simulator-display .route-drive-stats div {
+  min-height: 140px !important;
+  padding: 24px !important;
+  border-radius: 12px !important;
+}
+
+.cockpit-shell--simulator-display .route-drive-stats strong {
+  font-size: 46px !important;
+}
+
+.cockpit-shell--simulator-display .route-drive-stats span {
+  font-size: 18px !important;
+}
+

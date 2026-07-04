@@ -689,6 +689,7 @@ button {
 }
 
 .touch-control-well--hidden {
+  display: none !important;
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, 24px);

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Building2,
@@ -30,6 +31,18 @@ type CockpitShellProps = {
 };
 
 export function CockpitShell({ activeMode, children }: CockpitShellProps) {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Prefetch all modes to make page transitions instant in production
+    // And fetch them to trigger dev compilation in background
+    const routes = ["/", "/route", "/city", "/rewards", "/community"];
+    routes.forEach((route) => {
+      router.prefetch(route);
+      fetch(route).catch(() => {});
+    });
+  }, [router]);
+
   useEffect(() => {
     void useDashboardStore.persist.rehydrate();
   }, []);
