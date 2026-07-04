@@ -242,12 +242,7 @@ export default function CityPage() {
                   <span><small>Daily yield</small><strong className="is-cyan">+{cityStats.dailyYield}</strong></span>
                   <span><small>City stage</small><strong>{stage.name}</strong></span>
                 </div>
-              ) : (
-                <div className="city3d-sun-status">
-                  <i aria-hidden="true" />
-                  <span><b>{isDay ? "Daylight city" : "Night city"}</b><small>{isDay ? `Sunset ${formatTime(sunTimes.sunset)}` : `Sunrise ${formatTime(sunTimes.sunrise)}`}</small></span>
-                </div>
-              )}
+              ) : null}
               {cityView === "builder" ? (
                 <button className={storeOpen ? "city3d-view-toggle city3d-view-toggle--active" : "city3d-view-toggle"} onClick={() => { setStoreOpen((open) => !open); setSelectedBuildingId(null); setSelectedInfrastructureId(null); setSelectedWarehouseId(null); setPlacementPreview(null); setMessage({ kind: "success", text: storeOpen ? "Editing finished. Terrain camera unlocked." : "Edit mode active. Select an existing asset to move, rotate or sell it." }); }} type="button">
                   {storeOpen ? "Finish Editing" : "Edit Layout"}
@@ -317,7 +312,7 @@ export default function CityPage() {
           <div className={storeOpen ? "city3d-workspace city3d-workspace--store" : "city3d-workspace"}>
             <section className="city3d-map-panel" aria-label="Interactive 3D eco-city terrain">
               <div className="city3d-map-heading">
-                <div><small>District 01</small><strong>Lakeview eco district</strong></div>
+                
                 <div className={`city3d-message city3d-message--${message.kind}`}>{message.text}</div>
               </div>
 
@@ -417,7 +412,7 @@ export default function CityPage() {
                 <div className="city3d-instruction">{storeOpen ? "Drag from the palette, or tap an item then tap the terrain" : "Drag left/right to turn · up/down to tilt"}</div>
               </div>
 
-              <footer className="city3d-legend"><span><i /> Synergy bonus</span><span><i /> Auto-saved</span><strong>{infrastructure.length} assets placed</strong></footer>
+              
             </section>
 
             {storeOpen ? (
@@ -758,12 +753,12 @@ function getSunTimes(date: Date, latitude: number, longitude: number) {
 const styleSheet = `
   .city3d-page { min-height: 100vh; padding: 86px 24px 108px; transition: background .8s ease; }
   .city3d-frame { background: radial-gradient(circle at 75% 0%, rgba(55,229,143,.08), transparent 28%), #081312; border: 1px solid rgba(86,115,108,.28); border-radius: 20px; box-shadow: 0 30px 90px rgba(0,0,0,.32); margin: 0 auto; max-width: 1460px; overflow: hidden; padding: 22px; }
-  .city3d-header { align-items: center; display: flex; gap: 24px; justify-content: space-between; padding: 4px 4px 20px; }
-  .city3d-header p { color: #37e58f; font-size: 11px; font-weight: 900; letter-spacing: .12em; margin: 0; text-transform: uppercase; }
-  .city3d-header h1 { color: #f4fff9; font-size: clamp(30px,3.2vw,46px); letter-spacing: -.04em; margin: 5px 0 0; }
-  .city3d-header > div:first-child > span { color: #8fa69f; display: block; font-size: 12px; margin-top: 7px; }
+  .city3d-header { align-items: center; display: flex; gap: 24px; justify-content: space-between; padding: 4px 4px 10px; }
+  .city3d-header p { color: #37e58f; font-size: 18px; font-weight: 900; letter-spacing: .12em; margin: 0; text-transform: uppercase; }
+  .city3d-header h1 { color: #f4fff9; font-size: clamp(40px,4vw,56px); letter-spacing: -.04em; margin: 0; }
+  .city3d-header > div:first-child > span { color: #8fa69f; display: block; font-size: 16px; margin-top: 4px; }
   .city3d-header-actions { align-items: center; display: flex; gap: 10px; }
-  .city3d-sun-status { align-items: center; background: rgba(15,28,27,.84); border: 1px solid rgba(91,119,112,.24); border-radius: 12px; display: flex; gap: 9px; padding: 9px 12px; }
+  .city3d-sun-status { display: none; }
   .city3d-sun-status > i { background: #ffc45f; border-radius: 50%; box-shadow: 0 0 16px rgba(255,196,95,.55); height: 19px; width: 19px; }
   .city3d-page--night .city3d-sun-status > i { background: #b9d8ff; box-shadow: -5px 1px 0 #102226, 0 0 15px rgba(126,181,255,.46); }
   .city3d-sun-status span { display: grid; gap: 1px; }
@@ -1154,14 +1149,14 @@ const styleSheet = `
 
   .city3d-overview{display:grid;flex:1;gap:14px;grid-template-columns:minmax(0,1.05fr) minmax(460px,.95fr);min-height:0}
   .city3d-overview-hero,.city3d-overview-metrics article,.city3d-launch-card{background:linear-gradient(145deg,rgba(14,29,27,.96),rgba(7,17,16,.98));border:1px solid rgba(88,119,110,.25);border-radius:16px}
-  .city3d-overview-hero{background:radial-gradient(circle at 82% 22%,rgba(55,229,143,.19),transparent 34%),linear-gradient(145deg,rgba(15,36,31,.98),rgba(6,17,15,.98));display:flex;flex-direction:column;justify-content:space-between;min-height:0;overflow:hidden;padding:clamp(20px,3vw,38px);position:relative}
+  .city3d-overview-hero{background:radial-gradient(circle at 82% 22%,rgba(55,229,143,.19),transparent 34%),linear-gradient(145deg,rgba(15,36,31,.98),rgba(6,17,15,.98));display:flex;flex-direction:column;justify-content:space-between;min-height:0;overflow:hidden;padding:clamp(12px,1.5vw,20px);position:relative}
   .city3d-overview-hero::after{background:repeating-linear-gradient(90deg,rgba(55,229,143,.025) 0 1px,transparent 1px 38px),repeating-linear-gradient(0deg,rgba(55,229,143,.025) 0 1px,transparent 1px 38px);content:"";inset:0;pointer-events:none;position:absolute}
-  .city3d-overview-stage-label{display:grid;gap:5px;position:relative;z-index:1}.city3d-overview-stage-label span{color:#6e9587;font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}.city3d-overview-stage-label strong{color:#53e99e;font-size:clamp(25px,3vw,40px);letter-spacing:-.04em}
-  .city3d-overview-impact{align-items:flex-end;display:flex;gap:10px;position:relative;z-index:1}.city3d-overview-impact strong{color:#f5fff9;font-size:clamp(70px,8.5vw,118px);font-weight:950;letter-spacing:-.08em;line-height:.75}.city3d-overview-impact span{color:#8aa39b;font-size:11px;font-weight:900;margin-bottom:7px;text-transform:uppercase}
-  .city3d-overview-progress{display:grid;gap:8px;position:relative;z-index:1}.city3d-overview-progress>div{color:#91a79f;display:flex;font-size:9px;justify-content:space-between}.city3d-overview-progress>div b{color:#f4fff9}.city3d-overview-progress>i{background:#122522;border-radius:999px;height:8px;overflow:hidden}.city3d-overview-progress>i>span{background:linear-gradient(90deg,#37e58f,#38bdf8);border-radius:inherit;display:block;height:100%;box-shadow:0 0 16px rgba(55,229,143,.35)}
-  .city3d-overview-hero-footer{border-top:1px solid rgba(104,134,125,.2);display:grid;grid-template-columns:repeat(3,1fr);padding-top:14px;position:relative;z-index:1}.city3d-overview-hero-footer span{color:#789089;display:grid;font-size:8px;gap:2px}.city3d-overview-hero-footer b{color:#f2fff8;font-size:18px}
-  .city3d-overview-side{display:grid;gap:12px;grid-template-rows:auto minmax(0,1fr);min-height:0}.city3d-overview-metrics{display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}.city3d-overview-metrics article{display:flex;flex-direction:column;min-height:84px;padding:12px}.city3d-overview-metrics article>span{color:#789089;font-size:8px;font-weight:900;text-transform:uppercase}.city3d-overview-metrics article>strong{align-items:center;display:flex;font-size:clamp(18px,2.2vw,29px);gap:5px;letter-spacing:-.04em;margin:auto 0 2px}.city3d-overview-metrics strong.is-amber{color:#f5b84b}.city3d-overview-metrics strong.is-green{color:#37e58f}.city3d-overview-metrics strong.is-cyan{color:#38bdf8}.city3d-overview-metrics em{font-size:9px;font-style:normal;letter-spacing:0}.city3d-overview-metrics small{color:#607a72;font-size:7px}
-  .city3d-overview-actions{display:grid;gap:16px;grid-template-columns:repeat(2,1fr);min-height:0}.city3d-launch-card{color:#effff7;cursor:pointer;display:flex;flex-direction:column;justify-content:center;min-height:0;padding:56px 52px;text-align:left;transition:.2s ease}.city3d-launch-card:hover{border-color:rgba(55,229,143,.55);transform:translateY(-2px)}.city3d-launch-card--city{background:radial-gradient(circle at 85% 20%,rgba(56,189,248,.16),transparent 40%),linear-gradient(145deg,#0d2424,#081514)}.city3d-launch-card--store{background:radial-gradient(circle at 85% 20%,rgba(245,184,75,.16),transparent 40%),linear-gradient(145deg,#211c10,#0e1512)}.city3d-launch-card>span{color:#749087;font-size:18px;font-weight:900;text-transform:uppercase}.city3d-launch-card strong{font-size:48px;margin:12px 0;font-weight:950}.city3d-launch-card small{color:#b3cbc1;font-size:24px;line-height:1.55}.city3d-launch-card b{color:#37e58f;font-size:26px;margin-top:auto;padding-top:48px}.city3d-launch-card--store b{color:#f5b84b}
+  .city3d-overview-stage-label{display:grid;gap:5px;position:relative;z-index:1}.city3d-overview-stage-label span{color:#6e9587;font-size:16px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}.city3d-overview-stage-label strong{color:#53e99e;font-size:clamp(32px,3.5vw,46px);letter-spacing:-.04em}
+  .city3d-overview-impact{align-items:flex-end;display:flex;gap:10px;position:relative;z-index:1}.city3d-overview-impact strong{color:#f5fff9;font-size:clamp(70px,8.5vw,118px);font-weight:950;letter-spacing:-.08em;line-height:.75}.city3d-overview-impact span{color:#8aa39b;font-size:16px;font-weight:900;margin-bottom:7px;text-transform:uppercase}
+  .city3d-overview-progress{display:grid;gap:8px;position:relative;z-index:1}.city3d-overview-progress>div{color:#91a79f;display:flex;font-size:16px;justify-content:space-between}.city3d-overview-progress>div b{color:#f4fff9;font-size:18px}.city3d-overview-progress>i{background:#122522;border-radius:999px;height:12px;overflow:hidden}.city3d-overview-progress>i>span{background:linear-gradient(90deg,#37e58f,#38bdf8);border-radius:inherit;display:block;height:100%;box-shadow:0 0 16px rgba(55,229,143,.35)}
+  .city3d-overview-hero-footer{border-top:1px solid rgba(104,134,125,.2);display:grid;grid-template-columns:repeat(3,1fr);padding-top:10px;position:relative;z-index:1}.city3d-overview-hero-footer span{color:#789089;display:grid;font-size:14px;gap:2px}.city3d-overview-hero-footer b{color:#f2fff8;font-size:26px}
+  .city3d-overview-side{display:grid;gap:12px;grid-template-rows:auto minmax(0,1fr);min-height:0}.city3d-overview-metrics{display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}.city3d-overview-metrics article{display:flex;flex-direction:column;justify-content:center;min-height:84px;padding:8px}.city3d-overview-metrics article>span{color:#789089;font-size:14px;font-weight:900;text-transform:uppercase}.city3d-overview-metrics article>strong{align-items:center;display:flex;font-size:clamp(26px,3vw,38px);gap:5px;letter-spacing:-.04em;margin:5px 0}.city3d-overview-metrics strong.is-amber{color:#f5b84b}.city3d-overview-metrics strong.is-green{color:#37e58f}.city3d-overview-metrics strong.is-cyan{color:#38bdf8}.city3d-overview-metrics em{font-size:16px;font-style:normal;letter-spacing:0}.city3d-overview-metrics small{color:#607a72;font-size:12px}
+  .city3d-overview-actions{display:grid;gap:16px;grid-template-columns:repeat(2,1fr);min-height:0}.city3d-launch-card{color:#effff7;cursor:pointer;display:flex;flex-direction:column;justify-content:center;min-height:0;padding:20px 24px;text-align:left;transition:.2s ease}.city3d-launch-card:hover{border-color:rgba(55,229,143,.55);transform:translateY(-2px)}.city3d-launch-card--city{background:radial-gradient(circle at 85% 20%,rgba(56,189,248,.16),transparent 40%),linear-gradient(145deg,#0d2424,#081514)}.city3d-launch-card--store{background:radial-gradient(circle at 85% 20%,rgba(245,184,75,.16),transparent 40%),linear-gradient(145deg,#211c10,#0e1512)}.city3d-launch-card>span{color:#749087;font-size:20px;font-weight:900;text-transform:uppercase}.city3d-launch-card strong{font-size:52px;margin:8px 0;font-weight:950}.city3d-launch-card small{color:#b3cbc1;font-size:18px;line-height:1.55}.city3d-launch-card b{color:#37e58f;font-size:20px;margin-top:auto;padding-top:20px}.city3d-launch-card--store b{color:#f5b84b}
 
   .city3d-store-screen{display:flex;flex:1;flex-direction:column;min-height:0;overflow:hidden}.city3d-store-screen>header{align-items:center;border-bottom:1px solid rgba(90,118,111,.18);display:flex;justify-content:space-between;padding:5px 2px 10px}.city3d-store-screen>header>div:first-child>span{color:#37e58f;font-size:14px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}.city3d-store-screen>header h2{color:#f4fff9;font-size:30px;margin:4px 0}.city3d-store-screen>header p{color:#789089;font-size:15px;margin:0}.city3d-store-balance{align-items:flex-end;background:rgba(245,184,75,.07);border:1px solid rgba(245,184,75,.25);border-radius:12px;display:flex;flex-direction:column;padding:10px 16px}.city3d-store-balance small{color:#a18d64;font-size:12px;font-weight:900;text-transform:uppercase}.city3d-store-balance strong{align-items:center;color:#f5b84b;display:flex;font-size:28px;gap:6px}
   .city3d-store-warehouse-row{align-items:center;background:rgba(55,229,143,.045);border:1px solid rgba(55,229,143,.15);border-radius:11px;display:grid;gap:12px;grid-template-columns:155px minmax(0,1fr);margin-top:7px;padding:6px 8px}.city3d-store-warehouse-row>span{display:grid}.city3d-store-warehouse-row>span strong{color:#eafff5;font-size:11px}.city3d-store-warehouse-row>span small{color:#6f8880;font-size:7px}.city3d-store-warehouse-row>div{display:flex;gap:6px;overflow-x:auto}.city3d-store-warehouse-row button{align-items:center;background:#0b1816;border:1px solid rgba(55,229,143,.2);border-radius:8px;color:#f4fff9;display:flex;flex:0 0 170px;height:48px;padding:2px 7px;text-align:left}.city3d-store-warehouse-row button>.lowpoly--compact{height:42px;transform:scale(.45) rotateX(-30deg) rotateY(35deg);width:50px}.city3d-store-warehouse-row button>span{display:grid}.city3d-store-warehouse-row button strong{font-size:8px}.city3d-store-warehouse-row button small{color:#37e58f;font-size:7px}
