@@ -14,7 +14,7 @@ const char* ssid = "Ben’s iPhone";
 const char* password = "050928070037";
 const char* ws_host = "ecodrive-relay.benliew28262826.workers.dev";
 const uint16_t ws_port = 443;
-const char* ws_path = "/ws?role=bridge&session=demo-main";
+const char* ws_path = "/ws?role=bridge&session=demo-main&token=beauty_and_the_beast";
 
 WebSocketsClient webSocket;
 
@@ -22,6 +22,9 @@ WebSocketsClient webSocket;
 #define PIN_LED_GREEN   4
 #define PIN_LED_RED     2
 #define PIN_BUZZER     15
+
+#define BUZZER_ON  HIGH
+#define BUZZER_OFF LOW
 
 // ── State Machine ────────────────────────────────────────────────
 enum LedMode {
@@ -262,22 +265,22 @@ void runOutputs() {
     case MODE_GREEN:
       digitalWrite(PIN_LED_GREEN, HIGH);
       digitalWrite(PIN_LED_RED, LOW);
-      digitalWrite(PIN_BUZZER, LOW);
+      digitalWrite(PIN_BUZZER, BUZZER_OFF);
       break;
       
     case MODE_RED:
       digitalWrite(PIN_LED_GREEN, LOW);
       digitalWrite(PIN_LED_RED, HIGH);
-      runBuzzerPattern(now, 150, 100);
+      runBuzzerPattern(now, 150, 400);
       break;
       
     case MODE_AMBER:
       digitalWrite(PIN_LED_GREEN, LOW);
       digitalWrite(PIN_LED_RED, LOW);
       if (now - modeEnteredMs < 200) {
-        digitalWrite(PIN_BUZZER, HIGH);
+        digitalWrite(PIN_BUZZER, BUZZER_ON);
       } else {
-        digitalWrite(PIN_BUZZER, LOW);
+        digitalWrite(PIN_BUZZER, BUZZER_OFF);
       }
       break;
       
@@ -288,7 +291,7 @@ void runOutputs() {
         blinkState = !blinkState;
       }
       digitalWrite(PIN_LED_GREEN, blinkState ? HIGH : LOW);
-      digitalWrite(PIN_BUZZER, LOW);
+      digitalWrite(PIN_BUZZER, BUZZER_OFF);
       break;
       
     case MODE_OFF:
@@ -304,11 +307,11 @@ void runBuzzerPattern(unsigned long now, int onMs, int offMs) {
     lastToggleMs = now;
     buzzerOn = !buzzerOn;
   }
-  digitalWrite(PIN_BUZZER, buzzerOn ? HIGH : LOW);
+  digitalWrite(PIN_BUZZER, buzzerOn ? BUZZER_ON : BUZZER_OFF);
 }
 
 void allOff() {
   digitalWrite(PIN_LED_GREEN, LOW);
   digitalWrite(PIN_LED_RED,   LOW);
-  digitalWrite(PIN_BUZZER,    LOW);
+  digitalWrite(PIN_BUZZER,    BUZZER_OFF);
 }
