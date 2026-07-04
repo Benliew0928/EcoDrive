@@ -176,9 +176,8 @@ export default function CityPage() {
     if (!storeOpen || (event.target as HTMLElement).closest("[data-infrastructure-id]")) return;
     const position = readTerrainPosition(event.clientX, event.clientY);
     if (selectedInfrastructureId) {
-      moveInfrastructure(selectedInfrastructureId, position.x, position.y);
       setSelectedInfrastructureId(null);
-      setMessage({ kind: "success", text: "Selected infrastructure moved to the highlighted position." });
+      setMessage({ kind: "success", text: "Infrastructure deselected." });
       return;
     }
     if (selectedWarehouseId) {
@@ -245,7 +244,7 @@ export default function CityPage() {
           </header>
 
           <section className="city3d-summary" aria-label="City summary">
-            <SummaryStat label="EcoCoins" value={walletCoins.toLocaleString()} tone="amber" />
+            <SummaryStat label="EcoCoins" value={walletCoins.toLocaleString()} tone="amber" coin />
             <SummaryStat label="Yield Coins" value={cityStats.yieldCoins.toLocaleString()} tone="green" />
             <SummaryStat label="Daily yield" value={`+${cityStats.dailyYield}`} tone="cyan" />
             <div className="city3d-stage">
@@ -346,6 +345,11 @@ export default function CityPage() {
                       event.stopPropagation();
                       setSellCandidateId(selectedInfrastructure.id);
                     }} type="button">Sell</button>
+                    <button className="city3d-done-action" onClick={(event) => {
+                      event.stopPropagation();
+                      setSelectedInfrastructureId(null);
+                      setMessage({ kind: "success", text: "Done editing. Infrastructure deselected." });
+                    }} type="button">✓ Done</button>
                   </div>
                 ) : null}
 
@@ -357,7 +361,7 @@ export default function CityPage() {
 
             {storeOpen ? (
               <aside className="city3d-palette" aria-label="Infrastructure Store">
-                <div className="city3d-palette-heading"><div><small>Infrastructure</small><h2>Eco Store</h2></div><span>{walletCoins.toLocaleString()} coins</span></div>
+                <div className="city3d-palette-heading"><div><small>Infrastructure</small><h2>Eco Store</h2></div><span className="city3d-palette-coins"><CityEcoCoin size={16} />{walletCoins.toLocaleString()} coins</span></div>
 
                 <section className="city3d-warehouse">
                   <div><strong>Warehouse</strong><span>{warehouse.length} stored</span></div>
@@ -403,7 +407,7 @@ export default function CityPage() {
                       >
                         <LowPolyModel buildingId={building.id} compact />
                         <span className="city3d-palette-copy"><strong>{building.name}</strong><small>+{building.yieldPerDay}/day · +{building.impact} impact</small></span>
-                        <span className={affordable ? "city3d-cost" : "city3d-cost city3d-cost--locked"}><i />{building.cost}</span>
+                        <span className={affordable ? "city3d-cost" : "city3d-cost city3d-cost--locked"}><CityEcoCoin size={14} />{building.cost}</span>
                       </button>
                     );
                   })}
@@ -420,7 +424,7 @@ export default function CityPage() {
         <div className="city3d-sell-overlay" onClick={() => setSellCandidateId(null)} role="presentation">
           <section aria-labelledby="city3d-sell-title" aria-modal="true" className="city3d-sell-dialog" onClick={(event) => event.stopPropagation()} role="dialog">
             <h2 id="city3d-sell-title">Sell {cityBuildingMap[sellCandidate.buildingId].name}?</h2>
-            <p>You will receive <strong>{(cityBuildingMap[sellCandidate.buildingId].cost * 0.5).toLocaleString()} EcoCoins</strong> back.</p>
+            <p>You will receive <strong><CityEcoCoin size={12} />{(cityBuildingMap[sellCandidate.buildingId].cost * 0.5).toLocaleString()} EcoCoins</strong> back.</p>
             <div className="city3d-sell-dialog-actions">
               <button onClick={() => setSellCandidateId(null)} type="button">Cancel</button>
               <button className="city3d-sell-confirm" onClick={confirmSale} type="button">Sell</button>
@@ -433,8 +437,32 @@ export default function CityPage() {
   );
 }
 
-function SummaryStat({ label, value, tone }: { label: string; value: string; tone: "amber" | "green" | "cyan" }) {
-  return <div className={`city3d-stat city3d-stat--${tone}`}><span>{label}</span><strong>{value}</strong></div>;
+function SummaryStat({ label, value, tone, coin }: { label: string; value: string; tone: "amber" | "green" | "cyan"; coin?: boolean }) {
+  return <div className={`city3d-stat city3d-stat--${tone}`}><span>{label}</span><strong>{coin ? <><CityEcoCoin size={18} />{value}</> : value}</strong></div>;
+}
+
+function CityEcoCoin({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ verticalAlign: "middle", flexShrink: 0 }}>
+      <circle cx="12" cy="12" r="11" fill="url(#cCoinOuter)" stroke="#EAB308" strokeWidth="0.5" />
+      <circle cx="12" cy="12" r="8.5" fill="url(#cCoinInner)" stroke="#CA8A04" strokeWidth="0.5" />
+      <g transform="translate(4.5, 4.5) scale(0.62)">
+        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 8a7 7 0 0 1-9 10Z" fill="url(#cCoinLeaf)" stroke="#9A3412" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M9 22v-4h-4" stroke="#9A3412" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+      <defs>
+        <linearGradient id="cCoinOuter" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FDE047" /><stop offset="50%" stopColor="#EAB308" /><stop offset="100%" stopColor="#A16207" />
+        </linearGradient>
+        <linearGradient id="cCoinInner" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#EAB308" /><stop offset="50%" stopColor="#CA8A04" /><stop offset="100%" stopColor="#854D0E" />
+        </linearGradient>
+        <linearGradient id="cCoinLeaf" x1="0" y1="0" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FEF08A" /><stop offset="50%" stopColor="#FDE047" /><stop offset="100%" stopColor="#CA8A04" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
 }
 
 function PlacedModel({ item, isBonus, isEditing, isSelected, isSelling, onSelect, onRotate }: {
@@ -457,7 +485,7 @@ function PlacedModel({ item, isBonus, isEditing, isSelected, isSelling, onSelect
       onClick={(event) => { if (!isEditing) return; event.stopPropagation(); onSelect(); }}
       onDoubleClick={(event) => { if (!isEditing) return; event.stopPropagation(); onRotate(); }}
       onDragStart={(event) => { if (!isEditing) { event.preventDefault(); return; } event.stopPropagation(); event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData(INFRASTRUCTURE_DRAG_TYPE, item.id); }}
-      style={{ left: `${item.x}%`, top: `${item.y}%`, transform: `translate(-50%, -76%) scale(${depthScale})`, zIndex: Math.round(item.y) + 20, "--model-rotation": `${item.rotation}deg`, "--building-color": building.color } as CSSProperties}
+      style={{ left: `${item.x}%`, top: `${item.y}%`, transform: `translate(-50%, -96%) scale(${depthScale})`, zIndex: Math.round(item.y) + 20, "--model-rotation": `${item.rotation}deg`, "--building-color": building.color } as CSSProperties}
       type="button"
     >
       <span className="city3d-asset-shadow" />
@@ -474,12 +502,90 @@ function LowPolyModel({ buildingId, compact = false }: { buildingId: CityBuildin
   return (
     <span className={`lowpoly lowpoly--${buildingId} ${compact ? "lowpoly--compact" : ""}`} aria-hidden="true">
       <span className="lowpoly-ground" />
-      {buildingId === "wind" ? <><ModelBox className="wind-platform3d" /><ModelBox className="wind-house3d" /><span className="wind-roof3d" /><ModelBox className="wind-tower3d" /><ModelBox className="wind-hub3d" /><ModelBox className="wind-blade3d wind-blade3d--one" /><ModelBox className="wind-blade3d wind-blade3d--two" /><ModelBox className="wind-blade3d wind-blade3d--three" /><ModelTree className="wind-tree3d" /></> : null}
-      {buildingId === "solar" ? <><ModelBox className="solar-pad3d" /><ModelBox className="solar-stand3d solar-stand3d--one" /><ModelBox className="solar-stand3d solar-stand3d--two" /><ModelBox className="solar-panel3d solar-panel3d--one" /><ModelBox className="solar-panel3d solar-panel3d--two" /></> : null}
-      {buildingId === "park" ? <><ModelBox className="park-platform3d" /><span className="park-water3d" /><ModelTree className="park-tree3d park-tree3d--one" /><ModelTree className="park-tree3d park-tree3d--two" /><ModelTree className="park-tree3d park-tree3d--three" /><ModelBox className="park-bench3d" /></> : null}
-      {buildingId === "charger" ? <><ModelBox className="charger-pad3d" /><ModelBox className="charger-canopy3d" /><ModelBox className="charger-pillar3d charger-pillar3d--one" /><ModelBox className="charger-pillar3d charger-pillar3d--two" /><ModelBox className="charger-unit3d charger-unit3d--one" /><ModelBox className="charger-unit3d charger-unit3d--two" /><i className="charger-light3d charger-light3d--one" /><i className="charger-light3d charger-light3d--two" /></> : null}
-      {buildingId === "recycling" ? <><ModelBox className="recycling-pad3d" /><ModelBox className="recycling-building3d" /><ModelBox className="recycling-roof3d" /><ModelBox className="recycling-stack3d" /><ModelBox className="recycling-bin3d recycling-bin3d--one" /><ModelBox className="recycling-bin3d recycling-bin3d--two" /><i className="model-window3d recycling-window3d" /></> : null}
-      {buildingId === "school" ? <><ModelBox className="school-yard3d" /><ModelBox className="school-building3d" /><ModelBox className="school-roof3d" /><ModelBox className="school-wing3d" /><i className="model-window3d school-window3d school-window3d--one" /><i className="model-window3d school-window3d school-window3d--two" /><ModelTree className="school-tree3d" /></> : null}
+      {buildingId === "wind" ? (
+        <>
+          <ModelBox className="wind-platform3d" />
+          <ModelBox className="wind-tower3d" />
+          <ModelBox className="wind-nacelle3d" />
+          <span className="wind-rotor3d">
+            <ModelBox className="wind-hub3d" />
+            <ModelBox className="wind-blade3d wind-blade3d--one" />
+            <ModelBox className="wind-blade3d wind-blade3d--two" />
+            <ModelBox className="wind-blade3d wind-blade3d--three" />
+          </span>
+          <ModelTree className="wind-tree3d" />
+        </>
+      ) : null}
+      {buildingId === "solar" ? (
+        <>
+          <ModelBox className="solar-pad3d" />
+          <ModelBox className="solar-stand3d solar-stand3d--one" />
+          <ModelBox className="solar-stand3d solar-stand3d--two" />
+          <ModelBox className="solar-stand3d solar-stand3d--three" />
+          <ModelBox className="solar-stand3d solar-stand3d--four" />
+          <ModelBox className="solar-panel3d solar-panel3d--one" />
+          <ModelBox className="solar-panel3d solar-panel3d--two" />
+        </>
+      ) : null}
+      {buildingId === "park" ? (
+        <>
+          <ModelBox className="park-platform3d" />
+          <ModelBox className="park-path3d park-path3d--one" />
+          <ModelBox className="park-path3d park-path3d--two" />
+          <ModelBox className="park-fountain-base3d" />
+          <ModelBox className="park-fountain-pillar3d" />
+          <ModelBox className="park-fountain-water3d" />
+          <ModelTree className="park-tree3d park-tree3d--one" />
+          <ModelTree className="park-tree3d park-tree3d--two" />
+          <ModelTree className="park-tree3d park-tree3d--three" />
+          <ModelBox className="park-bench3d" />
+          <ModelBox className="park-bush3d park-bush3d--one" />
+          <ModelBox className="park-bush3d park-bush3d--two" />
+        </>
+      ) : null}
+      {buildingId === "charger" ? (
+        <>
+          <ModelBox className="charger-pad3d" />
+          <ModelBox className="charger-column3d charger-column3d--one" />
+          <ModelBox className="charger-column3d charger-column3d--two" />
+          <ModelBox className="charger-canopy3d" />
+          <ModelBox className="charger-unit3d charger-unit3d--one" />
+          <ModelBox className="charger-unit3d charger-unit3d--two" />
+          <ModelBox className="charger-screen3d charger-screen3d--one" />
+          <ModelBox className="charger-screen3d charger-screen3d--two" />
+        </>
+      ) : null}
+      {buildingId === "recycling" ? (
+        <>
+          <ModelBox className="recycling-pad3d" />
+          <ModelBox className="recycling-main-building3d" />
+          <ModelBox className="recycling-side-building3d" />
+          <ModelBox className="recycling-dock3d" />
+          <ModelBox className="recycling-dock-door3d" />
+          <ModelBox className="recycling-vent3d" />
+          <ModelBox className="recycling-chimney3d" />
+          <ModelBox className="recycling-bin3d recycling-bin3d--blue" />
+          <ModelBox className="recycling-bin3d recycling-bin3d--green" />
+          <ModelBox className="recycling-bin3d recycling-bin3d--yellow" />
+        </>
+      ) : null}
+      {buildingId === "school" ? (
+        <>
+          <ModelBox className="school-yard3d" />
+          <ModelBox className="school-ground-floor3d" />
+          <ModelBox className="school-first-floor3d" />
+          <ModelBox className="school-step3d school-step3d--bottom" />
+          <ModelBox className="school-step3d school-step3d--top" />
+          <ModelBox className="school-window-frame3d school-window-frame3d--one" />
+          <ModelBox className="school-window-frame3d school-window-frame3d--two" />
+          <ModelBox className="school-window-frame3d school-window-frame3d--three" />
+          <ModelBox className="school-window-frame3d school-window-frame3d--four" />
+          <ModelBox className="school-roof-solar3d school-roof-solar3d--one" />
+          <ModelBox className="school-roof-solar3d school-roof-solar3d--two" />
+          <ModelTree className="school-tree3d school-tree3d--one" />
+          <ModelTree className="school-tree3d school-tree3d--two" />
+        </>
+      ) : null}
     </span>
   );
 }
@@ -489,7 +595,14 @@ function ModelBox({ className }: { className: string }) {
 }
 
 function ModelTree({ className }: { className: string }) {
-  return <span className={`model-tree3d ${className}`}><ModelBox className="model-tree-trunk3d" /><i className="model-tree-crown3d model-tree-crown3d--low" /><i className="model-tree-crown3d model-tree-crown3d--high" /></span>;
+  return (
+    <span className={`model-tree3d ${className}`}>
+      <ModelBox className="model-tree-trunk3d" />
+      <ModelBox className="model-tree-foliage3d model-tree-foliage3d--base" />
+      <ModelBox className="model-tree-foliage3d model-tree-foliage3d--mid" />
+      <ModelBox className="model-tree-foliage3d model-tree-foliage3d--top" />
+    </span>
+  );
 }
 
 function screenPointToUnitSquare(point: TerrainPoint, quad: TerrainPoint[]) {
@@ -580,9 +693,7 @@ function getSunTimes(date: Date, latitude: number, longitude: number) {
   const hourAngle = Math.acos((Math.sin(altitude) - Math.sin(phi) * Math.sin(declination)) / (Math.cos(phi) * Math.cos(declination)));
   const set = j2000 + transit(hourAngle) + 0.0053 * Math.sin(meanAnomaly) - 0.0069 * Math.sin(2 * eclipticLongitude);
   return { sunrise: fromJulian(solarNoon - (set - solarNoon)), sunset: fromJulian(set) };
-}
-
-const styleSheet = `
+}const styleSheet = `
   .city3d-page { min-height: 100vh; padding: 86px 24px 108px; transition: background .8s ease; }
   .city3d-frame { background: radial-gradient(circle at 75% 0%, rgba(55,229,143,.08), transparent 28%), #081312; border: 1px solid rgba(86,115,108,.28); border-radius: 20px; box-shadow: 0 30px 90px rgba(0,0,0,.32); margin: 0 auto; max-width: 1460px; overflow: hidden; padding: 22px; }
   .city3d-header { align-items: center; display: flex; gap: 24px; justify-content: space-between; padding: 4px 4px 20px; }
@@ -612,7 +723,7 @@ const styleSheet = `
   .city3d-map-heading { align-items: center; display: flex; gap: 16px; justify-content: space-between; min-height: 62px; padding: 10px 14px; }
   .city3d-map-heading > div:first-child { display: grid; gap: 3px; }.city3d-map-heading small,.city3d-palette-heading small { color: #37e58f; font-size: 9px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }.city3d-map-heading strong { color: #f4fff9; font-size: 14px; }
   .city3d-message { background: rgba(55,229,143,.07); border: 1px solid rgba(55,229,143,.2); border-radius: 8px; color: #8feeb9; font-size: 9px; line-height: 1.35; max-width: 380px; padding: 8px 10px; }.city3d-message--error { background: rgba(255,95,80,.08); border-color: rgba(255,95,80,.28); color: #ff867a; }
-  .city3d-field { background: linear-gradient(180deg,#48afe0 0%,#8ed5e8 48%,#174239 100%); cursor: grab; height: clamp(480px,58vw,680px); overflow: hidden; perspective: 980px; position: relative; touch-action: none; transition: background .8s ease,box-shadow .2s ease; }
+  .city3d-field { background: linear-gradient(180deg,#48afe0 0%,#8ed5e8 48%,#174239 100%); cursor: grab; height: clamp(480px,58vw,680px); overflow: hidden; perspective: 980px; position: relative; touch-action: none; transition: background .8s ease,box-shadow .2s ease; transform-style: preserve-3d; }
   .city3d-field:active { cursor: grabbing; }.city3d-field--editing { cursor: crosshair; }.city3d-field--drop { box-shadow: inset 0 0 0 2px rgba(55,229,143,.72),inset 0 0 70px rgba(55,229,143,.1); }
   .city3d-page--night .city3d-field { background:linear-gradient(180deg,#071326 0%,#0b2340 52%,#071a1c 100%); }
   .city3d-atmosphere { background:linear-gradient(180deg,rgba(181,235,255,.2),rgba(255,236,183,.08) 52%,transparent 72%); inset:0; pointer-events:none; position:absolute; transition:background .8s ease; }.city3d-page--night .city3d-atmosphere{background:radial-gradient(circle at 50% 55%,rgba(57,116,174,.16),transparent 48%),linear-gradient(180deg,rgba(3,10,28,.22),transparent 72%)}
@@ -631,32 +742,328 @@ const styleSheet = `
   .city3d-corner { height:2px; pointer-events:none; position:absolute; width:2px; }.city3d-corner--tl{left:0;top:0}.city3d-corner--tr{right:0;top:0}.city3d-corner--br{bottom:0;right:0}.city3d-corner--bl{bottom:0;left:0}
   .city3d-placement-preview { background:rgba(55,229,143,.16); border:2px solid rgba(55,229,143,.86); border-radius:12px; box-shadow:0 0 18px rgba(55,229,143,.35),inset 0 0 16px rgba(55,229,143,.18); height:62px; pointer-events:none; position:absolute; transform:translate(-50%,-50%); width:62px; z-index:12; }
   .city3d-empty { color:#b7d6ca; display:grid; gap:6px; left:50%; place-items:center; pointer-events:none; position:absolute; text-align:center; top:43%; transform:translate(-50%,-50%); width:260px; }.city3d-empty strong{color:#f4fff9;font-size:18px}.city3d-empty span{font-size:10px}
-  .city3d-asset { background:transparent;border:0;height:108px;padding:0;position:absolute;transform-origin:center bottom;width:108px}.city3d-asset--locked{pointer-events:none}.city3d-asset--editable{cursor:grab}.city3d-asset--selected{filter:drop-shadow(0 0 13px #37e58f)}.city3d-asset--selling{animation:city3d-sell-away .24s cubic-bezier(.4,0,.8,.2) forwards;pointer-events:none}
-  .city3d-asset-shadow { background:rgba(0,0,0,.4);border-radius:50%;bottom:4px;filter:blur(5px);height:18px;left:17px;position:absolute;transform:translateZ(-5px);width:74px}.city3d-asset-upright{bottom:4px;height:108px;left:0;pointer-events:none;position:absolute;transform:rotateX(var(--terrain-pitch-inverse));transform-origin:center bottom;transform-style:preserve-3d;width:108px}.city3d-asset-label{background:rgba(4,13,12,.88);border:1px solid rgba(178,218,205,.2);border-radius:999px;bottom:-1px;color:#eafff5;font-size:8px;font-weight:900;left:50%;padding:4px 8px;position:absolute;transform:translateX(-50%) translateZ(18px);white-space:nowrap}.city3d-bonus{background:#f5b84b;border-radius:999px;color:#171006;font-size:6px;font-weight:950;padding:3px 5px;position:absolute;right:0;top:6px;transform:translateZ(22px)}
-  .lowpoly { bottom:14px;display:block;height:88px;left:10px;position:absolute;transform:scale(1.25) rotateX(-25deg) rotateY(calc(var(--model-rotation,12deg) + var(--terrain-yaw,0deg)));transform-origin:center bottom;transform-style:preserve-3d;transition:transform .12s linear;width:88px}.lowpoly *{box-sizing:border-box;position:absolute}.lowpoly-ground{background:radial-gradient(ellipse,rgba(0,0,0,.42),transparent 68%);bottom:-2px;filter:blur(2px);height:18px;left:4px;transform:rotateX(74deg) translateZ(-6px);width:80px}.lowpoly--compact{bottom:auto;height:62px;left:auto;position:relative;transform:scale(.74) rotateX(-25deg) rotateY(22deg);transform-origin:center;width:76px}.lowpoly--compact .lowpoly-ground{bottom:0}
-  .model-box{--box-d:16px;--box-h:20px;--box-w:20px;--face-back:#41675d;--face-bottom:#29473f;--face-front:#8cb9aa;--face-left:#517d70;--face-right:#3e655a;--face-top:#c7ded5;height:var(--box-h);transform-style:preserve-3d;width:var(--box-w)}.model-face{backface-visibility:hidden;display:block}.model-face--front,.model-face--back{height:var(--box-h);left:0;top:0;width:var(--box-w)}.model-face--front{background:var(--face-front);transform:translateZ(calc(var(--box-d) * .5))}.model-face--back{background:var(--face-back);transform:rotateY(180deg) translateZ(calc(var(--box-d) * .5))}.model-face--left,.model-face--right{height:var(--box-h);left:calc((var(--box-w) - var(--box-d)) * .5);top:0;width:var(--box-d)}.model-face--left{background:var(--face-left);transform:rotateY(-90deg) translateZ(calc(var(--box-w) * .5))}.model-face--right{background:var(--face-right);transform:rotateY(90deg) translateZ(calc(var(--box-w) * .5))}.model-face--top,.model-face--bottom{height:var(--box-d);left:0;top:calc((var(--box-h) - var(--box-d)) * .5);width:var(--box-w)}.model-face--top{background:var(--face-top);transform:rotateX(90deg) translateZ(calc(var(--box-h) * .5))}.model-face--bottom{background:var(--face-bottom);transform:rotateX(-90deg) translateZ(calc(var(--box-h) * .5))}
-  .wind-platform3d{--box-d:48px;--box-h:7px;--box-w:72px;--face-front:#159348;--face-left:#0c7137;--face-right:#095e30;--face-top:linear-gradient(135deg,#75dc66,#2dae50);bottom:4px;left:8px}.wind-house3d{--box-d:18px;--box-h:18px;--box-w:22px;--face-front:#edf2e7;--face-left:#b7c9bc;--face-right:#91aaa0;--face-top:#fff3cf;bottom:11px;left:5px}.wind-roof3d{background:linear-gradient(135deg,#fff3cf,#c8c0a8);bottom:29px;clip-path:polygon(50% 0,100% 100%,0 100%);height:11px;left:2px;transform:translateZ(1px);width:28px}.wind-tower3d{--box-d:9px;--box-h:58px;--box-w:9px;--face-front:linear-gradient(90deg,#b8cccd,#f8fcf8);--face-left:#8ca7aa;--face-right:#6f8d91;--face-top:#f7fbf8;bottom:11px;left:40px}.wind-hub3d{--box-d:12px;--box-h:13px;--box-w:13px;--face-front:#eef7f5;--face-left:#9eb7b9;--face-right:#78999c;--face-top:#fff;left:38px;top:5px;transform:translateZ(6px);z-index:9}.wind-blade3d{--box-d:3px;--box-h:39px;--box-w:5px;--face-front:linear-gradient(#f8fcfa,#a8bdc1);--face-left:#8da6aa;--face-right:#758f93;--face-top:#fff;left:42px;top:-27px;transform-origin:50% 100%;z-index:8}.wind-blade3d--one{transform:translateZ(6px)}.wind-blade3d--two{transform:translateZ(6px) rotateZ(120deg)}.wind-blade3d--three{transform:translateZ(6px) rotateZ(240deg)}
-  .solar-pad3d{--box-d:48px;--box-h:6px;--box-w:76px;--face-front:#267250;--face-left:#174f3a;--face-right:#103f31;--face-top:#3d9b68;bottom:4px;left:6px}.solar-stand3d{--box-d:5px;--box-h:27px;--box-w:5px;--face-front:#b5cbc7;--face-left:#718d88;--face-right:#58746f;--face-top:#e6f3ef;bottom:9px}.solar-stand3d--one{left:23px}.solar-stand3d--two{right:17px}.solar-panel3d{--box-d:27px;--box-h:5px;--box-w:40px;--face-front:#0a3554;--face-left:#36566b;--face-right:#18384d;--face-top:linear-gradient(rgba(83,190,255,.42) 1px,transparent 1px),linear-gradient(90deg,rgba(83,190,255,.42) 1px,transparent 1px),linear-gradient(145deg,#176f9d,#092d52);background-size:10px 10px;top:24px;transform:rotateX(-22deg) rotateZ(-5deg)}.solar-panel3d--one{left:1px}.solar-panel3d--two{right:0;top:31px}
-  .solar-panel3d .model-face--top{background-size:10px 10px,10px 10px,auto}
-  .park-platform3d{--box-d:54px;--box-h:7px;--box-w:76px;--face-front:#27945a;--face-left:#176f45;--face-right:#0e5738;--face-top:linear-gradient(135deg,#6bd377,#2e9b5b);bottom:4px;left:6px}.park-water3d{background:radial-gradient(ellipse at 40% 30%,#85eaf0,#2796b3 65%,#12677e);border:1px solid rgba(190,255,249,.65);border-radius:50%;bottom:12px;height:14px;left:12px;transform:rotateX(72deg) translateZ(8px);width:28px}.model-tree3d{height:48px;transform-style:preserve-3d;width:27px}.model-tree-trunk3d{--box-d:6px;--box-h:27px;--box-w:6px;--face-front:#9a673d;--face-left:#684226;--face-right:#56361f;--face-top:#b47a48;bottom:0;left:10px}.model-tree-crown3d{background:radial-gradient(circle at 33% 24%,#94ec91,#35a95d 58%,#13703e);border-radius:48% 52% 46% 54%;box-shadow:inset -5px -5px 8px rgba(10,77,40,.28),0 5px 7px rgba(0,0,0,.16);height:27px;left:0;transform:translateZ(2px);width:27px}.model-tree-crown3d--low{top:9px}.model-tree-crown3d--high{height:23px;left:2px;top:0;transform:translateZ(-3px);width:23px}.park-tree3d--one{bottom:13px;left:38px}.park-tree3d--two{bottom:8px;left:59px;transform:scale(.76)}.park-tree3d--three{bottom:7px;left:20px;transform:scale(.65)}.wind-tree3d{bottom:8px;right:2px;transform:scale(.72)}.park-bench3d{--box-d:7px;--box-h:5px;--box-w:23px;--face-front:#c18a51;--face-left:#77502d;--face-right:#684325;--face-top:#e0b177;bottom:11px;left:48px;transform:rotateY(-18deg)}
-  .charger-pad3d{--box-d:48px;--box-h:6px;--box-w:72px;--face-front:#276955;--face-left:#174a3c;--face-right:#10392f;--face-top:#428e76;bottom:4px;left:8px}.charger-canopy3d{--box-d:27px;--box-h:8px;--box-w:64px;--face-front:#2eaaa0;--face-left:#176f6b;--face-right:#115c59;--face-top:linear-gradient(135deg,#78e1d5,#2da8a0);left:11px;top:17px}.charger-pillar3d{--box-d:6px;--box-h:39px;--box-w:6px;--face-front:#d6e9e4;--face-left:#819c96;--face-right:#66817b;--face-top:#effaf7;bottom:8px}.charger-pillar3d--one{left:18px}.charger-pillar3d--two{right:15px}.charger-unit3d{--box-d:10px;--box-h:26px;--box-w:13px;--face-front:#dceee9;--face-left:#78938d;--face-right:#5b7771;--face-top:#f5fffc;bottom:9px}.charger-unit3d--one{left:27px}.charger-unit3d--two{right:23px}.charger-light3d{background:#48f0b6;border-radius:2px;box-shadow:0 0 8px #37e58f;height:7px;bottom:24px;transform:translateZ(6px);width:7px}.charger-light3d--one{left:30px}.charger-light3d--two{right:26px}
-  .recycling-pad3d,.school-yard3d{--box-d:50px;--box-h:6px;--box-w:76px;--face-front:#2b8156;--face-left:#185b40;--face-right:#104632;--face-top:#4aab70;bottom:4px;left:6px}.recycling-building3d{--box-d:28px;--box-h:41px;--box-w:52px;--face-front:linear-gradient(145deg,#a9d7b0,#4d9464);--face-left:#3c7651;--face-right:#2e6042;--face-top:#b8ddbe;bottom:10px;left:17px}.recycling-roof3d{--box-d:34px;--box-h:6px;--box-w:56px;--face-front:#709f79;--face-left:#426d50;--face-right:#355d44;--face-top:#b7d8b8;bottom:49px;left:15px}.recycling-stack3d{--box-d:8px;--box-h:25px;--box-w:8px;--face-front:#aec9c0;--face-left:#647e77;--face-right:#4d6861;--face-top:#dae9e4;bottom:53px;left:61px}.recycling-bin3d{--box-d:11px;--box-h:17px;--box-w:14px;--face-front:#37ac6c;--face-left:#23734b;--face-right:#1c5f3f;--face-top:#74d69b;bottom:7px}.recycling-bin3d--one{left:5px}.recycling-bin3d--two{--face-front:#3b98bd;--face-left:#296a85;--face-right:#20566c;--face-top:#77c6df;right:3px}.model-window3d{background:#c4ffe0;border-radius:2px;box-shadow:0 0 8px rgba(90,255,173,.4);height:10px;transform:translateZ(16px);width:14px}.recycling-window3d{bottom:27px;left:28px}
-  .school-yard3d{--face-front:#367d54;--face-left:#21583d;--face-right:#17452f;--face-top:#55ad73}.school-building3d{--box-d:30px;--box-h:40px;--box-w:53px;--face-front:linear-gradient(145deg,#dceae4,#86aaa0);--face-left:#6f9188;--face-right:#587970;--face-top:#b8d1c8;bottom:10px;left:8px}.school-roof3d{--box-d:35px;--box-h:7px;--box-w:57px;--face-front:#568c67;--face-left:#376347;--face-right:#2b523b;--face-top:#73b586;bottom:48px;left:6px}.school-wing3d{--box-d:22px;--box-h:25px;--box-w:29px;--face-front:#b9d1c8;--face-left:#74958c;--face-right:#5d7d74;--face-top:#d8e7e1;bottom:10px;right:1px}.school-window3d{bottom:27px}.school-window3d--one{left:17px}.school-window3d--two{left:37px}.school-tree3d{bottom:8px;right:0;transform:scale(.61)}
-  .wind-island{background:radial-gradient(circle at 72% 24%,#b8f45a,#43c849 52%,#15933d 82%);border-radius:48% 52% 46% 54%;bottom:2px;box-shadow:0 7px 0 #087532,0 12px 15px rgba(0,0,0,.28);height:37px;left:0;transform:rotateX(61deg);width:88px}.wind-base{background:#d7e8e5;border-radius:50%;bottom:13px;height:8px;left:35px;width:24px}.wind-tower{background:linear-gradient(90deg,#8ba9ad,#f7fbf7 46%,#abc0c1 72%,#76969a);bottom:16px;clip-path:polygon(41% 0,59% 0,78% 100%,22% 100%);height:62px;left:38px;width:18px}.wind-head{background:linear-gradient(145deg,#f8fcf9,#9ebcc0);border:1px solid rgba(108,147,153,.35);border-radius:50%;box-shadow:0 3px 5px rgba(0,0,0,.2);height:14px;left:40px;top:3px;width:14px;z-index:4}.wind-head i{background:linear-gradient(145deg,#f8fcfa,#9ab9bd);border-radius:50%;height:8px;left:2px;top:2px;width:8px;z-index:5}.wind-blade{background:linear-gradient(90deg,#a8bdc1,#f7fbfa 55%,#c6d4d5);clip-path:polygon(36% 0,66% 1%,59% 100%,42% 100%);height:48px;left:1px;top:-42px;transform-origin:6px 48px;width:12px}.wind-blade--one{transform:rotate(0deg)}.wind-blade--two{transform:rotate(120deg)}.wind-blade--three{transform:rotate(240deg)}.wind-house{background:linear-gradient(90deg,#dfe9df,#f6f1d8);border-radius:2px;bottom:17px;height:19px;left:8px;width:22px}.wind-house i{background:#f2ead3;clip-path:polygon(50% 0,100% 100%,0 100%);height:12px;left:-3px;top:-10px;width:28px}.wind-house b{background:#317395;border-radius:1px;bottom:5px;height:7px;left:4px;width:5px}.wind-tree{bottom:14px;height:35px;right:4px;width:21px}.wind-tree i{background:#9a5934;bottom:0;height:12px;left:8px;width:5px}.wind-tree b,.wind-tree em{background:linear-gradient(145deg,#69d93e,#168c38);clip-path:polygon(50% 0,100% 100%,0 100%);height:22px;left:0;top:8px;width:21px}.wind-tree em{background:linear-gradient(145deg,#8be246,#239940);height:19px;left:2px;top:0;width:18px}
-  .solar-panel{background:linear-gradient(rgba(95,198,255,.32) 1px,transparent 1px),linear-gradient(90deg,rgba(95,198,255,.32) 1px,transparent 1px),linear-gradient(145deg,#17618b,#092d52);background-size:12px 12px;border:2px solid #6b91a4;box-shadow:0 5px 0 #071b29,0 8px 12px rgba(0,0,0,.3);height:31px;top:22px;transform:rotateX(48deg) rotateZ(-6deg);width:48px}.solar-panel--one{left:1px}.solar-panel--two{right:-3px;top:30px}.solar-stand{background:linear-gradient(90deg,#7d9997,#d9ebe5);bottom:12px;height:33px;width:5px}.solar-stand--one{left:25px}.solar-stand--two{right:20px}
-  .park-island{background:linear-gradient(145deg,#4ebd72,#1e784b);border:3px solid #61ce83;border-radius:50% 42% 48% 38%;bottom:7px;height:43px;left:7px;transform:rotateX(64deg);width:76px}.park-pond{background:#39a9c3;border:2px solid #79d7d9;border-radius:50%;bottom:17px;height:15px;left:14px;transform:rotateX(60deg);width:25px}.park-tree i,.school-tree i{background:#76523a;bottom:8px;height:27px;left:10px;width:6px}.park-tree b,.school-tree b{background:radial-gradient(circle at 35% 25%,#85e59c,#2f9c57 65%,#12643c);border-radius:48% 53% 44% 58%;height:30px;left:0;top:0;width:28px}.park-tree{height:50px;width:30px}.park-tree--one{bottom:20px;left:38px}.park-tree--two{bottom:14px;left:59px;transform:scale(.76)}.park-tree--three{bottom:12px;left:20px;transform:scale(.66)}.park-bench{background:#d1a36b;bottom:17px;height:5px;left:49px;transform:rotate(-12deg);width:22px}
-  .charger-pad{background:#315d52;border:2px solid #4ea685;bottom:7px;height:34px;left:9px;transform:rotateX(62deg);width:72px}.charger-canopy{background:linear-gradient(145deg,#66d4c9,#167c78);border-radius:5px;height:16px;left:9px;top:17px;transform:skewX(-18deg);width:66px}.charger-canopy i,.charger-canopy b{background:#b5d8d1;bottom:-39px;height:40px;width:5px}.charger-canopy i{left:8px}.charger-canopy b{right:8px}.charger-post{background:linear-gradient(90deg,#dff8f0,#6f9690);border-radius:4px;bottom:16px;height:32px;width:14px}.charger-post--one{left:24px}.charger-post--two{right:18px}.charger-post i{background:#45e0b0;border-radius:2px;height:8px;left:3px;top:5px;width:8px;box-shadow:0 0 7px #37e58f}
-  .eco-building{bottom:10px;height:47px;left:15px;transform-style:preserve-3d;width:58px}.cube-front{background:linear-gradient(145deg,#d4e8df,#78a69a);border-radius:5px;inset:0;transform:translateZ(12px)}.cube-side{background:#547d73;height:100%;right:-12px;top:6px;transform:skewY(-28deg);width:14px}.cube-top{background:#a8c9bc;height:19px;left:6px;top:-12px;transform:skewX(-32deg);width:57px}.model-window{background:#bdf8d5;border-radius:2px;box-shadow:0 0 8px rgba(90,255,173,.4);height:11px;left:10px;top:13px;width:16px}.model-window--two{left:32px}.recycling-building .cube-front{background:linear-gradient(145deg,#a9d7b0,#4d9464)}.recycling-stack{background:linear-gradient(90deg,#567d72,#c4d9d1);bottom:53px;height:25px;left:60px;width:9px}.recycling-bin{background:#36a969;border-radius:3px;bottom:9px;height:17px;width:14px}.recycling-bin--one{left:8px}.recycling-bin--two{background:#3b98bd;right:5px}
-  .school-yard{background:#3f9a62;border-radius:50%;bottom:5px;height:38px;left:2px;transform:rotateX(63deg);width:82px}.school-building{left:8px;width:62px}.school-building .cube-front{background:linear-gradient(145deg,#d9e7df,#83a79a)}.school-building .cube-top{background:#5f9d73}.school-wing{background:linear-gradient(#c9ddd5,#71978b);border-radius:3px;bottom:12px;height:26px;right:1px;transform:skewY(-12deg);width:28px}.school-tree{bottom:13px;height:47px;right:4px;transform:scale(.64);width:28px}
-  .city3d-page--night .model-window,.city3d-page--night .model-window3d{background:#ffe28a;box-shadow:0 0 12px #ffc95b}.city3d-page--night .charger-post i,.city3d-page--night .wind-house b{background:#ffe28a;box-shadow:0 0 11px #ffc95b}.city3d-page--night .eco-building{filter:drop-shadow(0 0 9px rgba(86,151,255,.2))}.city3d-page--night .lowpoly{filter:drop-shadow(0 9px 8px rgba(0,0,0,.45)) brightness(.9) saturate(.92)}.city3d-page--day .lowpoly{filter:drop-shadow(-8px 10px 6px rgba(0,0,0,.25)) brightness(1.1) saturate(1.08)}
-  .city3d-edit-toolbar{align-items:center;background:rgba(4,13,13,.94);border:1px solid rgba(55,229,143,.35);border-radius:10px;display:flex;gap:6px;left:50%;padding:7px;position:absolute;top:12px;transform:translateX(-50%);z-index:180}.city3d-edit-toolbar strong{color:#f4fff9;font-size:9px;padding:0 5px}.city3d-edit-toolbar button{background:rgba(55,229,143,.1);border:1px solid rgba(55,229,143,.3);border-radius:6px;color:#37e58f;cursor:pointer;font-size:8px;font-weight:900;padding:6px 8px}.city3d-edit-toolbar .city3d-warehouse-action{border-color:rgba(245,184,75,.35);color:#f5b84b}.city3d-edit-toolbar .city3d-sell-action{background:rgba(255,92,78,.1);border-color:rgba(255,92,78,.48);color:#ff796c}
+
+  /* Assets container & uprights */
+  .city3d-asset { background:transparent;border:0;height:108px;padding:0;position:absolute;transform-origin:center bottom;width:108px;transform-style:preserve-3d}
+  .city3d-asset--locked{pointer-events:none}
+  .city3d-asset--editable{cursor:grab}
+  .city3d-asset--editable::after{content:"";position:absolute;inset:-10px;border-radius:12px;z-index:1}
+  .city3d-asset--editable:hover::after{background:rgba(55,229,143,.08);border:1px dashed rgba(55,229,143,.35)}
+  .city3d-asset--selected .city3d-asset-shadow{background:rgba(55,229,143,.5);box-shadow:0 0 18px 6px rgba(55,229,143,.45);filter:blur(8px)}
+  .city3d-asset--selling{animation:city3d-sell-away .24s cubic-bezier(.4,0,.8,.2) forwards;pointer-events:none}
+  .city3d-asset-shadow { background:rgba(0,0,0,.35);border-radius:50%;bottom:0;filter:blur(6px);height:20px;left:14px;position:absolute;transform:translateZ(-2px);width:80px;opacity:0.85}
+  .city3d-asset-upright{bottom:0;height:108px;left:0;pointer-events:none;position:absolute;transform:rotateX(-90deg) rotateY(var(--model-rotation,0deg));transform-origin:center bottom;transform-style:preserve-3d;width:108px;transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+  .city3d-asset-label{background:rgba(4,13,12,.88);border:1px solid rgba(178,218,205,.2);border-radius:999px;bottom:-1px;color:#eafff5;font-size:8px;font-weight:900;left:50%;padding:4px 8px;position:absolute;transform:translateX(-50%) translateZ(48px) rotateX(90deg);white-space:nowrap}
+  .city3d-bonus{background:#f5b84b;border-radius:999px;color:#171006;font-size:6px;font-weight:950;padding:3px 5px;position:absolute;right:0;top:6px;transform:translateZ(54px) rotateX(90deg)}
+
+  /* LowPoly structure */
+  .lowpoly { bottom:0;display:block;height:88px;left:10px;position:absolute;transform:scale(1.25);transform-origin:center bottom;transform-style:preserve-3d;width:88px}
+  .lowpoly-ground{background:radial-gradient(ellipse,rgba(0,0,0,.42),transparent 68%);bottom:-2px;filter:blur(2px);height:18px;left:4px;transform:rotateX(74deg) translateZ(-6px);width:80px}
+  .lowpoly--compact{bottom:auto;height:62px;left:auto;position:relative;transform:scale(.74) rotateX(-30deg) rotateY(35deg);transform-origin:center;transform-style:preserve-3d;width:76px}
+  .lowpoly--compact .lowpoly-ground{bottom:0}
+
+  /* Model Box primitive */
+  .model-box{--box-d:16px;--box-h:20px;--box-w:20px;--face-back:#41675d;--face-bottom:#29473f;--face-front:#8cb9aa;--face-left:#517d70;--face-right:#3e655a;--face-top:#c7ded5;height:var(--box-h);position:absolute;transform-style:preserve-3d;width:var(--box-w)}
+  .model-face{backface-visibility:hidden;display:block;position:absolute;box-shadow:inset 0 0 10px rgba(0,0,0,0.05)}
+  .model-face--front,.model-face--back,.model-face--left,.model-face--right {
+    background-image:linear-gradient(to top, rgba(0,0,0,0.22) 0%, transparent 60%);
+    background-blend-mode:multiply;
+  }
+  .model-face--front,.model-face--back{height:var(--box-h);left:0;top:0;width:var(--box-w)}
+  .model-face--front{background-color:var(--face-front);transform:translateZ(calc(var(--box-d) * .5))}
+  .model-face--back{background-color:var(--face-back);transform:rotateY(180deg) translateZ(calc(var(--box-d) * .5))}
+  .model-face--left,.model-face--right{height:var(--box-h);left:calc((var(--box-w) - var(--box-d)) * .5);top:0;width:var(--box-d)}
+  .model-face--left{background-color:var(--face-left);transform:rotateY(-90deg) translateZ(calc(var(--box-w) * .5))}
+  .model-face--right{background-color:var(--face-right);transform:rotateY(90deg) translateZ(calc(var(--box-w) * .5))}
+  .model-face--top,.model-face--bottom{height:var(--box-d);left:0;top:calc((var(--box-h) - var(--box-d)) * .5);width:var(--box-w)}
+  .model-face--top{background:var(--face-top);transform:rotateX(90deg) translateZ(calc(var(--box-h) * .5))}
+  .model-face--bottom{background:var(--face-bottom);transform:rotateX(-90deg) translateZ(calc(var(--box-h) * .5))}
+
+  /* 3D rounded foliage trees */
+  .model-tree3d { height:52px; transform-style:preserve-3d; width:28px; position:absolute; }
+  .model-tree-trunk3d {
+    --box-d: 5px; --box-h: 22px; --box-w: 5px;
+    --face-front: #805333; --face-left: #5c3b24; --face-right: #4d311d; --face-top: #a6724b;
+    bottom: 0px; left: 11px; transform: translateZ(0);
+  }
+  .model-tree-foliage3d {
+    --face-front: #2b7d41; --face-left: #1b592d; --face-right: #164a25; --face-top: #4caf50;
+  }
+  .model-tree-foliage3d--base {
+    --box-d: 22px; --box-h: 16px; --box-w: 22px;
+    bottom: 14px; left: 3px; transform: translateZ(0);
+  }
+  .model-tree-foliage3d--mid {
+    --box-d: 18px; --box-h: 12px; --box-w: 18px;
+    bottom: 24px; left: 5px; transform: rotateY(45deg);
+  }
+  .model-tree-foliage3d--top {
+    --box-d: 12px; --box-h: 10px; --box-w: 12px;
+    bottom: 32px; left: 8px; transform: translateZ(0);
+  }
+
+  /* Wind Turbine */
+  .wind-platform3d {
+    --box-d: 60px; --box-h: 8px; --box-w: 60px;
+    --face-front: #159348; --face-left: #0c7137; --face-right: #095e30;
+    --face-top: linear-gradient(135deg, #75dc66, #2dae50);
+    bottom: 0px; left: 14px; transform: translateZ(0);
+  }
+  .wind-tower3d {
+    --box-d: 6px; --box-h: 70px; --box-w: 6px;
+    --face-front: #e9f0f0; --face-left: #c2d2d4; --face-right: #aabebf; --face-back: #c2d2d4; --face-top: #f7fbf8;
+    bottom: 8px; left: 41px; transform: translateZ(0);
+  }
+  .wind-nacelle3d {
+    --box-d: 22px; --box-h: 12px; --box-w: 14px;
+    --face-front: #e0eaea; --face-left: #b8c8c9; --face-right: #a0b2b3; --face-back: #8fa0a1; --face-top: #ffffff;
+    bottom: 78px; left: 37px; transform: translateZ(-2px);
+  }
+  .wind-rotor3d {
+    position: absolute; bottom: 82px; left: 40px; width: 0; height: 0;
+    transform-style: preserve-3d;
+    transform: translateZ(10px);
+    animation: spin-rotor 3.6s linear infinite;
+  }
+  @keyframes spin-rotor {
+    from { transform: translateZ(10px) rotateZ(0deg); }
+    to { transform: translateZ(10px) rotateZ(360deg); }
+  }
+  .wind-hub3d {
+    --box-d: 8px; --box-h: 8px; --box-w: 8px;
+    --face-front: #ffffff; --face-left: #d5e2e3; --face-right: #b2c5c7; --face-top: #ffffff;
+    left: -4px; bottom: -4px; transform: translateZ(0);
+  }
+  .wind-blade3d {
+    --box-d: 2px; --box-h: 36px; --box-w: 4px;
+    --face-front: #ffffff; --face-left: #cbdad9; --face-right: #cbdad9; --face-top: #ffffff;
+    left: -2px; bottom: 4px; transform-origin: center bottom;
+  }
+  .wind-blade3d--one { transform: translateZ(2px); }
+  .wind-blade3d--two { transform: translateZ(2px) rotateZ(120deg); }
+  .wind-blade3d--three { transform: translateZ(2px) rotateZ(240deg); }
+  .wind-tree3d { bottom: 8px; left: 18px; transform: scale(0.65) translateZ(12px); }
+
+  /* Solar Farm */
+  .solar-pad3d {
+    --box-d: 64px; --box-h: 6px; --box-w: 76px;
+    --face-front: #3d4a46; --face-left: #2d3835; --face-right: #232c29; --face-top: #52635e;
+    bottom: 0px; left: 6px;
+  }
+  .solar-stand3d {
+    --box-d: 3px; --box-h: 18px; --box-w: 3px;
+    --face-front: #b5cbc7; --face-left: #718d88; --face-right: #58746f; --face-top: #e6f3ef;
+    bottom: 6px;
+  }
+  .solar-stand3d--one { left: 18px; transform: translateZ(-16px); }
+  .solar-stand3d--two { left: 18px; transform: translateZ(16px); }
+  .solar-stand3d--three { left: 58px; transform: translateZ(-16px); }
+  .solar-stand3d--four { left: 58px; transform: translateZ(16px); }
+  .solar-panel3d {
+    --box-d: 42px; --box-h: 4px; --box-w: 32px;
+    --face-front: #0f1c24; --face-left: #243b4a; --face-right: #1b2d38; --face-back: #0f1c24;
+    --face-top: linear-gradient(rgba(83,190,255,.42) 2px,transparent 2px), linear-gradient(90deg,rgba(83,190,255,.42) 2px,transparent 2px), linear-gradient(145deg,#176f9d,#092d52);
+    bottom: 20px; transform: rotateX(-22deg);
+  }
+  .solar-panel3d--one { left: 10px; }
+  .solar-panel3d--two { left: 46px; }
+  .solar-panel3d .model-face--top { background-size: 8px 8px, 8px 8px, auto; }
+
+  /* EV Charger */
+  .charger-pad3d {
+    --box-d: 64px; --box-h: 5px; --box-w: 76px;
+    --face-front: #1c2624; --face-left: #121a18; --face-right: #0f1413;
+    --face-top: linear-gradient(90deg, transparent 46%, #ffffff 46%, #ffffff 54%, transparent 54%), #2d3835;
+    bottom: 0px; left: 6px;
+  }
+  .charger-pad3d .model-face--top { background-size: 20px 100%; background-repeat: no-repeat; background-position: center; }
+  .charger-column3d {
+    --box-d: 6px; --box-h: 44px; --box-w: 6px;
+    --face-front: #edf3f2; --face-left: #879e9a; --face-right: #6c8480; --face-top: #ffffff;
+    bottom: 5px;
+  }
+  .charger-column3d--one { left: 12px; transform: translateZ(0); }
+  .charger-column3d--two { left: 70px; transform: translateZ(0); }
+  .charger-canopy3d {
+    --box-d: 56px; --box-h: 6px; --box-w: 74px;
+    --face-front: #27ae8f; --face-left: #1b8069; --face-right: #166d59;
+    --face-top: linear-gradient(135deg, #4ef0c6, #219b7d);
+    bottom: 49px; left: 7px; transform: translateZ(0);
+  }
+  .charger-unit3d {
+    --box-d: 12px; --box-h: 26px; --box-w: 12px;
+    --face-front: #edf3f2; --face-left: #78938d; --face-right: #5b7771; --face-top: #effaf7;
+    bottom: 5px;
+  }
+  .charger-unit3d--one { left: 24px; transform: translateZ(-8px); }
+  .charger-unit3d--two { left: 52px; transform: translateZ(-8px); }
+  .charger-screen3d {
+    --box-d: 2px; --box-h: 8px; --box-w: 8px;
+    --face-front: #40f3b0; --face-left: #1a6d4e; --face-right: #1a6d4e; --face-top: #ffffff;
+    bottom: 18px; box-shadow: 0 0 10px #37e58f;
+  }
+  .charger-screen3d--one { left: 26px; transform: translateZ(-6px); }
+  .charger-screen3d--two { left: 54px; transform: translateZ(-6px); }
+
+  /* Park */
+  .park-platform3d {
+    --box-d: 78px; --box-h: 8px; --box-w: 78px;
+    --face-front: #2b7d4a; --face-left: #1b5c34; --face-right: #144627;
+    --face-top: linear-gradient(135deg, #62cc71, #2da84a);
+    bottom: 0px; left: 5px;
+  }
+  .park-path3d {
+    --box-d: 14px; --box-h: 2px; --box-w: 78px;
+    --face-front: #5c5549; --face-left: #474239; --face-right: #474239; --face-top: #e0d5c1;
+    bottom: 8px;
+  }
+  .park-path3d--one { left: 5px; transform: translateZ(10px); }
+  .park-path3d--two { left: 5px; --box-w: 14px; --box-d: 78px; left: 28px; transform: translateZ(0); }
+  .park-fountain-base3d {
+    --box-d: 26px; --box-h: 6px; --box-w: 26px;
+    --face-front: #7b8f8a; --face-left: #5c6e69; --face-right: #4b5955; --face-top: #5fc5cf;
+    bottom: 10px; left: 46px; transform: translateZ(-16px);
+  }
+  .park-fountain-pillar3d {
+    --box-d: 6px; --box-h: 12px; --box-w: 6px;
+    --face-front: #7b8f8a; --face-left: #5c6e69; --face-right: #4b5955; --face-top: #ffffff;
+    bottom: 16px; left: 56px; transform: translateZ(-16px);
+  }
+  .park-fountain-water3d {
+    --box-d: 14px; --box-h: 2px; --box-w: 14px;
+    --face-front: #7ee0eb; --face-left: #4bbdc9; --face-right: #4bbdc9; --face-top: #aef3f9;
+    bottom: 28px; left: 52px; transform: translateZ(-16px); box-shadow: 0 0 12px rgba(126,224,235,0.7);
+  }
+  .park-bench3d {
+    --box-d: 8px; --box-h: 6px; --box-w: 18px;
+    --face-front: #a8723c; --face-left: #754d26; --face-right: #5e3d1d; --face-top: #c2894f;
+    bottom: 10px; left: 12px; transform: translateZ(16px) rotateY(45deg);
+  }
+  .park-bush3d {
+    --box-d: 10px; --box-h: 9px; --box-w: 10px;
+    --face-front: #297a47; --face-left: #1b5932; --face-right: #1b5932; --face-top: #42a164;
+    bottom: 10px;
+  }
+  .park-bush3d--one { left: 12px; transform: translateZ(-18px) rotateY(25deg); }
+  .park-bush3d--two { left: 62px; transform: translateZ(18px) rotateY(-35deg); }
+  .park-tree3d--one { bottom: 10px; left: 38px; transform: translateZ(-12px); }
+  .park-tree3d--two { bottom: 8px; left: 58px; transform: scale(.76) translateZ(18px); }
+  .park-tree3d--three { bottom: 8px; left: 18px; transform: scale(.65) translateZ(-10px); }
+
+  /* Recycling Centre */
+  .recycling-pad3d {
+    --box-d: 68px; --box-h: 6px; --box-w: 78px;
+    --face-front: #4b5955; --face-left: #37423f; --face-right: #2d3634; --face-top: #697a75;
+    bottom: 0px; left: 5px;
+  }
+  .recycling-main-building3d {
+    --box-d: 34px; --box-h: 36px; --box-w: 40px;
+    --face-front: #8ba994; --face-left: #5c7865; --face-right: #43594a; --face-top: #b5cbbb;
+    bottom: 6px; left: 10px; transform: translateZ(-10px);
+  }
+  .recycling-side-building3d {
+    --box-d: 26px; --box-h: 24px; --box-w: 20px;
+    --face-front: #7b948b; --face-left: #4c6159; --face-right: #3b4c46; --face-top: #a5bdb4;
+    bottom: 6px; left: 50px; transform: translateZ(-14px);
+  }
+  .recycling-dock3d {
+    --box-d: 16px; --box-h: 12px; --box-w: 22px;
+    --face-front: #707f7c; --face-left: #525e5b; --face-right: #424c4a; --face-top: #8d9e9a;
+    bottom: 6px; left: 20px; transform: translateZ(15px);
+  }
+  .recycling-dock-door3d {
+    --box-d: 2px; --box-h: 9px; --box-w: 14px;
+    --face-front: #4a5452; --face-left: #313837; --face-right: #313837; --face-top: #707f7c;
+    bottom: 6px; left: 24px; transform: translateZ(24px);
+  }
+  .recycling-vent3d {
+    --box-d: 8px; --box-h: 6px; --box-w: 8px;
+    --face-front: #cbd2d0; --face-left: #9ba1a0; --face-right: #818685; --face-top: #eff3f2;
+    bottom: 30px; left: 56px; transform: translateZ(-10px);
+  }
+  .recycling-chimney3d {
+    --box-d: 6px; --box-h: 26px; --box-w: 6px;
+    --face-front: #bf8d75; --face-left: #8c634f; --face-right: #704f3e; --face-top: #4a362c;
+    bottom: 42px; left: 16px; transform: translateZ(-10px);
+  }
+  .recycling-bin3d { --box-d: 10px; --box-h: 13px; --box-w: 10px; bottom: 6px; }
+  .recycling-bin3d--blue { --face-front: #2563eb; --face-left: #1d4ed8; --face-right: #1e40af; --face-top: #60a5fa; left: 48px; transform: translateZ(12px); }
+  .recycling-bin3d--green { --face-front: #16a34a; --face-left: #15803d; --face-right: #166534; --face-top: #4ade80; left: 60px; transform: translateZ(12px); }
+  .recycling-bin3d--yellow { --face-front: #ca8a04; --face-left: #a16207; --face-right: #854d0e; --face-top: #fde047; left: 60px; transform: translateZ(-2px); }
+
+  /* Eco School */
+  .school-yard3d {
+    --box-d: 74px; --box-h: 6px; --box-w: 78px;
+    --face-front: #576b5d; --face-left: #3d4c42; --face-right: #323e35; --face-top: #7fa188;
+    bottom: 0px; left: 5px;
+  }
+  .school-ground-floor3d {
+    --box-d: 36px; --box-h: 22px; --box-w: 52px;
+    --face-front: #cc7e64; --face-left: #9c5c47; --face-right: #824b38; --face-top: #e6b3a0;
+    bottom: 6px; left: 10px; transform: translateZ(-12px);
+  }
+  .school-first-floor3d {
+    --box-d: 28px; --box-h: 18px; --box-w: 44px;
+    --face-front: #ebd8c8; --face-left: #bfaea0; --face-right: #9e8f82; --face-top: #ffffff;
+    bottom: 28px; left: 14px; transform: translateZ(-12px);
+  }
+  .school-step3d { --face-front: #73807a; --face-left: #515c57; --face-right: #434d49; --face-top: #97a6a0; }
+  .school-step3d--bottom { --box-d: 10px; --box-h: 3px; --box-w: 20px; left: 26px; bottom: 6px; transform: translateZ(10px); }
+  .school-step3d--top { --box-d: 6px; --box-h: 3px; --box-w: 16px; left: 28px; bottom: 9px; transform: translateZ(8px); }
+  .school-window-frame3d {
+    --box-d: 2px; --box-h: 10px; --box-w: 10px;
+    --face-front: #5cdafc; --face-left: #ffffff; --face-right: #ffffff; --face-top: #ffffff;
+    box-shadow: 0 0 8px rgba(92,218,252,0.4);
+  }
+  .school-window-frame3d--one { left: 18px; bottom: 12px; transform: translateZ(7px); }
+  .school-window-frame3d--two { left: 44px; bottom: 12px; transform: translateZ(7px); }
+  .school-window-frame3d--three { left: 20px; bottom: 32px; transform: translateZ(3px); }
+  .school-window-frame3d--four { left: 38px; bottom: 32px; transform: translateZ(3px); }
+  .school-roof-solar3d {
+    --box-d: 14px; --box-h: 3px; --box-w: 12px;
+    --face-front: #101c24; --face-left: #2a3d4a; --face-right: #1b2a33;
+    --face-top: linear-gradient(135deg, #176f9d, #092d52);
+    bottom: 46px; transform: translateZ(-12px) rotateX(-15deg);
+  }
+  .school-roof-solar3d--one { left: 18px; }
+  .school-roof-solar3d--two { left: 32px; }
+  .school-tree3d { bottom: 6px; }
+  .school-tree3d--one { left: 64px; transform: scale(0.68) translateZ(-14px); }
+  .school-tree3d--two { left: 64px; transform: scale(0.58) translateZ(16px); }
+
+  /* Night Mode and Palette card adjustments */
+  .city3d-page--night .school-window-frame3d, .city3d-page--night .charger-screen3d {
+    --face-front: #ffde83;
+    box-shadow: 0 0 12px #ffc95b;
+  }
+  .city3d-page--night .lowpoly{filter:drop-shadow(0 9px 8px rgba(0,0,0,.45)) brightness(.9) saturate(.92)}.city3d-page--day .lowpoly{filter:drop-shadow(-8px 10px 6px rgba(0,0,0,.25)) brightness(1.1) saturate(1.08)}
+  .city3d-edit-toolbar{align-items:center;background:rgba(4,13,13,.94);border:1px solid rgba(55,229,143,.35);border-radius:10px;display:flex;gap:6px;left:50%;padding:7px;position:absolute;top:12px;transform:translateX(-50%);z-index:180}.city3d-edit-toolbar strong{color:#f4fff9;font-size:9px;padding:0 5px}.city3d-edit-toolbar button{background:rgba(55,229,143,.1);border:1px solid rgba(55,229,143,.3);border-radius:6px;color:#37e58f;cursor:pointer;font-size:8px;font-weight:900;padding:6px 8px}.city3d-edit-toolbar .city3d-warehouse-action{border-color:rgba(245,184,75,.35);color:#f5b84b}.city3d-edit-toolbar .city3d-sell-action{background:rgba(255,92,78,.1);border-color:rgba(255,92,78,.48);color:#ff796c}.city3d-edit-toolbar .city3d-done-action{background:rgba(55,229,143,.22);border-color:rgba(55,229,143,.7);color:#37e58f}
   .city3d-sell-overlay{align-items:center;background:rgba(2,8,9,.48);backdrop-filter:blur(2px);display:flex;inset:0;justify-content:center;padding:12px;position:fixed;z-index:1200}.city3d-sell-dialog{background:#0a1615;border:1px solid rgba(255,111,94,.3);border-radius:10px;box-shadow:0 14px 38px rgba(0,0,0,.46);max-width:310px;padding:14px;width:min(86vw,310px)}.city3d-sell-dialog h2{color:#f5fff9;font-size:16px;letter-spacing:-.02em;margin:0}.city3d-sell-dialog p{color:#91a59f;font-size:9px;line-height:1.4;margin:6px 0 12px}.city3d-sell-dialog p strong{color:#f5b84b}.city3d-sell-dialog-actions{display:grid;gap:7px;grid-template-columns:1fr 1fr}.city3d-sell-dialog-actions button{background:#142220;border:1px solid rgba(113,142,135,.28);border-radius:7px;color:#b4c7c1;cursor:pointer;font-size:9px;font-weight:900;height:31px}.city3d-sell-dialog-actions .city3d-sell-confirm{background:#df5849;border-color:#ff796c;color:#fff}.city3d-sell-dialog-actions .city3d-sell-confirm:hover{background:#f36b5b}
-  @keyframes city3d-sell-away{to{opacity:0;transform:translate(-50%,-76%) scale(.08) rotate(8deg)}}
+  @keyframes city3d-sell-away{to{opacity:0;transform:translate(-50%,-96%) scale(.08) rotate(8deg)}}
   .city3d-instruction{background:rgba(4,13,13,.78);border:1px solid rgba(142,165,160,.2);border-radius:999px;bottom:12px;color:#81968f;font-size:8px;left:12px;padding:7px 10px;pointer-events:none;position:absolute;z-index:160}.city3d-legend{align-items:center;display:flex;gap:15px;min-height:38px;padding:6px 13px}.city3d-legend span{align-items:center;color:#81968f;display:flex;font-size:8px;gap:5px}.city3d-legend i{border:1px solid #719188;border-radius:2px;height:8px;width:8px}.city3d-legend span:first-child i{background:#f5b84b;border:0}.city3d-legend strong{color:#dff6ed;font-size:8px;margin-left:auto}
-  .city3d-palette{display:flex;flex-direction:column;gap:9px;max-height:760px;overflow:auto;padding:12px}.city3d-palette-heading{align-items:center;display:flex;justify-content:space-between}.city3d-palette-heading h2{color:#f4fff9;font-size:17px;margin:3px 0 0}.city3d-palette-heading>span{color:#f5b84b;font-size:9px;font-weight:900}
-  .city3d-warehouse{background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.2);border-radius:9px;display:grid;gap:7px;padding:8px}.city3d-warehouse>div:first-child{display:flex;justify-content:space-between}.city3d-warehouse>div:first-child strong{color:#6dd5ff;font-size:9px}.city3d-warehouse>div:first-child span,.city3d-warehouse p{color:#7f958e;font-size:7px;margin:0}.city3d-warehouse-list{display:grid;gap:5px;grid-template-columns:repeat(2,minmax(0,1fr))}.city3d-warehouse-card{align-items:center;background:#0a1817;border:1px solid rgba(112,142,134,.2);border-radius:7px;color:#eafff5;cursor:grab;display:grid;grid-template-columns:54px minmax(0,1fr);min-width:0;padding:4px;text-align:left}.city3d-warehouse-card--selected{border-color:#37e58f}.city3d-warehouse-card>span:last-child{display:grid;min-width:0}.city3d-warehouse-card strong{font-size:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.city3d-warehouse-card small{color:#789088;font-size:6px}
-  .city3d-palette-label{border-top:1px solid rgba(93,119,113,.18);color:#8da39c;font-size:8px;font-weight:900;padding-top:9px;text-transform:uppercase}.city3d-palette-list{display:grid;gap:6px}.city3d-palette-card{align-items:center;background:linear-gradient(145deg,rgba(17,30,29,.96),rgba(9,19,18,.96));border:1px solid rgba(91,119,112,.2);border-radius:9px;color:#f4fff9;cursor:grab;display:grid;gap:7px;grid-template-columns:66px minmax(0,1fr) auto;min-height:70px;padding:5px 8px;text-align:left;transition:border-color .18s ease,transform .18s ease}.city3d-palette-card:hover,.city3d-palette-card--selected{border-color:var(--building-color);transform:translateX(-2px)}.city3d-palette-copy{display:grid;gap:3px;min-width:0}.city3d-palette-copy strong{font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.city3d-palette-copy small{color:#799088;font-size:7px}.city3d-cost{align-items:center;color:#f5b84b;display:flex;font-size:9px;font-weight:900;gap:3px}.city3d-cost i{border:2px solid #f5b84b;border-radius:50%;height:9px;width:9px}.city3d-cost--locked{color:#657b74}.city3d-cost--locked i{border-color:#657b74}.city3d-selected-detail{background:rgba(55,229,143,.05);border:1px solid rgba(55,229,143,.15);border-radius:8px;padding:9px}.city3d-selected-detail strong{color:#37e58f;font-size:9px}.city3d-selected-detail p{color:#81968f;font-size:7px;line-height:1.5;margin:4px 0 0}
-  .city3d-page{box-sizing:border-box;height:100dvh;min-height:0;overflow:hidden;padding:68px 18px 76px}.city3d-frame{box-sizing:border-box;display:flex;flex-direction:column;height:100%;padding:12px}.city3d-header{flex:0 0 auto;padding:1px 3px 9px}.city3d-header h1{font-size:clamp(24px,2.5vw,34px)}.city3d-header>div:first-child>span{font-size:10px;margin-top:3px}.city3d-sun-status{padding:6px 9px}.city3d-store-toggle{min-height:36px}.city3d-summary{flex:0 0 auto;margin-bottom:8px;padding:6px}.city3d-stat{gap:2px;padding:6px 9px}.city3d-stat strong{font-size:16px}.city3d-stage{gap:3px;padding:6px 9px}.city3d-workspace{flex:1;min-height:0}.city3d-map-panel{display:flex;flex-direction:column;min-height:0}.city3d-map-heading{flex:0 0 auto;min-height:46px;padding:6px 11px}.city3d-field{flex:1;height:auto;min-height:0}.city3d-world{width:min(68%,570px)}.city3d-legend{flex:0 0 auto;min-height:30px;padding:3px 11px}.city3d-palette{height:100%;max-height:none;min-height:0;overflow:auto;padding:9px}.city3d-palette-card{min-height:62px}.city3d-palette-list{gap:5px}
+  .city3d-palette{display:flex;flex-direction:column;gap:9px;max-height:760px;overflow:auto;padding:12px;transform-style:preserve-3d}.city3d-palette-heading{align-items:center;display:flex;justify-content:space-between}.city3d-palette-heading h2{color:#f4fff9;font-size:17px;margin:3px 0 0}.city3d-palette-heading>span{color:#f5b84b;font-size:9px;font-weight:900}
+  .city3d-warehouse{background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.2);border-radius:9px;display:grid;gap:7px;padding:8px;transform-style:preserve-3d}.city3d-warehouse>div:first-child{display:flex;justify-content:space-between}.city3d-warehouse>div:first-child strong{color:#6dd5ff;font-size:9px}.city3d-warehouse>div:first-child span,.city3d-warehouse p{color:#7f958e;font-size:7px;margin:0}.city3d-warehouse-list{display:grid;gap:5px;grid-template-columns:repeat(2,minmax(0,1fr));transform-style:preserve-3d}.city3d-warehouse-card{align-items:center;background:#0a1817;border:1px solid rgba(112,142,134,.2);border-radius:7px;color:#eafff5;cursor:grab;display:grid;grid-template-columns:54px minmax(0,1fr);min-width:0;padding:4px;text-align:left;transform-style:preserve-3d}.city3d-warehouse-card--selected{border-color:#37e58f}.city3d-warehouse-card>span:last-child{display:grid;min-width:0}.city3d-warehouse-card strong{font-size:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.city3d-warehouse-card small{color:#789088;font-size:6px}
+  .city3d-palette-label{border-top:1px solid rgba(93,119,113,.18);color:#8da39c;font-size:8px;font-weight:900;padding-top:9px;text-transform:uppercase}.city3d-palette-list{display:grid;gap:6px;transform-style:preserve-3d}.city3d-palette-card{align-items:center;background:linear-gradient(145deg,rgba(17,30,29,.96),rgba(9,19,18,.96));border:1px solid rgba(91,119,112,.2);border-radius:999px;color:#f4fff9;cursor:grab;display:grid;gap:7px;grid-template-columns:66px minmax(0,1fr) auto;min-height:70px;padding:5px 8px;text-align:left;transition:border-color .18s ease,transform .18s ease;transform-style:preserve-3d}.city3d-palette-card:hover,.city3d-palette-card--selected{border-color:var(--building-color);transform:translateX(-2px)}.city3d-palette-copy{display:grid;gap:3px;min-width:0}.city3d-palette-copy strong{font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.city3d-palette-copy small{color:#799088;font-size:7px}.city3d-cost{align-items:center;color:#f5b84b;display:flex;font-size:9px;font-weight:900;gap:3px}.city3d-cost--locked{color:#657b74}.city3d-cost--locked svg{opacity:.45}.city3d-palette-coins{align-items:center;display:flex;gap:4px}.city3d-stat strong{align-items:center;display:flex;gap:4px}.city3d-selected-detail{background:rgba(55,229,143,.05);border:1px solid rgba(55,229,143,.15);border-radius:8px;padding:9px}.city3d-selected-detail strong{color:#37e58f;font-size:9px}.city3d-selected-detail p{color:#81968f;font-size:7px;line-height:1.5;margin:4px 0 0}
+  .city3d-page { box-sizing: border-box; height: 100dvh; min-height: 0; overflow: hidden; padding: 68px 18px 76px; }
+  .city3d-frame { box-sizing: border-box; display: flex; flex-direction: column; height: 100%; padding: 12px; }
+  .city3d-header { flex: 0 0 auto; padding: 1px 3px 9px; }
+  .city3d-header h1 { font-size: clamp(24px, 2.5vw, 34px); }
+  .city3d-header > div:first-child > span { font-size: 10px; margin-top: 3px; }
+  .city3d-sun-status { padding: 6px 9px; }
+  .city3d-store-toggle { min-height: 36px; }
+  .city3d-summary { flex: 0 0 auto; margin-bottom: 8px; padding: 6px; }
+  .city3d-stat { gap: 2px; padding: 6px 9px; }
+  .city3d-stat strong { font-size: 16px; }
+  .city3d-stage { gap: 3px; padding: 6px 9px; }
+  .city3d-workspace { flex: 1; min-height: 0; }
+  .city3d-map-panel { display: flex; flex-direction: column; min-height: 0; }
+  .city3d-map-heading { flex: 0 0 auto; min-height: 46px; padding: 6px 11px; }
+  .city3d-field { flex: 1; height: auto; min-height: 0; }
+  .city3d-world { width: min(68%, 570px); }
+  .city3d-legend { flex: 0 0 auto; min-height: 30px; padding: 3px 11px; }
+  .city3d-palette { height: 100%; max-height: none; min-height: 0; overflow: auto; padding: 9px; }
+  .city3d-palette-card { min-height: 62px; border-radius: 9px; }
+  .city3d-palette-list { gap: 5px; }
   @media(max-width:1100px){.city3d-workspace--store{grid-template-columns:minmax(0,1fr) minmax(235px,285px)}.city3d-world{width:min(74%,540px)}.city3d-palette-card{grid-template-columns:54px minmax(0,1fr) auto;min-height:58px}.city3d-palette-card .lowpoly--compact{transform:scale(.62) rotateY(14deg);transform-origin:center}.city3d-warehouse-list{grid-template-columns:1fr}.city3d-selected-detail{padding:7px}}
   @media(max-width:760px){.city3d-page{padding:60px 7px 70px}.city3d-frame{border-radius:12px;padding:7px}.city3d-header{gap:7px}.city3d-header>div:first-child>span{display:none}.city3d-header h1{font-size:21px}.city3d-header-actions{gap:5px}.city3d-sun-status{padding:5px 7px}.city3d-store-toggle{min-height:32px;padding:0 9px}.city3d-summary{gap:4px;grid-template-columns:repeat(3,1fr)}.city3d-stage{display:none}.city3d-stat{padding:5px}.city3d-stat span{font-size:7px}.city3d-stat strong{font-size:13px}.city3d-workspace--store{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 128px}.city3d-map-heading{min-height:38px}.city3d-map-heading>div:first-child{display:none}.city3d-message{max-width:none;width:100%}.city3d-world{width:88%}.city3d-palette{display:grid;gap:5px;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);overflow:hidden}.city3d-palette-heading{grid-column:1/-1}.city3d-warehouse,.city3d-palette-label,.city3d-selected-detail{display:none}.city3d-palette-list{display:flex;grid-column:1/-1;overflow-x:auto;padding-bottom:3px;scrollbar-width:none}.city3d-palette-list::-webkit-scrollbar{display:none}.city3d-palette-card{flex:0 0 205px;min-height:56px}.city3d-legend{min-height:25px}.city3d-sky-orb{height:46px;width:46px}.city3d-instruction{bottom:7px;left:7px;max-width:78%}}
 `;
