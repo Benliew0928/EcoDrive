@@ -447,9 +447,9 @@ function Gate({ position, color, label }: { position: [number, number, number]; 
         <boxGeometry args={[14.4, 0.35, 0.4]} />
         <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.25} />
       </mesh>
-      <Html center distanceFactor={18} position={[0, 7.5, 0]}>
+      <DistanceLabel center distanceFactor={18} position={[0, 7.5, 0]}>
         <div style={{ color: "#fff", background: `rgba(0,0,0,0.75)`, border: `2px solid ${color}`, borderRadius: 8, padding: "8px 16px", fontSize: 16, fontWeight: 900, whiteSpace: "nowrap", boxShadow: `0 0 20px ${color}66`, textShadow: "0 2px 4px rgba(0,0,0,1)" }}>{label}</div>
-      </Html>
+      </DistanceLabel>
     </group>
   );
 }
@@ -484,9 +484,9 @@ function CampusLakes() {
             <planeGeometry args={[1, 1]} />
             <meshBasicMaterial color="#d6fbff" transparent opacity={0.13} side={DoubleSide} />
           </mesh>
-          <Html center distanceFactor={28} position={[0, 3.5, 0]}>
+          <DistanceLabel center distanceFactor={28} position={[0, 3.5, 0]}>
             <div style={{ color: "#fff", background: "rgba(11, 80, 98, 0.75)", border: "2px solid #55c9d2", borderRadius: 8, padding: "8px 16px", fontSize: 16, fontWeight: 900, whiteSpace: "nowrap", boxShadow: "0 0 20px rgba(85, 201, 210, 0.4)", textShadow: "0 2px 4px rgba(0,0,0,1)" }}>{lake.label}</div>
-          </Html>
+          </DistanceLabel>
         </group>
       ))}
     </group>
@@ -510,9 +510,9 @@ function CampusFields() {
             <ringGeometry args={[0.99, 1, 4]} />
             <meshBasicMaterial color="#d8ffe8" transparent opacity={0.22} side={DoubleSide} />
           </mesh>
-          <Html center distanceFactor={24} position={[0, 3.5, 0]}>
+          <DistanceLabel center distanceFactor={24} position={[0, 3.5, 0]}>
             <div style={{ color: "#fff", background: "rgba(23, 76, 56, 0.75)", border: "2px solid #37e58f", borderRadius: 8, padding: "8px 16px", fontSize: 16, fontWeight: 900, whiteSpace: "nowrap", boxShadow: "0 0 20px rgba(55, 229, 143, 0.4)", textShadow: "0 2px 4px rgba(0,0,0,1)" }}>{field.label}</div>
-          </Html>
+          </DistanceLabel>
         </group>
       ))}
     </group>
@@ -532,9 +532,9 @@ function CampusParking() {
             <ringGeometry args={[0.98, 1, 4]} />
             <meshBasicMaterial color="#e8f0d6" transparent opacity={0.28} side={DoubleSide} />
           </mesh>
-          <Html center distanceFactor={28} position={[0, 2.5, 0]}>
+          <DistanceLabel center distanceFactor={28} position={[0, 2.5, 0]}>
             <div style={{ color: "#fff", background: "rgba(31, 40, 41, 0.85)", border: "2px solid #e8f0d6", borderRadius: 8, padding: "6px 12px", fontSize: 14, fontWeight: 900, whiteSpace: "nowrap", boxShadow: "0 0 16px rgba(232, 240, 214, 0.3)", textShadow: "0 2px 4px rgba(0,0,0,1)" }}>P{zone.label}</div>
-          </Html>
+          </DistanceLabel>
         </group>
       ))}
     </group>
@@ -569,11 +569,11 @@ function CampusBuildings() {
             <meshBasicMaterial color={building.accent} transparent opacity={0.28} />
           </mesh>
           <BuildingWindowBands scale={building.scale} accent={building.accent} />
-          <Html center distanceFactor={24} position={[0, building.scale[1] + 3.5, 0]}>
+          <DistanceLabel center distanceFactor={24} position={[0, building.scale[1] + 3.5, 0]}>
             <div style={{ color: "#fff", background: `rgba(0,0,0,0.7)`, border: `2px solid ${building.accent}`, borderRadius: 8, padding: "8px 16px", fontSize: 16, fontWeight: 900, whiteSpace: "nowrap", boxShadow: `0 8px 32px rgba(0,0,0,0.6), 0 0 20px ${building.accent}66`, backdropFilter: "blur(4px)", textShadow: "0 2px 4px rgba(0,0,0,0.8)" }}>
               {building.label}
             </div>
-          </Html>
+          </DistanceLabel>
         </group>
       ))}
     </group>
@@ -630,11 +630,11 @@ function CampusGates() {
             <boxGeometry args={[12.5, 0.22, 0.22]} />
             <meshStandardMaterial color="#f5f7ef" emissive="#f5b84b" emissiveIntensity={0.42} />
           </mesh>
-          <Html center distanceFactor={22} position={[0, 6.5, 0]}>
+          <DistanceLabel center distanceFactor={22} position={[0, 6.5, 0]}>
             <div style={{ color: "#fff", background: `rgba(0,0,0,0.7)`, border: `2px solid ${gate.color}`, borderRadius: 8, padding: "8px 16px", fontSize: 16, fontWeight: 900, whiteSpace: "nowrap", boxShadow: `0 0 20px ${gate.color}66`, backdropFilter: "blur(4px)", textShadow: "0 2px 4px rgba(0,0,0,0.8)" }}>
               {gate.label}
             </div>
-          </Html>
+          </DistanceLabel>
         </group>
       ))}
     </group>
@@ -673,9 +673,9 @@ function MapLandmarks() {
             <boxGeometry args={[landmark.size[0] * 0.86, 0.14, landmark.size[2] * 0.76]} />
             <meshBasicMaterial color={landmark.color} transparent opacity={0.72} />
           </mesh>
-          <Html center distanceFactor={22} position={[0, landmark.size[1] + 3.5, 0]}>
+          <DistanceLabel center distanceFactor={22} position={[0, landmark.size[1] + 3.5, 0]}>
             <div style={{ color: "#fff", background: `rgba(0,0,0,0.7)`, border: `2px solid ${landmark.color}`, borderRadius: 8, padding: "8px 16px", fontSize: 16, fontWeight: 900, whiteSpace: "nowrap", boxShadow: `0 8px 32px rgba(0,0,0,0.6), 0 0 20px ${landmark.color}66`, backdropFilter: "blur(4px)", textShadow: "0 2px 4px rgba(0,0,0,0.8)" }}>{landmark.label}</div>
-          </Html>
+          </DistanceLabel>
         </group>
       ))}
     </group>
@@ -691,9 +691,9 @@ function RouteSigns() {
             <boxGeometry args={[16, 4, 0.4]} />
             <meshStandardMaterial color="#0a1516" emissive={marker.color} emissiveIntensity={0.2} metalness={0.8} roughness={0.2} />
           </mesh>
-          <Html center distanceFactor={18} position={[0, 0, 0.22]}>
+          <DistanceLabel center distanceFactor={18} position={[0, 0, 0.22]}>
             <div style={{ color: "#fff", background: `rgba(0,0,0,0.6)`, border: `2px solid ${marker.color}`, borderRadius: 8, padding: "10px 20px", fontSize: 22, fontWeight: 900, whiteSpace: "nowrap", boxShadow: `0 0 24px ${marker.color}44`, textShadow: "0 2px 6px rgba(0,0,0,0.9)" }}>{marker.label}</div>
-          </Html>
+          </DistanceLabel>
         </group>
       ))}
     </group>
@@ -1595,4 +1595,36 @@ function buildSimulatorInput(telemetry: Telemetry): SimulatorInput {
     event: telemetry.event,
     distanceMeters: telemetry.distanceMeters
   };
+}
+
+
+function DistanceLabel({ children, distanceFactor, position, maxDistance = 140 }: { children: import('react').ReactNode; distanceFactor: number; position: [number, number, number]; maxDistance?: number }) {
+  const groupRef = useRef<import('three').Group>(null);
+  const divRef = useRef<HTMLDivElement>(null);
+  const vec = useMemo(() => new Vector3(), []);
+  
+  useFrame(({ camera }) => {
+    if (!groupRef.current || !divRef.current) return;
+    groupRef.current.getWorldPosition(vec);
+    const dist = camera.position.distanceTo(vec);
+    const fadeStart = maxDistance * 0.7;
+    if (dist > maxDistance) {
+      divRef.current.style.opacity = '0';
+      divRef.current.style.pointerEvents = 'none';
+    } else {
+      const opacity = dist < fadeStart ? 1 : 1 - (dist - fadeStart) / (maxDistance - fadeStart);
+      divRef.current.style.opacity = opacity.toFixed(2);
+      divRef.current.style.pointerEvents = 'auto';
+    }
+  });
+
+  return (
+    <group ref={groupRef} position={position}>
+      <Html center distanceFactor={distanceFactor}>
+        <div ref={divRef} style={{ transition: 'opacity 0.1s linear' }}>
+          {children}
+        </div>
+      </Html>
+    </group>
+  );
 }
