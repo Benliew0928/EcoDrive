@@ -10,7 +10,7 @@
 #include <WebSocketsClient.h>
 #include <ArduinoJson.h>
 
-const char* ssid = "Ben's iPhone";
+const char* ssid = "Ben’s iPhone";
 const char* password = "050928070037";
 const char* ws_host = "ecodrive-relay.benliew28262826.workers.dev";
 const uint16_t ws_port = 443;
