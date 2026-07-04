@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import {
   fetchRoutes,
@@ -14,37 +14,36 @@ const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.Map
 const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
 const Polyline = dynamic(() => import("react-leaflet").then((mod) => mod.Polyline), { ssr: false });
 const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false });
-const useMap = dynamic(() => import("react-leaflet").then((mod) => mod.useMap as any), { ssr: false }) as any;
 
 import "leaflet/dist/leaflet.css";
 
 let startIcon: any;
 let endIcon: any;
+let carIcon: any;
+
 if (typeof window !== "undefined") {
   const L = require("leaflet");
 
   startIcon = L.divIcon({
-    html: `<div style="background:#37E58F;width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 8px rgba(55,229,143,0.6)"></div>`,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-    className: "",
+    html: `<div class="route-marker route-marker--start"></div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+    className: ""
   });
 
   endIcon = L.divIcon({
-    html: `<div style="background:#FF5B5B;width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 8px rgba(255,91,91,0.6)"></div>`,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-    className: "",
+    html: `<div class="route-marker route-marker--end"></div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+    className: ""
   });
-}
 
-// Sub-component to fit map bounds when routes change
-function FitBounds({ routes }: { routes: RoutePath[] }) {
-  if (typeof window === "undefined") return null;
-
-  // We need useMap from react-leaflet, but since we're using dynamic imports
-  // we handle this differently
-  return null;
+  carIcon = L.divIcon({
+    html: `<div class="route-car-marker"><span></span></div>`,
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
+    className: ""
+  });
 }
 
 export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePath) => void }) {
@@ -56,16 +55,19 @@ export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePa
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDriving, setIsDriving] = useState(false);
+  const [driveProgress, setDriveProgress] = useState(0);
   const searchRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mapRef = useRef<any>(null);
 
   const origin: [number, number] = UTAR_KAMPAR;
 
-  // Debounced search
   const handleSearchInput = useCallback((value: string) => {
     setQuery(value);
     setError(null);
+    setIsDriving(false);
+    setDriveProgress(0);
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
@@ -86,7 +88,17 @@ export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePa
     }, 400);
   }, []);
 
-  // Select a destination from suggestions
+  const fitMapToRoutes = useCallback((routeList: RoutePath[]) => {
+    if (!mapRef.current || typeof window === "undefined") return;
+
+    const L = require("leaflet");
+    const allPoints = routeList.flatMap((route) => route.points);
+    if (!allPoints.length) return;
+
+    const bounds = L.latLngBounds(allPoints);
+    mapRef.current.fitBounds(bounds, { padding: [48, 48] });
+  }, []);
+
   const handleSelectDestination = useCallback(async (suggestion: GeocodeSuggestion) => {
     const shortName = suggestion.displayName.split(",").slice(0, 2).join(",").trim();
     setDestination({ name: shortName, coords: [suggestion.lat, suggestion.lon] });
@@ -97,34 +109,26 @@ export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePa
     setError(null);
     setRoutes([]);
     setSelectedRouteId(null);
+    setIsDriving(false);
+    setDriveProgress(0);
 
     try {
       const result = await fetchRoutes(origin, [suggestion.lat, suggestion.lon]);
       setRoutes(result);
       if (result.length > 0) {
-        setSelectedRouteId(result[0].id); // auto-select eco route
-
-        // Fit map to route bounds
-        if (mapRef.current && typeof window !== "undefined") {
-          const L = require("leaflet");
-          const allPoints = result.flatMap(r => r.points);
-          if (allPoints.length > 0) {
-            const bounds = L.latLngBounds(allPoints);
-            mapRef.current.fitBounds(bounds, { padding: [40, 40] });
-          }
-        }
+        setSelectedRouteId(result[0].id);
+        fitMapToRoutes(result);
       }
-    } catch (err: any) {
+    } catch {
       setError("Could not calculate routes. Try a different destination.");
     } finally {
       setLoading(false);
     }
-  }, [origin]);
+  }, [fitMapToRoutes, origin]);
 
-  // Click outside to close suggestions
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
       }
     };
@@ -132,158 +136,265 @@ export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePa
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (!isDriving || !routes.length) return;
+
+    const timer = window.setInterval(() => {
+      setDriveProgress((progress) => {
+        if (progress >= 0.98) return 0.98;
+        return progress + 0.006;
+      });
+    }, 600);
+
+    return () => window.clearInterval(timer);
+  }, [isDriving, routes.length]);
+
+  const selectedRoute = routes.find((route) => route.id === selectedRouteId);
+
+  const routeProgress = useMemo(() => {
+    if (!selectedRoute || selectedRoute.points.length === 0) {
+      return {
+        travelledPoints: [] as [number, number][],
+        remainingPoints: [] as [number, number][],
+        carPosition: origin,
+        remainingKm: 0,
+        remainingMins: 0
+      };
+    }
+
+    const maxIndex = Math.max(0, selectedRoute.points.length - 1);
+    const routeIndex = Math.min(maxIndex, Math.max(0, Math.floor(driveProgress * maxIndex)));
+    const travelledPoints = selectedRoute.points.slice(0, routeIndex + 1);
+    const remainingPoints = selectedRoute.points.slice(routeIndex);
+
+    return {
+      travelledPoints,
+      remainingPoints,
+      carPosition: selectedRoute.points[routeIndex] ?? origin,
+      remainingKm: Math.max(0, selectedRoute.distanceKm * (1 - driveProgress)),
+      remainingMins: Math.max(0, selectedRoute.timeMins * (1 - driveProgress))
+    };
+  }, [driveProgress, origin, selectedRoute]);
+
   const handleSelectRoute = (route: RoutePath) => {
     setSelectedRouteId(route.id);
+    setIsDriving(false);
+    setDriveProgress(0);
     onRouteSelect?.(route);
   };
 
-  const selectedRoute = routes.find(r => r.id === selectedRouteId);
+  const handleStartDriving = () => {
+    if (!selectedRoute) return;
+    setIsDriving(true);
+    setDriveProgress(0);
+    onRouteSelect?.(selectedRoute);
+    fitMapToRoutes([selectedRoute]);
+  };
+
+  const handleStopDemo = () => {
+    setIsDriving(false);
+    setDriveProgress(0);
+    if (selectedRoute) fitMapToRoutes([selectedRoute]);
+  };
 
   return (
-    <div className="eco-route-planner">
-      {/* Search Header */}
-      <div className="route-search-section">
-        <div className="route-origin">
-          <div className="origin-dot" />
-          <span>UTAR Kampar Campus</span>
+    <div className={`eco-route-planner ${isDriving ? "eco-route-planner--driving" : ""}`}>
+      <aside className="route-control-panel" aria-label="Route controls">
+        <div className="route-mode-heading">
+          <span>{isDriving ? "Driving demo" : "Route planner"}</span>
+          <strong>{isDriving ? "Eco route active" : "Choose your destination"}</strong>
         </div>
-        <div className="route-search-connector" />
-        <div className="route-search-bar" ref={searchRef}>
-          <div className="dest-dot" />
-          <input
-            type="text"
-            placeholder="Where are you going? (e.g. Ipoh, KL Sentral...)"
-            value={query}
-            onChange={(e) => handleSearchInput(e.target.value)}
-            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-          />
-          {loading && <div className="search-spinner" />}
 
-          {showSuggestions && (
-            <div className="search-suggestions">
-              {suggestions.map((s, i) => (
-                <button
-                  key={i}
-                  className="suggestion-item"
-                  onClick={() => handleSelectDestination(s)}
-                >
-                  <span className="suggestion-name">{s.displayName.split(",").slice(0, 2).join(",")}</span>
-                  <span className="suggestion-detail">{s.displayName.split(",").slice(2, 4).join(",")}</span>
-                </button>
-              ))}
+        {!isDriving ? (
+          <>
+            <div className="route-location-stack" ref={searchRef}>
+              <div className="route-location-card route-location-card--origin">
+                <span className="route-location-kicker">From</span>
+                <strong>UTAR Kampar Campus</strong>
+              </div>
+
+              <div className="route-search-card">
+                <span className="route-location-kicker">To</span>
+                <label className="route-search-label" htmlFor="route-destination-input">
+                  Destination
+                </label>
+                <input
+                  id="route-destination-input"
+                  type="text"
+                  placeholder="Tap here, then search a place"
+                  value={query}
+                  onChange={(event) => handleSearchInput(event.target.value)}
+                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                />
+                {loading ? <div className="search-spinner" /> : null}
+
+                {showSuggestions ? (
+                  <div className="search-suggestions">
+                    {suggestions.map((suggestion, index) => (
+                      <button
+                        key={`${suggestion.displayName}-${index}`}
+                        className="suggestion-item"
+                        onClick={() => handleSelectDestination(suggestion)}
+                        type="button"
+                      >
+                        <span className="suggestion-name">{suggestion.displayName.split(",").slice(0, 2).join(",")}</span>
+                        <span className="suggestion-detail">{suggestion.displayName.split(",").slice(2, 4).join(",")}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             </div>
-          )}
-        </div>
-      </div>
 
-      {error && <p className="route-error">{error}</p>}
+            {error ? <p className="route-error">{error}</p> : null}
 
-      {/* Map */}
-      <div className="map-container">
+            {routes.length > 0 ? (
+              <div className="route-cards" aria-label="Available routes">
+                {routes.map((route) => {
+                  const isSelected = route.id === selectedRouteId;
+                  return (
+                    <button
+                      key={route.id}
+                      className={`route-card ${isSelected ? "route-card--selected" : ""} ${route.isEco ? "route-card--eco" : ""}`}
+                      onClick={() => handleSelectRoute(route)}
+                      style={{ borderLeft: `8px solid ${route.color}` }}
+                      type="button"
+                    >
+                      <div className="route-card-header">
+                        <div className="route-card-title">
+                          {route.isEco ? <span className="eco-tag">ECO</span> : null}
+                          <h3>{route.label}</h3>
+                        </div>
+                        {route.ecoCoinsBonus > 0 ? (
+                          <span className="eco-bonus">+{route.ecoCoinsBonus}</span>
+                        ) : null}
+                      </div>
+                      <div className="route-stats">
+                        <div className="stat">
+                          <span>Distance</span>
+                          <strong>{route.distanceKm} km</strong>
+                        </div>
+                        <div className="stat">
+                          <span>Time</span>
+                          <strong>{route.timeMins} min</strong>
+                        </div>
+                        <div className="stat">
+                          <span>CO2</span>
+                          <strong style={{ color: route.isEco ? "#37E58F" : "#FF5B5B" }}>
+                            {route.carbonEmissionKg} kg
+                          </strong>
+                        </div>
+                        {route.carbonSavedKg > 0 ? (
+                          <div className="stat stat--save">
+                            <span>Saves</span>
+                            <strong>{route.carbonSavedKg} kg</strong>
+                          </div>
+                        ) : null}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            {selectedRoute ? (
+              <button className="route-start-drive-btn" onClick={handleStartDriving} type="button">
+                Start Driving
+              </button>
+            ) : null}
+          </>
+        ) : (
+          <div className="route-drive-panel">
+            <button className="route-compact-location" onClick={handleStopDemo} type="button">
+              <span>From</span>
+              <strong>UTAR Kampar</strong>
+            </button>
+            <button className="route-compact-location" onClick={handleStopDemo} type="button">
+              <span>To</span>
+              <strong>{destination?.name ?? "Destination"}</strong>
+            </button>
+
+            <div className="route-drive-stats">
+              <div>
+                <span>Remaining</span>
+                <strong>{routeProgress.remainingKm.toFixed(1)} km</strong>
+              </div>
+              <div>
+                <span>ETA</span>
+                <strong>{Math.ceil(routeProgress.remainingMins)} min</strong>
+              </div>
+              <div>
+                <span>Progress</span>
+                <strong>{Math.round(driveProgress * 100)}%</strong>
+              </div>
+            </div>
+
+            <button className="route-stop-drive-btn" onClick={handleStopDemo} type="button">
+              Stop Demo
+            </button>
+          </div>
+        )}
+      </aside>
+
+      <div className="map-container route-map-stage">
         <MapContainer
           center={origin}
           zoom={13}
-          style={{ height: "100%", width: "100%", borderRadius: "8px" }}
+          style={{ height: "100%", width: "100%" }}
           zoomControl={false}
           ref={mapRef}
         >
           <TileLayer
-            attribution='&copy; OpenStreetMap'
+            attribution="&copy; OpenStreetMap"
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           />
 
-          {/* Draw non-selected routes first (dimmed) */}
-          {routes.filter(r => r.id !== selectedRouteId).map((route) => (
+          {!isDriving ? routes.filter((route) => route.id !== selectedRouteId).map((route) => (
             <Polyline
               key={route.id}
               positions={route.points}
               color={route.color}
-              weight={4}
+              weight={6}
               opacity={0.3}
               eventHandlers={{ click: () => handleSelectRoute(route) }}
             />
-          ))}
+          )) : null}
 
-          {/* Draw selected route on top (bright) */}
-          {selectedRoute && (
+          {isDriving && routeProgress.travelledPoints.length > 1 ? (
             <Polyline
-              positions={selectedRoute.points}
-              color={selectedRoute.color}
-              weight={6}
-              opacity={0.9}
+              positions={routeProgress.travelledPoints}
+              color="#5f7471"
+              weight={8}
+              opacity={0.45}
             />
-          )}
+          ) : null}
 
-          {/* Origin marker */}
-          {startIcon && <Marker position={origin} icon={startIcon} />}
+          {selectedRoute ? (
+            <Polyline
+              positions={isDriving ? routeProgress.remainingPoints : selectedRoute.points}
+              color={selectedRoute.color}
+              weight={isDriving ? 9 : 8}
+              opacity={0.95}
+            />
+          ) : null}
 
-          {/* Destination marker */}
-          {destination && endIcon && (
-            <Marker position={destination.coords} icon={endIcon} />
-          )}
+          {startIcon ? <Marker position={origin} icon={startIcon} /> : null}
+          {destination && endIcon ? <Marker position={destination.coords} icon={endIcon} /> : null}
+          {isDriving && carIcon ? <Marker position={routeProgress.carPosition} icon={carIcon} /> : null}
         </MapContainer>
 
-        {/* Map overlay: no destination selected */}
-        {routes.length === 0 && !loading && (
+        {routes.length === 0 && !loading ? (
           <div className="map-overlay">
-            <p>Search for a destination above to calculate eco-routes</p>
+            <p>Tap the destination panel to calculate eco-routes</p>
           </div>
-        )}
-      </div>
+        ) : null}
 
-      {/* Route Cards */}
-      {routes.length > 0 && (
-        <div className="route-cards">
-          {routes.map(route => {
-            const isSelected = route.id === selectedRouteId;
-            return (
-              <button
-                key={route.id}
-                className={`route-card ${isSelected ? "route-card--selected" : ""} ${route.isEco ? "route-card--eco" : ""}`}
-                onClick={() => handleSelectRoute(route)}
-                style={{ borderLeft: `4px solid ${route.color}` }}
-              >
-                <div className="route-card-header">
-                  <div className="route-card-title">
-                    {route.isEco && <span className="eco-tag">♻ ECO</span>}
-                    <h3>{route.label}</h3>
-                  </div>
-                  {route.ecoCoinsBonus > 0 && (
-                    <span className="eco-bonus">+{route.ecoCoinsBonus} EcoCoins</span>
-                  )}
-                </div>
-                <div className="route-stats">
-                  <div className="stat">
-                    <span>Distance</span>
-                    <strong>{route.distanceKm} km</strong>
-                  </div>
-                  <div className="stat">
-                    <span>Time</span>
-                    <strong>{route.timeMins} min</strong>
-                  </div>
-                  <div className="stat">
-                    <span>CO₂</span>
-                    <strong style={{ color: route.isEco ? "#37E58F" : "#FF5B5B" }}>
-                      {route.carbonEmissionKg} kg
-                    </strong>
-                  </div>
-                  {route.carbonSavedKg > 0 && (
-                    <div className="stat stat--save">
-                      <span>Saves</span>
-                      <strong>{route.carbonSavedKg} kg</strong>
-                    </div>
-                  )}
-                </div>
-                {isSelected && route.isEco && (
-                  <div className="route-cta">
-                    Select Eco-Route & Start Driving
-                  </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
+        {loading ? (
+          <div className="map-overlay map-overlay--loading">
+            <p>Finding dashboard-friendly route choices...</p>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Gauge, RadioTower, Crown, Trophy, Gem, Users, Award, ChevronDown } from "lucide-react";
+import { Gauge, RadioTower, Crown, Trophy, Users, Award, ChevronDown, X } from "lucide-react";
 import { CockpitShell } from "./cockpit-shell";
 import { cockpitModes, type ModeId } from "../data/cockpit-content";
 import { eventLabel, hardwareFeedbackForTelemetry } from "../lib/dashboard-data";
@@ -179,10 +179,23 @@ function getPlayersForState(stateName: string, globalScore: number, timeframe: "
   }).sort((a, b) => b.score - a.score);
 }
 
+type LeaderboardPanelId = "overall" | "state" | "friends";
+
+type LeaderboardEntry = {
+  name: string;
+  score: number;
+  avatar: string;
+  state?: string;
+  stateName?: string;
+  flag?: string;
+  isReal?: boolean;
+};
+
 function CommunitySurface() {
   const globalScore = useDashboardStore((state) => state.globalScore);
   const [selectedState, setSelectedState] = useState("All States");
   const [timeframe, setTimeframe] = useState<"daily" | "monthly">("daily");
+  const [openLeaderboard, setOpenLeaderboard] = useState<LeaderboardPanelId | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [activeLeaderboardTab, setActiveLeaderboardTab] = useState<"top3" | "state" | "friends">("top3");
 
@@ -193,8 +206,7 @@ function CommunitySurface() {
     "Putrajaya", "Labuan"
   ];
 
-  // Dynamically calculate Overall Top 3 Achievers from combined state pools
-  const overallTop3 = useMemo(() => {
+  const overallPlayers = useMemo<LeaderboardEntry[]>(() => {
     const listStates = [
       "Johor", "Kedah", "Kelantan", "Melaka", "Negeri Sembilan", 
       "Pahang", "Perak", "Perlis", "Pulau Pinang", "Sabah", 
@@ -206,20 +218,9 @@ function CommunitySurface() {
       const players = getPlayersForState(stName, globalScore, timeframe);
       pool = [...pool, ...players];
     });
-    // Remove duplicates by name if any
     const uniquePool = pool.filter((v, i, a) => a.findIndex(t => t.name === v.name) === i);
-    // Sort descending
     uniquePool.sort((a, b) => b.score - a.score);
-    // Return top 3
-    return uniquePool.slice(0, 3).map((p, idx) => ({
-      rank: idx + 1,
-      name: p.name,
-      earn: Math.round(p.score * 0.025), // dynamic earn points calculation
-      score: p.score,
-      avatar: p.avatar,
-      flag: p.flag,
-      stateName: p.state
-    }));
+    return uniquePool;
   }, [globalScore, timeframe]);
 
   // Friends Leaderboard Data
@@ -249,6 +250,42 @@ function CommunitySurface() {
     return getPlayersForState(selectedState, globalScore, timeframe);
   }, [selectedState, globalScore, timeframe]);
 
+  const overallTop3 = useMemo(() => overallPlayers.slice(0, 3).map((player, index) => ({
+    rank: index + 1,
+    name: player.name,
+    earn: Math.round(player.score * 0.025),
+    score: player.score,
+    avatar: player.avatar,
+    flag: player.flag,
+    stateName: player.state ?? player.stateName ?? ""
+  })), [overallPlayers]);
+
+  const leaderboardSections = useMemo(() => [
+    {
+      id: "overall" as const,
+      title: "Overall",
+      subtitle: "Malaysia top eco-drivers",
+      icon: Trophy,
+      entries: overallPlayers
+    },
+    {
+      id: "state" as const,
+      title: "State",
+      subtitle: selectedState === "All States" ? "Best drivers by state" : `${selectedState} drivers`,
+      icon: Award,
+      entries: statePlayers
+    },
+    {
+      id: "friends" as const,
+      title: "Friends",
+      subtitle: "Your driving circle",
+      icon: Users,
+      entries: friends
+    }
+  ], [friends, overallPlayers, selectedState, statePlayers]);
+
+  const openedSection = leaderboardSections.find((section) => section.id === openLeaderboard) ?? null;
+
   const handleStateChange = (state: string) => {
     setIsTransitioning(true);
     setTimeout(() => {
@@ -258,7 +295,7 @@ function CommunitySurface() {
   };
 
   return (
-    <div className="live-surface community-surface">
+    <div className="live-surface community-surface community-surface--dashboard">
       <style>{`
         /* Local flag badge styling */
         .podium-flag-badge {
@@ -1012,6 +1049,104 @@ function CommunitySurface() {
         }
       `}</style>
 
+      <header className="leaderboard-dashboard-header">
+        <div className="leaderboard-dashboard-title">
+          <span>EcoDrive Leaderboard</span>
+          <h2>Top drivers at a glance</h2>
+        </div>
+
+        <div className="time-toggle-container" aria-label="Leaderboard timeframe">
+          <button
+            onClick={() => setTimeframe("daily")}
+            className={`time-toggle-btn ${timeframe === "daily" ? "time-toggle-btn--active" : ""}`}
+            type="button"
+          >
+            Daily
+          </button>
+          <button
+            onClick={() => setTimeframe("monthly")}
+            className={`time-toggle-btn ${timeframe === "monthly" ? "time-toggle-btn--active" : ""}`}
+            type="button"
+          >
+            Monthly
+          </button>
+        </div>
+      </header>
+
+      <div className="leaderboard-podium-grid">
+        {leaderboardSections.map((section) => {
+          const Icon = section.icon;
+          return (
+            <section className="dashboard-leaderboard-panel" key={section.id}>
+              <header className="dashboard-leaderboard-panel-header">
+                <div className="dashboard-leaderboard-label">
+                  <Icon />
+                  <div>
+                    <h3>{section.title}</h3>
+                    <p>{section.subtitle}</p>
+                  </div>
+                </div>
+
+                {section.id === "state" ? (
+                  <div className="state-select-container">
+                    <select
+                      value={selectedState}
+                      onChange={(event) => setSelectedState(event.target.value)}
+                      className="state-select-dropdown"
+                      aria-label="Select state leaderboard"
+                    >
+                      {states.map((state) => (
+                        <option key={state} value={state}>{state}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={16} className="state-select-chevron" />
+                  </div>
+                ) : null}
+              </header>
+
+              <LeaderboardPodium entries={section.entries.slice(0, 3)} />
+
+              <button
+                className="driver-list-button"
+                onClick={() => setOpenLeaderboard(section.id)}
+                type="button"
+              >
+                Show complete list
+              </button>
+            </section>
+          );
+        })}
+      </div>
+
+      <div className="leaderboard-driver-footer">
+        You earned <span className="footer-highlight" style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}><EcoCoin size={18} className="footer-coin" /> 50</span> today and are ranked <span className="footer-highlight">#18</span> out of <strong>2,789</strong> users
+      </div>
+
+      {openedSection ? (
+        <div className="leaderboard-list-overlay" onClick={() => setOpenLeaderboard(null)} role="presentation">
+          <section
+            className="leaderboard-list-drawer"
+            aria-label={`${openedSection.title} complete leaderboard`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header>
+              <div>
+                <h2>{openedSection.title} list</h2>
+                <p>{openedSection.entries.length} drivers, {timeframe} ranking</p>
+              </div>
+              <button className="leaderboard-list-close" onClick={() => setOpenLeaderboard(null)} type="button" aria-label="Close leaderboard list">
+                <X size={28} />
+              </button>
+            </header>
+            <div className="leaderboard-list-scroll">
+              {openedSection.entries.map((entry, index) => (
+                <LeaderboardListRow entry={entry} index={index} key={`${openedSection.id}-${entry.name}-${index}`} />
+              ))}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
       {/* EV Styled Leaderboard Header */}
       <div className="ev-header-container">
         <h1 className="ev-main-title">EcoDrive Leaderboard</h1>
@@ -1307,6 +1442,59 @@ function CommunitySurface() {
       <div className="leaderboard-footer">
         You earned <span className="footer-highlight" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><EcoCoin size={13} className="footer-coin" /> 50</span> today and are ranked <span className="footer-highlight">#18</span> out of <strong>2,789</strong> users
       </div>
+    </div>
+  );
+}
+
+function LeaderboardPodium({ entries }: { entries: LeaderboardEntry[] }) {
+  const podiumOrder = [1, 0, 2];
+
+  return (
+    <div className="driver-podium">
+      {podiumOrder.map((entryIndex) => {
+        const entry = entries[entryIndex];
+        if (!entry) return <div className="driver-podium-card driver-podium-card--empty" key={entryIndex} />;
+
+        const rank = entryIndex + 1;
+        const stateLabel = entry.state ?? entry.stateName;
+
+        return (
+          <article className={`driver-podium-card driver-podium-card--${rank}`} key={`${entry.name}-${rank}`}>
+            {rank === 1 ? (
+              <div className="podium-crown-container">
+                <Crown className="podium-crown-icon" size={34} fill="#FCD34D" stroke="#FCD34D" />
+              </div>
+            ) : null}
+            <span className="driver-podium-rank">{rank}</span>
+            <img className="driver-podium-avatar" src={entry.avatar} alt={entry.name} />
+            <h4 className="driver-podium-name">{entry.name}</h4>
+            <div className="driver-podium-meta">
+              {entry.flag ? <img className="driver-podium-flag" src={entry.flag} alt={stateLabel ? `${stateLabel} flag` : "State flag"} /> : null}
+              <span>{stateLabel ?? (entry.isReal ? "You" : "Driver")}</span>
+            </div>
+            <div className="driver-podium-score">
+              <EcoCoin size={22} />
+              <span>{entry.score.toLocaleString()}</span>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function LeaderboardListRow({ entry, index }: { entry: LeaderboardEntry; index: number }) {
+  const stateLabel = entry.state ?? entry.stateName ?? "Driver";
+
+  return (
+    <div className="driver-leaderboard-row">
+      <span className="driver-leaderboard-row-rank">{index + 1}</span>
+      <img className="driver-leaderboard-row-avatar" src={entry.avatar} alt={entry.name} />
+      <div className="driver-leaderboard-row-info">
+        <strong>{entry.name}</strong>
+        <span>{stateLabel}</span>
+      </div>
+      <span className="driver-leaderboard-row-score">{entry.score.toLocaleString()}</span>
     </div>
   );
 }
