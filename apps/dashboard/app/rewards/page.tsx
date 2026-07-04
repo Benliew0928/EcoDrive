@@ -2489,10 +2489,10 @@ const styleSheet = `
     color: #dcece7;
     cursor: pointer;
     display: grid;
-    gap: 20px;
-    grid-template-columns: 50px minmax(0, 1fr) auto 32px;
+    gap: 24px;
+    grid-template-columns: 60px minmax(0, 1fr) auto 36px;
     min-height: 0;
-    padding: 22px 28px;
+    padding: 32px 36px;
     text-align: left;
     transition: background .18s ease, border-color .18s ease, transform .18s ease;
   }
@@ -2503,11 +2503,15 @@ const styleSheet = `
     transform: translateX(3px);
   }
 
-  .reward-category-number { color: #37e58f; font-size: 24px; font-weight: 950; }
-  .reward-category-copy { display: grid; gap: 6px; min-width: 0; }
-  .reward-category-copy strong { color: #f4fff9; font-size: 28px; }
-  .reward-category-copy small { color: #b0c9c1; font-size: 16px; line-height: 1.45; }
-  .reward-category-count { color: #37e58f; font-size: 15px; font-weight: 900; text-transform: uppercase; }
+  .reward-category-number { color: #37e58f; font-size: 32px; font-weight: 950; }
+  .reward-category-copy { display: grid; gap: 8px; min-width: 0; }
+  .reward-category-copy strong { color: #f4fff9; font-size: 36px; }
+  .reward-category-copy small { color: #b0c9c1; font-size: 20px; line-height: 1.45; }
+  .reward-category-count { color: #37e58f; font-size: 18px; font-weight: 900; text-transform: uppercase; }
+
+  .reward-category-features-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+  .reward-feat-pill { background: rgba(55, 229, 143, 0.08); border: 1px solid rgba(55, 229, 143, 0.22); color: #37e58f; font-size: 13px; font-weight: 800; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
 
   /* Compact sub-view header leaves the screen to the selected catalogue or wallet */
   .rewards-panel--subview .marketplace-top-summary { padding-bottom: 8px; padding-top: 8px; }
