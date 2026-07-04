@@ -1598,7 +1598,7 @@ function buildSimulatorInput(telemetry: Telemetry): SimulatorInput {
 }
 
 
-function DistanceLabel({ children, distanceFactor, position, maxDistance = 140 }: { children: import('react').ReactNode; distanceFactor: number; position: [number, number, number]; maxDistance?: number }) {
+function DistanceLabel({ children, distanceFactor, position, maxDistance = 140, center = true }: { children: import('react').ReactNode; distanceFactor: number; position: [number, number, number]; maxDistance?: number; center?: boolean }) {
   const groupRef = useRef<import('three').Group>(null);
   const divRef = useRef<HTMLDivElement>(null);
   const vec = useMemo(() => new Vector3(), []);
