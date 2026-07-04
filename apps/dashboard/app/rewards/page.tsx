@@ -8,12 +8,11 @@ import {
   CheckCircle2, 
   ChevronLeft, 
   ChevronRight, 
-  Clock, 
   Gift, 
-  ExternalLink,
+  AlertTriangle,
   Search,
-  Sparkles,
-  Ticket
+  Ticket,
+  ChevronDown
 } from "lucide-react";
 
 const EcoCoin = ({ size = 16, className = "", style = {} }: { size?: number; className?: string; style?: React.CSSProperties }) => (
@@ -78,7 +77,7 @@ type Reward = {
 type RedeemedEntry = {
   id: string;
   reward: Reward;
-  redeemedAt: string; // ISO string for local storage stability
+  redeemedAt: string;
   expiresAt: string;
   status: "Active" | "Used" | "Expired";
 };
@@ -95,37 +94,37 @@ const categoriesInfo: CategoryInfo[] = [
   {
     id: "Vehicle Benefits",
     title: "Vehicle Benefits",
-    description: "Access charging credits, preferred parking spots, and diagnostics checkups.",
+    description: "Eco charging credits, diagnostics checks, preferred parking spots, and support packs.",
     image: "https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=600&q=80",
     icon: "🚗"
   },
   {
     id: "Lifestyle",
     title: "Lifestyle",
-    description: "Redeem premium coffees, cinema tickets, meals, and gym day passes.",
+    description: "Premium coffee vouchers, cinema screen entries, healthy meals, and gym day passes.",
     image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80",
     icon: "☕"
   },
   {
     id: "Shopping",
     title: "Shopping",
-    description: "Shop sustainably with apparel, gift cards, and reusable gear.",
+    description: "Eco-conscious organic garments, campus store credits, reusable gear, and mall gift vouchers.",
     image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80",
     icon: "🛍️"
   },
   {
     id: "Eco Impact",
     title: "Eco Impact",
-    description: "Directly support reforestation, wildlife protection, and cleanup projects.",
+    description: "Directly fund tree plantings, carbon offsetting credits, and waste cleanup campaigns.",
     image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80",
     icon: "🌱"
   }
 ];
 
 const rewardsData: Reward[] = [
-  // Vehicle Benefits
+  // Vehicle Benefits (12 items)
   {
-    id: "charging-credit",
+    id: "ev-charging-credit",
     title: "EV Charging Credit",
     partner: "GreenCharge Hub",
     description: "RM20 fast-charging credit redeemable at all grid locations.",
@@ -136,7 +135,7 @@ const rewardsData: Reward[] = [
     image: "https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=400&q=80"
   },
   {
-    id: "reserved-parking",
+    id: "reserved-ev-parking",
     title: "Reserved EV Parking",
     partner: "CityPark Connect",
     description: "Guaranteed premium parking bay with charger access for one full day.",
@@ -147,8 +146,8 @@ const rewardsData: Reward[] = [
     image: "https://images.unsplash.com/photo-1597404294360-feeeda04612e?auto=format&fit=crop&w=400&q=80"
   },
   {
-    id: "premium-pass",
-    title: "Premium Parking Pass",
+    id: "premium-parking",
+    title: "Premium Parking",
     partner: "MetroValet",
     description: "One-week free upgrade to VIP multi-level garage structures.",
     cost: 1200,
@@ -159,7 +158,7 @@ const rewardsData: Reward[] = [
   },
   {
     id: "car-wash",
-    title: "Car Wash Voucher",
+    title: "Car Wash",
     partner: "AquaEco Care",
     description: "Eco-friendly, water-reclaimed exterior detailing and shine service.",
     cost: 600,
@@ -169,7 +168,7 @@ const rewardsData: Reward[] = [
     image: "https://images.unsplash.com/photo-1607860108855-64acf2078ed9?auto=format&fit=crop&w=400&q=80"
   },
   {
-    id: "battery-diagnostics",
+    id: "battery-health-check",
     title: "Battery Health Check",
     partner: "Volt Diagnostics",
     description: "Complete EV powertrain and thermal cell health validation checkup.",
@@ -191,7 +190,7 @@ const rewardsData: Reward[] = [
     image: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=400&q=80"
   },
   {
-    id: "service-discount",
+    id: "vehicle-service-discount",
     title: "Vehicle Service Discount",
     partner: "E-Force Mechanics",
     description: "RM50 discount coupon for any regular schedule component servicing.",
@@ -212,8 +211,52 @@ const rewardsData: Reward[] = [
     category: "Vehicle Benefits",
     image: "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=400&q=80"
   },
+  {
+    id: "interior-cleaning",
+    title: "Interior Cleaning",
+    partner: "PureCabin",
+    description: "Deep vacuum cleaner extraction and organic scent refreshing.",
+    cost: 700,
+    stock: 20,
+    badge: "New",
+    category: "Vehicle Benefits",
+    image: "https://images.unsplash.com/photo-1520340356584-f9917d1ecc6f?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: "ev-accessories",
+    title: "EV Accessories",
+    partner: "SleekMount",
+    description: "A secure magnetic fast-charging smartphone dashboard holder.",
+    cost: 1000,
+    stock: 14,
+    badge: "Limited",
+    category: "Vehicle Benefits",
+    image: "https://images.unsplash.com/photo-1622037022824-0c71d511ef3c?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: "premium-air-pump",
+    title: "Premium Air Pump",
+    partner: "VoltPressure",
+    description: "Digital tire inflator accessory bundle for vehicle trunk storage.",
+    cost: 1100,
+    stock: 10,
+    badge: "Popular",
+    category: "Vehicle Benefits",
+    image: "https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: "roadside-assistance",
+    title: "Roadside Assistance",
+    partner: "EcoRescue Team",
+    description: "One year roadside recovery membership covering battery jumps and tows.",
+    cost: 2500,
+    stock: 5,
+    badge: "Limited",
+    category: "Vehicle Benefits",
+    image: "https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=400&q=80"
+  },
 
-  // Lifestyle
+  // Lifestyle (12 items)
   {
     id: "coffee-voucher",
     title: "Coffee Voucher",
@@ -226,7 +269,7 @@ const rewardsData: Reward[] = [
     image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=400&q=80"
   },
   {
-    id: "boba-voucher",
+    id: "bubble-tea-voucher",
     title: "Bubble Tea Voucher",
     partner: "Boba Avenue",
     description: "Signature brown sugar fresh milk tea with grass jelly or pearls.",
@@ -259,17 +302,6 @@ const rewardsData: Reward[] = [
     image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=400&q=80"
   },
   {
-    id: "gym-pass",
-    title: "Gym Pass",
-    partner: "FitZone Studio",
-    description: "Full day usage pass including group training and indoor pool access.",
-    cost: 1800,
-    stock: 10,
-    badge: "Limited",
-    category: "Lifestyle",
-    image: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=400&q=80"
-  },
-  {
     id: "cinema-ticket",
     title: "Cinema Ticket",
     partner: "Starlight Screens",
@@ -281,7 +313,18 @@ const rewardsData: Reward[] = [
     image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=400&q=80"
   },
   {
-    id: "ice-cream",
+    id: "gym-pass",
+    title: "Gym Pass",
+    partner: "FitZone Studio",
+    description: "Full day usage pass including group training and indoor pool access.",
+    cost: 1800,
+    stock: 10,
+    badge: "Limited",
+    category: "Lifestyle",
+    image: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: "ice-cream-coupon",
     title: "Ice Cream Coupon",
     partner: "Creamy Scoop",
     description: "Dual scoops of handcrafted premium dairy or vegan gelato.",
@@ -302,19 +345,52 @@ const rewardsData: Reward[] = [
     category: "Lifestyle",
     image: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=400&q=80"
   },
-
-  // Shopping
   {
-    id: "eco-tshirt",
-    title: "Eco T-Shirt",
-    partner: "EcoWear Co.",
-    description: "Made from 100% certified organic ring-spun cotton and plant dyes.",
-    cost: 2500,
-    stock: 12,
+    id: "fast-food-combo",
+    title: "Fast Food Combo",
+    partner: "EcoGrill Burgers",
+    description: "One plant-based cheeseburger combo set with potato skin wedges.",
+    cost: 750,
+    stock: 25,
     badge: "Popular",
-    category: "Shopping",
-    image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=400&q=80"
+    category: "Lifestyle",
+    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80"
   },
+  {
+    id: "restaurant-voucher",
+    title: "Restaurant Voucher",
+    partner: "Olive Garden Bistro",
+    description: "RM40 discount voucher for dine-in organic dinner meals.",
+    cost: 1300,
+    stock: 15,
+    badge: "Best Value",
+    category: "Lifestyle",
+    image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: "spa-discount",
+    title: "Spa Discount",
+    partner: "Orchid Wellness",
+    description: "Get 25% off massage, hot stone relaxation therapies and body scrubs.",
+    cost: 1600,
+    stock: 8,
+    badge: "Limited",
+    category: "Lifestyle",
+    image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: "hotel-voucher",
+    title: "Hotel Voucher",
+    partner: "Grand Horizon Hotels",
+    description: "One night stay upgrade at select partner eco-resorts.",
+    cost: 3500,
+    stock: 3,
+    badge: "Limited",
+    category: "Lifestyle",
+    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=400&q=80"
+  },
+
+  // Shopping (12 items)
   {
     id: "grocery-voucher",
     title: "Grocery Voucher",
@@ -327,26 +403,15 @@ const rewardsData: Reward[] = [
     image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=400&q=80"
   },
   {
-    id: "gift-card",
-    title: "Gift Card",
-    partner: "MultiMall Retail",
-    description: "RM100 universal e-voucher valid across 100+ partner outlets.",
-    cost: 2000,
-    stock: 10,
-    badge: "New",
-    category: "Shopping",
-    image: "https://images.unsplash.com/photo-1572715655204-47e297d38a5f?auto=format&fit=crop&w=400&q=80"
-  },
-  {
-    id: "campus-credit",
-    title: "Campus Store Credit",
-    partner: "UniShop Outlet",
-    description: "RM30 credit for campus bookstore, uniform, and school gear.",
-    cost: 800,
-    stock: 30,
+    id: "eco-tshirt",
+    title: "Eco T-Shirt",
+    partner: "EcoWear Co.",
+    description: "Made from 100% certified organic ring-spun cotton and plant dyes.",
+    cost: 2500,
+    stock: 12,
     badge: "Popular",
     category: "Shopping",
-    image: "https://images.unsplash.com/photo-1527891751199-7225231a68dd?auto=format&fit=crop&w=400&q=80"
+    image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=400&q=80"
   },
   {
     id: "electronics-discount",
@@ -360,15 +425,26 @@ const rewardsData: Reward[] = [
     image: "https://images.unsplash.com/photo-1618220179428-22790b461013?auto=format&fit=crop&w=400&q=80"
   },
   {
-    id: "sports-voucher",
-    title: "Sports Store Voucher",
-    partner: "EcoSport",
-    description: "RM50 voucher code for hiking gear, athletic shoes, and accessories.",
-    cost: 1500,
-    stock: 14,
-    badge: "Best Value",
+    id: "campus-store-credit",
+    title: "Campus Store Credit",
+    partner: "UniShop Outlet",
+    description: "RM30 credit for campus bookstore, uniform, and school gear.",
+    cost: 800,
+    stock: 30,
+    badge: "Popular",
     category: "Shopping",
-    image: "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=400&q=80"
+    image: "https://images.unsplash.com/photo-1527891751199-7225231a68dd?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: "gift-card",
+    title: "Gift Card",
+    partner: "MultiMall Retail",
+    description: "RM100 universal e-voucher valid across 100+ partner outlets.",
+    cost: 2000,
+    stock: 10,
+    badge: "New",
+    category: "Shopping",
+    image: "https://images.unsplash.com/photo-1572715655204-47e297d38a5f?auto=format&fit=crop&w=400&q=80"
   },
   {
     id: "fashion-voucher",
@@ -382,6 +458,17 @@ const rewardsData: Reward[] = [
     image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=400&q=80"
   },
   {
+    id: "sports-store-voucher",
+    title: "Sports Store Voucher",
+    partner: "EcoSport",
+    description: "RM50 voucher code for hiking gear, athletic shoes, and accessories.",
+    cost: 1500,
+    stock: 14,
+    badge: "Best Value",
+    category: "Shopping",
+    image: "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=400&q=80"
+  },
+  {
     id: "reusable-bottle",
     title: "Reusable Bottle",
     partner: "HydroEco",
@@ -392,8 +479,52 @@ const rewardsData: Reward[] = [
     category: "Shopping",
     image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=400&q=80"
   },
+  {
+    id: "supermarket-voucher",
+    title: "Supermarket Voucher",
+    partner: "EcoMart Chains",
+    description: "RM25 discount voucher for green packaging household cleanups.",
+    cost: 700,
+    stock: 45,
+    badge: "Best Value",
+    category: "Shopping",
+    image: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: "smart-watch-discount",
+    title: "Smart Watch Discount",
+    partner: "PulseTech Wear",
+    description: "20% off the latest solar powered fitness tracking watch models.",
+    cost: 3200,
+    stock: 8,
+    badge: "New",
+    category: "Shopping",
+    image: "https://images.unsplash.com/photo-1579586337278-3befd40fd17a?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: "headphones-discount",
+    title: "Headphones Discount",
+    partner: "Acoustix Gear",
+    description: "Get RM60 off premium noise-canceling wireless headphones.",
+    cost: 2200,
+    stock: 12,
+    badge: "Limited",
+    category: "Shopping",
+    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: "online-shopping-coupon",
+    title: "Online Shopping Coupon",
+    partner: "ExpressCart",
+    description: "RM15 off site-wide plus free carbon-neutral shipping on orders.",
+    cost: 500,
+    stock: 50,
+    badge: "Best Value",
+    category: "Shopping",
+    image: "https://images.unsplash.com/photo-1511556532299-8f662fc26a06?auto=format&fit=crop&w=400&q=80"
+  },
 
-  // Eco Impact
+  // Eco Impact (12 items)
   {
     id: "plant-tree",
     title: "Plant One Tree",
@@ -450,7 +581,7 @@ const rewardsData: Reward[] = [
     image: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=400&q=80"
   },
   {
-    id: "campus-donation",
+    id: "green-campus-donation",
     title: "Green Campus Donation",
     partner: "EcoCampus Foundation",
     description: "Contribute to building solar charging arrays on university blocks.",
@@ -459,6 +590,17 @@ const rewardsData: Reward[] = [
     badge: "Best Value",
     category: "Eco Impact",
     image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: "solar-contribution",
+    title: "Solar Energy Contribution",
+    partner: "SunPower Alliance",
+    description: "Support off-grid solar kits deployments in remote rural communities.",
+    cost: 1500,
+    stock: 999,
+    badge: "Popular",
+    category: "Eco Impact",
+    image: "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&w=400&q=80"
   },
   {
     id: "community-cleanup",
@@ -472,13 +614,46 @@ const rewardsData: Reward[] = [
     image: "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=400&q=80"
   },
   {
-    id: "solar-contribution",
-    title: "Solar Energy Contribution",
-    partner: "SunPower Alliance",
-    description: "Support off-grid solar kits deployments in remote rural communities.",
-    cost: 1500,
+    id: "plastic-reduction",
+    title: "Plastic Reduction",
+    partner: "BioBag Organics",
+    description: "Sponsor distribution of biodegradable bags to local night markets.",
+    cost: 600,
+    stock: 999,
+    badge: "Best Value",
+    category: "Eco Impact",
+    image: "https://images.unsplash.com/photo-1618477388954-7852f32655ec?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: "forest-conservation",
+    title: "Forest Conservation",
+    partner: "GreenCanopy",
+    description: "Adopt an acre of tropical rainforest to protect against logging.",
+    cost: 1800,
+    stock: 999,
+    badge: "Limited",
+    category: "Eco Impact",
+    image: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: "ocean-cleanup",
+    title: "Ocean Cleanup",
+    partner: "OceanSave Group",
+    description: "Direct funding to clear 5kg of marine plastic waste from shorelines.",
+    cost: 1100,
     stock: 999,
     badge: "Popular",
+    category: "Eco Impact",
+    image: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: "renewable-energy-support",
+    title: "Renewable Energy Support",
+    partner: "CleanGrid Power",
+    description: "Support grid integration testing of offshore wave energy devices.",
+    cost: 2200,
+    stock: 999,
+    badge: "New",
     category: "Eco Impact",
     image: "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&w=400&q=80"
   }
@@ -488,70 +663,84 @@ export default function RewardsPage() {
   const walletCoins = useDashboardStore((state) => state.walletCoins);
   const spendCoins = useDashboardStore((state) => state.spendCoins);
 
-  // States
+  // Core navigation & view states
   const [activeCategory, setActiveCategory] = useState<RewardCategory | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [myRewardsOpen, setMyRewardsOpen] = useState(false);
   const [myRewardsTab, setMyRewardsTab] = useState<"Active" | "Used" | "Expired">("Active");
   const [redemptionHistory, setRedemptionHistory] = useState<RedeemedEntry[]>([]);
+  const [myRewardsPage, setMyRewardsPage] = useState(1);
+
+  // Transient states
   const [successModal, setSuccessModal] = useState<{ reward: Reward; remaining: number } | null>(null);
   const [detailReward, setDetailReward] = useState<Reward | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState<SortOption>("Most Popular");
+  
+  // Transition slide direction helper
+  const [slideDirection, setSlideDirection] = useState<"left" | "right" | "">("");
+  
+  // Loading hydration flag to prevent Next.js SSR blink
   const [isStateLoaded, setIsStateLoaded] = useState(false);
 
-  // 1. Mount Persistence Hydration
+  // 1. Mount Persistence Hydration from localStorage
   useEffect(() => {
     try {
-      const savedCategory = localStorage.getItem("eco_rewards_activeCategory");
+      const savedCategory = localStorage.getItem("dash_rewards_activeCategory");
       if (savedCategory) setActiveCategory(JSON.parse(savedCategory));
       
-      const savedPage = localStorage.getItem("eco_rewards_currentPage");
+      const savedPage = localStorage.getItem("dash_rewards_currentPage");
       if (savedPage) setCurrentPage(Number(savedPage));
 
-      const savedOpen = localStorage.getItem("eco_rewards_myRewardsOpen");
+      const savedOpen = localStorage.getItem("dash_rewards_myRewardsOpen");
       if (savedOpen) setMyRewardsOpen(JSON.parse(savedOpen));
 
-      const savedTab = localStorage.getItem("eco_rewards_myRewardsTab");
+      const savedTab = localStorage.getItem("dash_rewards_myRewardsTab");
       if (savedTab) setMyRewardsTab(JSON.parse(savedTab));
 
-      const savedHistory = localStorage.getItem("eco_rewards_redemptionHistory");
-      if (savedHistory) {
-        setRedemptionHistory(JSON.parse(savedHistory));
-      }
+      const savedHistory = localStorage.getItem("dash_rewards_redemptionHistory");
+      if (savedHistory) setRedemptionHistory(JSON.parse(savedHistory));
+
+      const savedMyPage = localStorage.getItem("dash_rewards_myRewardsPage");
+      if (savedMyPage) setMyRewardsPage(Number(savedMyPage));
     } catch (e) {
       console.error("Failed to load rewards state", e);
     }
     setIsStateLoaded(true);
   }, []);
 
-  // 2. State Auto-Saving to LocalStorage
+  // 2. LocalStorage Persistence Triggers
   useEffect(() => {
     if (!isStateLoaded) return;
-    localStorage.setItem("eco_rewards_activeCategory", JSON.stringify(activeCategory));
+    localStorage.setItem("dash_rewards_activeCategory", JSON.stringify(activeCategory));
   }, [activeCategory, isStateLoaded]);
 
   useEffect(() => {
     if (!isStateLoaded) return;
-    localStorage.setItem("eco_rewards_currentPage", String(currentPage));
+    localStorage.setItem("dash_rewards_currentPage", String(currentPage));
   }, [currentPage, isStateLoaded]);
 
   useEffect(() => {
     if (!isStateLoaded) return;
-    localStorage.setItem("eco_rewards_myRewardsOpen", JSON.stringify(myRewardsOpen));
+    localStorage.setItem("dash_rewards_myRewardsOpen", JSON.stringify(myRewardsOpen));
   }, [myRewardsOpen, isStateLoaded]);
 
   useEffect(() => {
     if (!isStateLoaded) return;
-    localStorage.setItem("eco_rewards_myRewardsTab", JSON.stringify(myRewardsTab));
+    localStorage.setItem("dash_rewards_myRewardsTab", JSON.stringify(myRewardsTab));
   }, [myRewardsTab, isStateLoaded]);
 
   useEffect(() => {
     if (!isStateLoaded) return;
-    localStorage.setItem("eco_rewards_redemptionHistory", JSON.stringify(redemptionHistory));
+    localStorage.setItem("dash_rewards_redemptionHistory", JSON.stringify(redemptionHistory));
   }, [redemptionHistory, isStateLoaded]);
 
-  // Compute stats on active category
+  useEffect(() => {
+    if (!isStateLoaded) return;
+    localStorage.setItem("dash_rewards_myRewardsPage", String(myRewardsPage));
+  }, [myRewardsPage, isStateLoaded]);
+
+  // Compute Active Category rewards list
   const filteredRewards = useMemo(() => {
     if (!activeCategory) return [];
     const query = searchQuery.trim().toLowerCase();
@@ -569,17 +758,33 @@ export default function RewardsPage() {
     });
   }, [activeCategory, searchQuery, sortOption]);
 
-  // Total pages calculation (exactly 4 rewards per page)
+  // 2x2 Pagination Configuration
   const itemsPerPage = 4;
   const totalPages = Math.max(1, Math.ceil(filteredRewards.length / itemsPerPage));
 
-  // Scoped active rewards
   const paginatedRewards = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredRewards.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredRewards, currentPage]);
 
-  // Reset page when category changes
+  const handlePrevPage = () => {
+    if (currentPage === 1) return;
+    setSlideDirection("right");
+    setTimeout(() => {
+      setCurrentPage((p) => p - 1);
+      setSlideDirection("");
+    }, 150);
+  };
+
+  const handleNextPage = () => {
+    if (currentPage === totalPages) return;
+    setSlideDirection("left");
+    setTimeout(() => {
+      setCurrentPage((p) => p + 1);
+      setSlideDirection("");
+    }, 150);
+  };
+
   const handleCategorySelect = (categoryId: RewardCategory) => {
     setActiveCategory(categoryId);
     setCurrentPage(1);
@@ -588,8 +793,6 @@ export default function RewardsPage() {
   // Redemption Action
   const handleRedeem = (reward: Reward) => {
     if (walletCoins < reward.cost) return;
-    
-    // Spend coins in state & store
     const success = spendCoins(reward.cost);
     if (!success) return;
 
@@ -609,7 +812,6 @@ export default function RewardsPage() {
     setDetailReward(null);
   };
 
-  // Toggle status of voucher for fidelity simulation
   const handleUseVoucher = (id: string) => {
     setRedemptionHistory((prev) =>
       prev.map((entry) =>
@@ -618,7 +820,7 @@ export default function RewardsPage() {
     );
   };
 
-  // Organize history categories dynamically
+  // Filter My Rewards categories
   const activeVouchers = redemptionHistory.filter((entry) => {
     const isExpired = new Date(entry.expiresAt) < new Date();
     return entry.status === "Active" && !isExpired;
@@ -637,18 +839,31 @@ export default function RewardsPage() {
     return expiredVouchers;
   }, [myRewardsTab, activeVouchers, usedVouchers, expiredVouchers]);
 
+  // Paginate My Rewards 2x2 (exactly 4 items per page to prevent scroll)
+  const totalMyPages = Math.max(1, Math.ceil(tabListVouchers.length / itemsPerPage));
+  
+  const paginatedMyRewards = useMemo(() => {
+    const startIndex = (myRewardsPage - 1) * itemsPerPage;
+    return tabListVouchers.slice(startIndex, startIndex + itemsPerPage);
+  }, [tabListVouchers, myRewardsPage]);
+
+  // Safeguard page bounds for My Rewards tab changes
+  useEffect(() => {
+    setMyRewardsPage(1);
+  }, [myRewardsTab]);
+
   return (
     <CockpitShell activeMode="rewards">
       <main className="cockpit-main cockpit-main--rewards">
-        <section className="primary-panel" aria-labelledby="rewards-title">
+        <section className={`primary-panel rewards-panel ${activeCategory || myRewardsOpen ? "rewards-panel--subview" : "rewards-panel--home"}`} aria-labelledby="rewards-title">
           
           {/* Top Panel - Balance Dashboard */}
-          <header className="marketplace-top-summary">
+          <header className={`marketplace-top-summary ${activeCategory || myRewardsOpen ? "marketplace-top-summary--compact" : ""}`}>
             <div className="balance-info-hero">
               <div className="balance-info-left">
                 <span className="summary-eyebrow">Available Balance</span>
-                <h1 className="coins-value-display" id="rewards-title">
-                  <EcoCoin size={44} />
+                <h1 className="coins-value-display">
+                  <EcoCoin size={36} />
                   {walletCoins.toLocaleString()} <span className="currency-label">EcoCoins</span>
                 </h1>
               </div>
@@ -657,181 +872,143 @@ export default function RewardsPage() {
                   <span className="metric-label">Monthly Earned</span>
                   <strong className="metric-value text-green">+1,200</strong>
                 </div>
-                <div className="metric-box text-alert-box">
+                
+                {/* Expiring Soon highlight warning border & orange badge */}
+                <div className="metric-box warning-alert-box">
                   <span className="metric-label">Expiring Soon</span>
-                  <strong className="metric-value text-amber">320</strong>
-                  <span className="metric-sub">in 5 days</span>
+                  <div className="alert-badge">
+                    <AlertTriangle size={12} className="warning-icon" />
+                    <strong>320 EcoCoins</strong>
+                  </div>
+                  <span className="metric-sub">Expires in 5 days</span>
                 </div>
               </div>
             </div>
             
-            <button 
-              className="my-rewards-trigger-btn" 
-              onClick={() => setMyRewardsOpen(true)}
-              type="button"
-            >
-              <Ticket size={16} />
-              My Rewards
-              <span className="trigger-badge">{activeVouchers.length}</span>
-            </button>
+            {/* Slide Page triggers */}
+            {!myRewardsOpen && (
+              <button 
+                className="my-rewards-trigger-btn" 
+                onClick={() => setMyRewardsOpen(true)}
+                type="button"
+              >
+                <Ticket size={14} />
+                My Rewards
+                <span className="trigger-badge">{activeVouchers.length}</span>
+              </button>
+            )}
           </header>
 
           {/* MAIN DYNAMIC VIEW */}
           <div className="marketplace-workspace-area">
             
-            {/* VIEW A: CATEGORIES LANDING HOME */}
-            {!activeCategory ? (
-              <div className="categories-landing-view">
-                <div className="landing-heading">
-                  <h2>Select a Category to Browse Rewards</h2>
-                  <p>Choose an area below to view available vouchers, offers, and positive climate actions.</p>
-                </div>
-                <div className="categories-cards-grid">
-                  {categoriesInfo.map((cat) => {
-                    const count = rewardsData.filter((r) => r.category === cat.id).length;
-                    return (
-                      <article 
-                        className="category-card" 
-                        key={cat.id}
-                        onClick={() => handleCategorySelect(cat.id)}
-                      >
-                        <div className="category-card-image-wrapper">
-                          <img alt={cat.title} src={cat.image} />
-                          <div className="category-image-tint" />
-                        </div>
-                        <div className="category-card-content">
-                          <span className="category-card-icon">{cat.icon}</span>
-                          <h3>{cat.title}</h3>
-                          <p>{cat.description}</p>
-                          <span className="category-rewards-count">{count} Rewards Available</span>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : (
-              
-              /* VIEW B: REWARD GRID FOR SELECTED CATEGORY */
-              <div className="rewards-grid-view">
-                
-                {/* Nav tools toolbar */}
-                <div className="rewards-nav-toolbar">
+            {/* VIEW A: MY REWARDS FULL-PAGE VIEW */}
+            {myRewardsOpen ? (
+              <div className="my-rewards-fullpage-view">
+                <header className="fullpage-view-header">
                   <button 
-                    className="back-to-categories-btn" 
-                    onClick={() => setActiveCategory(null)}
+                    className="back-to-catalog-btn" 
+                    onClick={() => setMyRewardsOpen(false)}
                     type="button"
                   >
                     <ArrowLeft size={16} />
-                    Back to Categories
+                    Back
                   </button>
-                  
-                  <div className="nav-toolbar-right">
-                    <div className="nav-search-wrapper">
-                      <Search size={14} className="search-icon-svg" />
-                      <input 
-                        onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} 
-                        placeholder="Search rewards..." 
-                        type="text" 
-                        value={searchQuery} 
-                      />
-                    </div>
-                    <div className="nav-sort-wrapper">
-                      <select 
-                        onChange={(e) => { setSortOption(e.target.value as SortOption); setCurrentPage(1); }} 
-                        value={sortOption}
+                  <h2>My Rewards Collection</h2>
+                </header>
+
+                <div className="fullpage-tabs-row" role="tablist">
+                  {(["Active", "Used", "Expired"] as const).map((tab) => {
+                    let badgeCount = 0;
+                    if (tab === "Active") badgeCount = activeVouchers.length;
+                    if (tab === "Used") badgeCount = usedVouchers.length;
+                    if (tab === "Expired") badgeCount = expiredVouchers.length;
+
+                    return (
+                      <button 
+                        aria-selected={myRewardsTab === tab} 
+                        className={myRewardsTab === tab ? "voucher-tab-button active" : "voucher-tab-button"} 
+                        key={tab} 
+                        onClick={() => setMyRewardsTab(tab)}
+                        role="tab" 
+                        type="button"
                       >
-                        <option value="Most Popular">Most Popular</option>
-                        <option value="Lowest EcoCoins">Lowest EcoCoins</option>
-                        <option value="Highest EcoCoins">Highest EcoCoins</option>
-                        <option value="Newest">Newest</option>
-                      </select>
-                    </div>
-                  </div>
+                        {tab} Vouchers ({badgeCount})
+                      </button>
+                    );
+                  })}
                 </div>
 
-                <div className="grid-category-header">
-                  <h2>{activeCategory}</h2>
-                  <span className="results-indicator">{filteredRewards.length} items found</span>
-                </div>
-
-                {/* 4 Cards Grid */}
-                <div className="rewards-cards-container">
-                  {paginatedRewards.length ? (
-                    paginatedRewards.map((reward) => {
-                      const canRedeem = walletCoins >= reward.cost;
+                {/* Paginated 2x2 grid of redeemed items */}
+                <div className="fullpage-rewards-grid">
+                  {paginatedMyRewards.length ? (
+                    paginatedMyRewards.map((entry) => {
+                      const rDate = new Date(entry.redeemedAt).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
+                      const eDate = new Date(entry.expiresAt).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
+                      
                       return (
-                        <article 
-                          className="reward-item-card" 
-                          key={reward.id}
-                          onClick={() => setDetailReward(reward)}
-                        >
-                          <div className="reward-card-image">
-                            <img alt={reward.title} src={reward.image} />
-                            <span className={`reward-badge-pill badge-${reward.badge.toLowerCase().replace(" ", "-")}`}>
-                              {reward.badge}
-                            </span>
-                            <div className="card-image-shade" />
+                        <article className="owned-reward-card" key={entry.id}>
+                          <div className="owned-image-frame">
+                            <img alt={entry.reward.title} src={entry.reward.image} />
                           </div>
-                          
-                          <div className="reward-card-details">
-                            <div className="reward-card-header-info">
-                              <h3>{reward.title}</h3>
-                              <span className="partner-label">{reward.partner}</span>
+                          <div className="owned-info-details">
+                            <div>
+                              <h3>{entry.reward.title}</h3>
+                              <span className="owned-partner">{entry.reward.partner}</span>
                             </div>
                             
-                            <p className="reward-card-desc">{reward.description}</p>
-                            
-                            <div className="reward-card-bottom-row">
-                              <div className="cost-tag-wrapper">
-                                <EcoCoin size={20} />
-                                <strong>{reward.cost.toLocaleString()}</strong>
-                                <small>EcoCoins</small>
-                              </div>
+                            <div className="owned-dates-row">
+                              <div><small>Redeemed</small><strong>{rDate}</strong></div>
+                              <div><small>Expiry</small><strong>{eDate}</strong></div>
+                            </div>
+
+                            <div className="owned-action-footer">
+                              <span className="coins-spent-tag"><EcoCoin size={12} /> {entry.reward.cost} spent</span>
                               
-                              <button 
-                                className="redeem-action-btn" 
-                                disabled={!canRedeem}
-                                onClick={(e) => { e.stopPropagation(); handleRedeem(reward); }}
-                                type="button"
-                              >
-                                {canRedeem ? "Redeem" : "Insufficient Coins"}
-                              </button>
+                              {myRewardsTab === "Active" && (
+                                <button 
+                                  className="use-voucher-btn"
+                                  onClick={() => handleUseVoucher(entry.id)}
+                                  type="button"
+                                >
+                                  Use Voucher
+                                </button>
+                              )}
+                              {myRewardsTab === "Used" && <span className="status-badge-text text-green">✓ Used</span>}
+                              {myRewardsTab === "Expired" && <span className="status-badge-text text-red">Expired</span>}
                             </div>
                           </div>
                         </article>
                       );
                     })
                   ) : (
-                    <div className="rewards-grid-empty">
-                      <strong>No rewards match your search criteria.</strong>
-                      <p>Try searching for another keyword or clear the search query filter.</p>
-                      <button onClick={() => setSearchQuery("")} type="button">Clear Search</button>
+                    <div className="fullpage-empty-vouchers">
+                      <Gift size={32} className="empty-gift-icon" />
+                      <h3>No Vouchers Found</h3>
+                      <p>You do not have any {myRewardsTab.toLowerCase()} vouchers at the moment.</p>
                     </div>
                   )}
                 </div>
 
-                {/* Pagination Controls - Always Visible */}
-                {filteredRewards.length > 0 && (
-                  <footer className="rewards-grid-pagination">
+                {/* My Rewards Pagination */}
+                {tabListVouchers.length > itemsPerPage && (
+                  <footer className="fullpage-grid-pagination">
                     <button 
                       className="pagination-btn" 
-                      disabled={currentPage === 1}
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={myRewardsPage === 1}
+                      onClick={() => setMyRewardsPage((p) => Math.max(1, p - 1))}
                       type="button"
                     >
                       <ChevronLeft size={16} />
                       Previous
                     </button>
-                    
                     <span className="pagination-text">
-                      Page <strong>{currentPage}</strong> of {totalPages}
+                      Page <strong>{myRewardsPage}</strong> of {totalMyPages}
                     </span>
-                    
                     <button 
                       className="pagination-btn" 
-                      disabled={currentPage === totalPages}
-                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={myRewardsPage === totalMyPages}
+                      onClick={() => setMyRewardsPage((p) => Math.min(totalMyPages, p + 1))}
                       type="button"
                     >
                       Next
@@ -840,97 +1017,191 @@ export default function RewardsPage() {
                   </footer>
                 )}
               </div>
+            ) : (
+
+              /* VIEW B: CATEGORIES HOME OR SCOPED REWARD BROWSER */
+              <div className="catalog-workspace-wrapper">
+                
+                {/* Category selector row - always visible below top summary */}
+                {activeCategory ? (
+                  <nav className="horizontal-categories-navbar" aria-label="Reward categories">
+                    <button 
+                      className="inline-back-home-btn" 
+                      onClick={() => setActiveCategory(null)}
+                      type="button"
+                    >
+                      <ArrowLeft size={16} />
+                      All Categories
+                    </button>
+                    <div className="nav-categories-cluster">
+                      {categoriesInfo.map((cat) => {
+                        const isActive = activeCategory === cat.id;
+                        return (
+                          <button
+                            className={`nav-category-pill ${isActive ? "active" : ""}`}
+                            key={cat.id}
+                            onClick={() => handleCategorySelect(cat.id)}
+                            type="button"
+                          >
+                            <span className="pill-title">{cat.title}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </nav>
+                ) : null}
+
+                {/* Conditional Sub-View based on selected category state */}
+                {!activeCategory ? (
+                  
+                  /* View B1: Dashboard overview with four direct category actions */
+                  <div className="rewards-home-dashboard">
+                    <section className="rewards-home-intro">
+                      <span>Rewards marketplace</span>
+                      <h2>Turn every efficient drive into something useful.</h2>
+                      <p>Choose a benefit category to open its full-screen catalogue. Your EcoCoins stay available across every category.</p>
+                      <div className="rewards-home-facts">
+                        <div><strong>48</strong><span>benefits available</span></div>
+                        <div><strong>4</strong><span>reward categories</span></div>
+                        <div><strong>{activeVouchers.length}</strong><span>active vouchers</span></div>
+                      </div>
+                    </section>
+                    <nav className="reward-category-buttons" aria-label="Benefit categories">
+                      {categoriesInfo.map((cat, index) => (
+                        <button key={cat.id} onClick={() => handleCategorySelect(cat.id)} type="button">
+                          <span className="reward-category-number">0{index + 1}</span>
+                          <span className="reward-category-copy"><strong>{cat.title}</strong><small>{cat.description}</small></span>
+                          <span className="reward-category-count">12 benefits</span>
+                          <ChevronRight size={23} />
+                        </button>
+                      ))}
+                    </nav>
+                  </div>
+                ) : (
+
+                  /* View B2: 2x2 Scoped reward browser grid */
+                  <div className="category-rewards-browser">
+                    
+                    <div className="browser-tools-heading">
+                      <div className="browser-title-group">
+                        <h2>{activeCategory} Rewards</h2>
+                        <span className="total-badge">{filteredRewards.length} items available</span>
+                      </div>
+                      
+                      <div className="browser-filters">
+                        <div className="compact-search-box">
+                          <Search size={12} className="search-box-icon" />
+                          <input 
+                            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} 
+                            placeholder="Filter rewards..." 
+                            type="text" 
+                            value={searchQuery} 
+                          />
+                        </div>
+                        <select 
+                          className="compact-sort-select"
+                          onChange={(e) => { setSortOption(e.target.value as SortOption); setCurrentPage(1); }} 
+                          value={sortOption}
+                        >
+                          <option value="Most Popular">Most Popular</option>
+                          <option value="Lowest EcoCoins">Lowest EcoCoins</option>
+                          <option value="Highest EcoCoins">Highest EcoCoins</option>
+                          <option value="Newest">Newest</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Fixed height 2x2 Reward Grid (strict 4 cards) */}
+                    <div className={`rewards-grid-2x2 ${slideDirection ? `sliding-${slideDirection}` : ""}`}>
+                      {paginatedRewards.length ? (
+                        paginatedRewards.map((reward) => {
+                          const canRedeem = walletCoins >= reward.cost;
+                          return (
+                            <article 
+                              className="reward-item-card" 
+                              key={reward.id}
+                              onClick={() => setDetailReward(reward)}
+                            >
+                              <div className="item-card-banner">
+                                <img alt={reward.title} src={reward.image} />
+                                <span className={`badge-pill badge-${reward.badge.toLowerCase().replace(" ", "-")}`}>
+                                  {reward.badge}
+                                </span>
+                                <div className="item-shade" />
+                              </div>
+                              <div className="item-card-content">
+                                <div className="item-card-header">
+                                  <h3>{reward.title}</h3>
+                                  <span className="item-partner">{reward.partner}</span>
+                                  <p className="reward-card-desc">{reward.description}</p>
+                                  <div className="item-card-meta"><span>{reward.stock} remaining</span><span>30-day validity</span></div>
+                                </div>
+                                <div className="item-card-footer">
+                                  <div className="item-cost">
+                                    <EcoCoin size={16} />
+                                    <strong>{reward.cost}</strong>
+                                    <small>EcoCoins</small>
+                                  </div>
+                                  <button 
+                                    className="item-redeem-action"
+                                    disabled={!canRedeem}
+                                    onClick={(e) => { e.stopPropagation(); handleRedeem(reward); }}
+                                    type="button"
+                                  >
+                                    Redeem
+                                  </button>
+                                </div>
+                              </div>
+                            </article>
+                          );
+                        })
+                      ) : (
+                        <div className="empty-grid-results">
+                          <strong>No rewards match your search criteria.</strong>
+                          <p>Try searching for another keyword or clear the search query filter.</p>
+                          <button onClick={() => setSearchQuery("")} type="button">Clear Search Filter</button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Pagination Controls - Always Visible */}
+                    {filteredRewards.length > 0 && (
+                      <footer className="rewards-grid-pagination">
+                        <button 
+                          className="pagination-btn" 
+                          disabled={currentPage === 1}
+                          onClick={handlePrevPage}
+                          type="button"
+                        >
+                          <ChevronLeft size={16} />
+                          Previous
+                        </button>
+                        
+                        <span className="pagination-text">
+                          Page <strong>{currentPage}</strong> of {totalPages}
+                        </span>
+                        
+                        <button 
+                          className="pagination-btn" 
+                          disabled={currentPage === totalPages}
+                          onClick={handleNextPage}
+                          type="button"
+                        >
+                          Next
+                          <ChevronRight size={16} />
+                        </button>
+                      </footer>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
         </section>
       </main>
 
-      {/* DRAW PANEL: MY REWARDS */}
-      {myRewardsOpen && (
-        <div className="marketplace-overlay" onClick={() => setMyRewardsOpen(false)} role="presentation">
-          <section className="my-rewards-drawer-panel" onClick={(e) => e.stopPropagation()}>
-            <header className="drawer-header">
-              <div>
-                <span className="drawer-eyebrow">Redeemed Vouchers</span>
-                <h2>My Rewards</h2>
-              </div>
-              <button className="close-drawer-btn" onClick={() => setMyRewardsOpen(false)} type="button">×</button>
-            </header>
-            
-            <div className="drawer-tabs-row" role="tablist">
-              {(["Active", "Used", "Expired"] as const).map((tab) => {
-                let badgeCount = 0;
-                if (tab === "Active") badgeCount = activeVouchers.length;
-                if (tab === "Used") badgeCount = usedVouchers.length;
-                if (tab === "Expired") badgeCount = expiredVouchers.length;
-
-                return (
-                  <button 
-                    aria-selected={myRewardsTab === tab} 
-                    className={myRewardsTab === tab ? "tab-btn active" : "tab-btn"} 
-                    key={tab} 
-                    onClick={() => setMyRewardsTab(tab)}
-                    role="tab" 
-                    type="button"
-                  >
-                    {tab} ({badgeCount})
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="drawer-content-scrollable">
-              {tabListVouchers.length ? (
-                <div className="drawer-rewards-list">
-                  {tabListVouchers.map((entry) => {
-                    const rDate = new Date(entry.redeemedAt).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
-                    const eDate = new Date(entry.expiresAt).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
-                    
-                    return (
-                      <article className="drawer-reward-item" key={entry.id}>
-                        <img alt={entry.reward.title} src={entry.reward.image} />
-                        <div className="drawer-reward-info">
-                          <h3>{entry.reward.title}</h3>
-                          <span className="drawer-partner-label">{entry.reward.partner}</span>
-                          
-                          <div className="drawer-fact-row">
-                            <span className="fact-item">Redeemed: <b>{rDate}</b></span>
-                            <span className="fact-item">Expires: <b>{eDate}</b></span>
-                          </div>
-
-                          <div className="drawer-action-row">
-                            <span className="spent-tag"><EcoCoin size={12} /> {entry.reward.cost} EcoCoins</span>
-                            {myRewardsTab === "Active" && (
-                              <button 
-                                className="use-voucher-action"
-                                onClick={() => handleUseVoucher(entry.id)}
-                                type="button"
-                              >
-                                Use Voucher
-                              </button>
-                            )}
-                            {myRewardsTab === "Used" && <span className="status-badge used-badge">✓ Used</span>}
-                            {myRewardsTab === "Expired" && <span className="status-badge expired-badge">Expired</span>}
-                          </div>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="drawer-empty-state">
-                  <Gift size={32} className="empty-icon-svg" />
-                  <strong>No rewards in this section</strong>
-                  <p>Browse the catalog and redeem vouchers using your earned EcoCoins.</p>
-                </div>
-              )}
-            </div>
-          </section>
-        </div>
-      )}
-
-      {/* DETAIL MODAL OVERLAY */}
+      {/* DETAIL DIALOG MODAL */}
       {detailReward && (
         <div className="marketplace-overlay marketplace-overlay--center" onClick={() => setDetailReward(null)} role="presentation">
           <section className="reward-detail-dialog" onClick={(e) => e.stopPropagation()}>
@@ -941,12 +1212,14 @@ export default function RewardsPage() {
                 <span className="detail-badge-label">{detailReward.badge}</span>
               </div>
               <div className="detail-dialog-body">
-                <span className="detail-partner">{detailReward.partner}</span>
-                <h2>{detailReward.title}</h2>
-                <p className="detail-description">{detailReward.description}</p>
+                <div>
+                  <span className="detail-partner">{detailReward.partner}</span>
+                  <h2>{detailReward.title}</h2>
+                  <p className="detail-description">{detailReward.description}</p>
+                </div>
                 
                 <div className="detail-cost-display">
-                  <EcoCoin size={24} />
+                  <EcoCoin size={20} />
                   <strong>{detailReward.cost.toLocaleString()}</strong>
                   <small>EcoCoins Required</small>
                 </div>
@@ -975,10 +1248,10 @@ export default function RewardsPage() {
         <div className="marketplace-overlay marketplace-overlay--center" role="presentation">
           <section className="redemption-success-modal" onClick={(e) => e.stopPropagation()}>
             <div className="success-icon-wrapper">
-              <CheckCircle2 size={48} className="success-checkmark-svg" />
+              <CheckCircle2 size={44} className="success-checkmark-svg" />
             </div>
             
-            <h2>Redemption Successful!</h2>
+            <h2>✓ Reward Redeemed</h2>
             <p className="success-tagline">Your eco-reward is ready to use.</p>
             
             <div className="success-summary-card">
@@ -992,7 +1265,7 @@ export default function RewardsPage() {
                 </div>
                 <div className="math-row border-top-divider">
                   <span>Remaining Balance</span>
-                  <strong className="text-green"><EcoCoin size={14} />{successModal.remaining.toLocaleString()}</strong>
+                  <strong className="text-green"><EcoCoin size={12} />{successModal.remaining.toLocaleString()}</strong>
                 </div>
               </div>
             </div>
@@ -1026,56 +1299,60 @@ export default function RewardsPage() {
 }
 
 const styleSheet = `
-  /* Premium Cockpit Screen Styles overrides & layout stability */
+  /* Premium Infotainment Layout Constraints (Zero page scrolling) */
   .cockpit-main--rewards {
-    min-height: calc(100vh - 120px);
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
     padding: 88px 28px 100px;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    box-sizing: border-box;
   }
   
   .primary-panel {
     background: rgba(10, 18, 19, 0.82);
     border: 1px solid rgba(38, 59, 58, 0.78);
     border-radius: 8px;
-    padding: 22px;
-    gap: 16px;
+    padding: 16px 20px;
     display: flex;
     flex-direction: column;
-    flex: 1;
-    min-height: 0;
+    height: calc(100vh - 188px);
+    max-height: calc(100vh - 188px);
     overflow: hidden;
+    box-sizing: border-box;
+    justify-content: space-between;
+    gap: 12px;
   }
   
-  /* Top Panel: EcoCoins Summary layout styling (infotainment feel) */
+  /* Top Panel: EcoCoins Summary Layout (Infotainment styling) */
   .marketplace-top-summary {
     background: linear-gradient(135deg, rgba(16, 31, 30, 0.95) 0%, rgba(10, 20, 20, 0.9) 100%);
     border: 1px solid rgba(55, 229, 143, 0.35);
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.04);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px;
+    padding: 12px 20px;
     flex-shrink: 0;
   }
 
   .balance-info-hero {
     display: flex;
     align-items: center;
-    gap: 48px;
+    gap: 36px;
     flex: 1;
   }
 
   .balance-info-left {
     display: grid;
-    gap: 4px;
+    gap: 2px;
   }
 
   .summary-eyebrow {
     color: #8fa69f;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 800;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -1083,46 +1360,48 @@ const styleSheet = `
 
   .coins-value-display {
     color: #f4fff9;
-    font-size: clamp(32px, 3.5vw, 42px);
+    font-size: clamp(26px, 3vw, 34px);
     font-weight: 950;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.03em;
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
 
   .currency-label {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 800;
     color: #37e58f;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    margin-left: 2px;
+    margin-left: 1px;
   }
 
   .summary-metrics-grid {
     display: flex;
-    gap: 24px;
+    gap: 20px;
     border-left: 1px solid rgba(55, 229, 143, 0.2);
-    padding-left: 32px;
+    padding-left: 24px;
   }
 
   .metric-box {
-    display: grid;
-    gap: 2px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
   }
 
   .metric-label {
     color: #81958f;
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
   }
 
   .metric-value {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 900;
   }
 
@@ -1130,35 +1409,58 @@ const styleSheet = `
   .text-amber { color: #f5b84b; }
   .text-red { color: #ff5c4e; }
   
-  .text-alert-box {
+  /* Expiring Soon visual card styling */
+  .warning-alert-box {
+    border: 1px solid rgba(245, 184, 75, 0.45);
+    border-radius: 6px;
+    padding: 4px 10px;
+    background: rgba(245, 184, 75, 0.06);
     position: relative;
   }
-  .metric-sub {
-    font-size: 8px;
-    color: #657b74;
-    font-weight: 800;
+
+  .alert-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #ffb84b;
+    margin-top: 1px;
   }
 
-  /* My Rewards Button */
+  .alert-badge strong {
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  .warning-icon {
+    color: #ff9f1a;
+  }
+
+  .metric-sub {
+    font-size: 8px;
+    color: #a8bdb7;
+    font-weight: 800;
+    margin-top: 1px;
+  }
+
+  /* My Rewards Header Toggle button */
   .my-rewards-trigger-btn {
-    background: linear-gradient(135deg, rgba(55, 229, 143, 0.22) 0%, rgba(55, 229, 143, 0.08) 100%);
-    border: 1px solid rgba(55, 229, 143, 0.6);
-    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(55, 229, 143, 0.2) 0%, rgba(55, 229, 143, 0.06) 100%);
+    border: 1px solid rgba(55, 229, 143, 0.5);
+    border-radius: 6px;
     color: #eafff5;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 900;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 18px;
+    gap: 6px;
+    padding: 10px 14px;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .my-rewards-trigger-btn:hover {
-    background: rgba(55, 229, 143, 0.28);
+    background: rgba(55, 229, 143, 0.25);
     border-color: #37e58f;
-    box-shadow: 0 0 16px rgba(55, 229, 143, 0.15);
     transform: translateY(-1px);
   }
 
@@ -1168,160 +1470,46 @@ const styleSheet = `
     font-size: 8px;
     font-weight: 950;
     border-radius: 50%;
-    min-width: 18px;
-    height: 18px;
+    min-width: 16px;
+    height: 16px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0 4px;
+    margin-left: 2px;
   }
 
-  /* Workspace Area Height controls */
+  /* Workspace panel bounds */
   .marketplace-workspace-area {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
-  }
-
-  /* VIEW A: CATEGORY LANDING HOME */
-  .categories-landing-view {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    justify-content: space-between;
-    gap: 16px;
-  }
-
-  .landing-heading {
-    margin-top: 4px;
-  }
-
-  .landing-heading h2 {
-    color: #f4fff9;
-    font-size: 18px;
-    font-weight: 800;
-    margin: 0 0 4px 0;
-  }
-
-  .landing-heading p {
-    color: #8fa69f;
-    font-size: 12px;
-    margin: 0;
-  }
-
-  .categories-cards-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    flex: 1;
-    min-height: 250px;
-    margin-bottom: 4px;
-  }
-
-  .category-card {
-    background: rgba(14, 25, 24, 0.85);
-    border: 1px solid rgba(55, 229, 143, 0.2);
-    border-radius: 12px;
     overflow: hidden;
-    position: relative;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .category-card-image-wrapper {
-    height: 48%;
-    width: 100%;
+  /* VIEW A: MY REWARDS FULL-PAGE VIEW MODULE */
+  .my-rewards-fullpage-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     overflow: hidden;
-    position: relative;
-  }
-
-  .category-card-image-wrapper img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-  }
-
-  .category-image-tint {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, transparent 40%, rgba(14, 25, 24, 0.98) 100%);
-  }
-
-  .category-card-content {
-    padding: 16px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    background: rgba(14, 25, 24, 0.6);
-  }
-
-  .category-card-icon {
-    font-size: 24px;
-    margin-bottom: 6px;
-    display: block;
-  }
-
-  .category-card h3 {
-    color: #f4fff9;
-    font-size: 18px;
-    font-weight: 900;
-    margin: 0 0 6px 0;
-    letter-spacing: -0.01em;
-  }
-
-  .category-card p {
-    color: #9db3ad;
-    font-size: 11px;
-    line-height: 1.5;
-    margin: 0 0 12px 0;
-    flex: 1;
-  }
-
-  .category-rewards-count {
-    color: #37e58f;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-
-  /* Category card hover animations */
-  .category-card:hover {
-    border-color: rgba(55, 229, 143, 0.85);
-    box-shadow: 0 12px 36px rgba(55, 229, 143, 0.14);
-    transform: translateY(-4px);
-  }
-
-  .category-card:hover .category-card-image-wrapper img {
-    transform: scale(1.08);
-  }
-
-  /* VIEW B: REWARDS LIST GRID VIEW */
-  .rewards-grid-view {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
     min-height: 0;
+    justify-content: space-between;
   }
 
-  /* Nav Toolbar */
-  .rewards-nav-toolbar {
+  .fullpage-view-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    gap: 16px;
+    margin-bottom: 4px;
     flex-shrink: 0;
   }
 
-  .back-to-categories-btn {
+  .back-to-catalog-btn {
     background: rgba(142, 165, 160, 0.1);
     border: 1px solid rgba(142, 165, 160, 0.35);
-    border-radius: 8px;
+    border-radius: 6px;
     color: #eafff5;
     font-size: 11px;
     font-weight: 800;
@@ -1329,447 +1517,68 @@ const styleSheet = `
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 14px;
+    padding: 6px 12px;
     transition: all 0.2s ease;
   }
 
-  .back-to-categories-btn:hover {
-    background: rgba(142, 165, 160, 0.22);
-    border-color: #8fa69f;
+  .back-to-catalog-btn:hover {
+    background: rgba(142, 165, 160, 0.2);
+    border-color: #bdcec9;
   }
 
-  .nav-toolbar-right {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
-
-  .nav-search-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
-
-  .search-icon-svg {
-    position: absolute;
-    left: 12px;
-    color: #728a83;
-  }
-
-  .nav-search-wrapper input {
-    background: #0b1716;
-    border: 1px solid rgba(105, 134, 127, 0.35);
-    border-radius: 8px;
-    color: #eafff5;
-    font-size: 11px;
-    height: 34px;
-    outline: 0;
-    padding: 0 12px 0 32px;
-    width: 200px;
-    transition: all 0.2s ease;
-  }
-
-  .nav-search-wrapper input:focus {
-    border-color: #37e58f;
-    width: 250px;
-  }
-
-  .nav-sort-wrapper select {
-    background: #0b1716;
-    border: 1px solid rgba(105, 134, 127, 0.35);
-    border-radius: 8px;
-    color: #eafff5;
-    font-size: 11px;
-    height: 34px;
-    outline: 0;
-    padding: 0 8px;
-    cursor: pointer;
-  }
-
-  .grid-category-header {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-    margin-bottom: 8px;
-    flex-shrink: 0;
-  }
-
-  .grid-category-header h2 {
+  .fullpage-view-header h2 {
     color: #f4fff9;
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 800;
     margin: 0;
   }
 
-  .results-indicator {
-    color: #78908a;
-    font-size: 10px;
-  }
-
-  /* 4 Cards Container */
-  .rewards-cards-container {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    flex: 1;
-    min-height: 0;
-    align-content: stretch;
-  }
-
-  .reward-item-card {
-    background: linear-gradient(180deg, rgba(14, 25, 24, 0.98) 0%, rgba(9, 18, 17, 0.98) 100%);
-    border: 1px solid rgba(91, 119, 112, 0.25);
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    cursor: pointer;
-    transition: all 0.24s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .reward-item-card:hover {
-    border-color: rgba(55, 229, 143, 0.55);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-    transform: translateY(-3px);
-  }
-
-  .reward-card-image {
-    height: 44%;
-    width: 100%;
-    position: relative;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-
-  .reward-card-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .card-image-shade {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, transparent 60%, rgba(14, 25, 24, 0.8) 100%);
-  }
-
-  .reward-badge-pill {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    font-size: 8px;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 4px 8px;
-    border-radius: 4px;
-    z-index: 2;
-  }
-
-  .badge-popular { background: rgba(55, 229, 143, 0.2); border: 1px solid #37e58f; color: #37e58f; }
-  .badge-best-value { background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; }
-  .badge-limited { background: rgba(245, 184, 75, 0.2); border: 1px solid #f5b84b; color: #f5b84b; }
-  .badge-new { background: rgba(255, 255, 255, 0.15); border: 1px solid #ffffff; color: #ffffff; }
-
-  .reward-card-details {
-    padding: 14px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 8px;
-  }
-
-  .reward-card-header-info {
-    display: grid;
-    gap: 2px;
-  }
-
-  .reward-card-header-info h3 {
-    color: #f4fff9;
-    font-size: 15px;
-    font-weight: 800;
-    margin: 0;
-    line-height: 1.2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .partner-label {
-    color: #65a990;
-    font-size: 9px;
-    font-weight: 700;
-  }
-
-  .reward-card-desc {
-    color: #9db1ac;
-    font-size: 10px;
-    line-height: 1.4;
-    margin: 0;
-    flex: 1;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-
-  .reward-card-bottom-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 4px;
-    flex-shrink: 0;
-  }
-
-  .cost-tag-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    color: #37e58f;
-  }
-
-  .cost-tag-wrapper strong {
-    font-size: 18px;
-    font-weight: 950;
-  }
-
-  .cost-tag-wrapper small {
-    font-size: 8px;
-    color: #77a795;
-    text-transform: uppercase;
-    font-weight: 800;
-  }
-
-  .redeem-action-btn {
-    background: #37e58f;
-    border: 0;
-    border-radius: 6px;
-    color: #03120b;
-    font-size: 10px;
-    font-weight: 900;
-    cursor: pointer;
-    padding: 8px 12px;
-    transition: all 0.2s ease;
-  }
-
-  .redeem-action-btn:hover:not(:disabled) {
-    background: #54f0a3;
-  }
-
-  .redeem-action-btn:disabled {
-    background: #202d2b;
-    color: #667a75;
-    cursor: not-allowed;
-  }
-
-  .rewards-grid-empty {
-    grid-column: 1 / -1;
-    text-align: center;
-    align-content: center;
-    padding: 48px;
-  }
-
-  .rewards-grid-empty strong {
-    color: #f4fff9;
-    font-size: 14px;
-    display: block;
-    margin-bottom: 6px;
-  }
-
-  .rewards-grid-empty p {
-    color: #8fa69f;
-    font-size: 11px;
-    margin: 0 0 16px 0;
-  }
-
-  .rewards-grid-empty button {
-    background: rgba(142, 165, 160, 0.1);
-    border: 1px solid rgba(142, 165, 160, 0.35);
-    border-radius: 6px;
-    color: #eafff5;
-    font-size: 10px;
-    padding: 8px 16px;
-    cursor: pointer;
-  }
-
-  /* Pagination controls styling */
-  .rewards-grid-pagination {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0 0 0;
-    border-top: 1px solid rgba(55, 229, 143, 0.15);
-    margin-top: 12px;
-    flex-shrink: 0;
-  }
-
-  .pagination-btn {
-    background: rgba(14, 25, 24, 0.8);
-    border: 1px solid rgba(55, 229, 143, 0.35);
-    border-radius: 6px;
-    color: #eafff5;
-    font-size: 11px;
-    font-weight: 800;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 8px 16px;
-    transition: all 0.2s ease;
-  }
-
-  .pagination-btn:hover:not(:disabled) {
-    background: rgba(55, 229, 143, 0.15);
-    border-color: #37e58f;
-  }
-
-  .pagination-btn:disabled {
-    border-color: rgba(93, 119, 113, 0.18);
-    color: #657b74;
-    cursor: not-allowed;
-  }
-
-  .pagination-text {
-    color: #8fa69f;
-    font-size: 11px;
-  }
-
-  /* MODAL OVERLAYS & SUCCESS SCREENS */
-  .marketplace-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(4, 10, 10, 0.85);
-    backdrop-filter: blur(12px);
-    z-index: 1000;
-    display: flex;
-    justify-content: flex-end;
-  }
-
-  .marketplace-overlay--center {
-    justify-content: center;
-    align-items: center;
-    padding: 24px;
-  }
-
-  /* My Rewards side drawer */
-  .my-rewards-drawer-panel {
-    background: radial-gradient(circle at 100% 0, rgba(55, 229, 143, 0.12), transparent 30%), #081211;
-    border-left: 1px solid rgba(55, 229, 143, 0.3);
-    box-shadow: -16px 0 48px rgba(0, 0, 0, 0.65);
-    width: min(90vw, 440px);
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    padding: 24px;
-    box-sizing: border-box;
-  }
-
-  .drawer-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-  }
-
-  .drawer-eyebrow {
-    color: #37e58f;
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .drawer-header h2 {
-    color: #f4fff9;
-    font-size: 24px;
-    font-weight: 900;
-    margin: 4px 0 0 0;
-    letter-spacing: -0.02em;
-  }
-
-  .close-drawer-btn {
-    background: rgba(142, 165, 160, 0.1);
-    border: 1px solid rgba(142, 165, 160, 0.25);
-    border-radius: 50%;
-    color: #bdcec9;
-    font-size: 20px;
-    width: 32px;
-    height: 32px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .drawer-tabs-row {
+  .fullpage-tabs-row {
     background: #0b1716;
     border: 1px solid rgba(105, 134, 127, 0.2);
-    border-radius: 8px;
+    border-radius: 6px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 4px;
-    margin: 16px 0;
-    padding: 4px;
+    margin: 8px 0;
+    padding: 3px;
+    flex-shrink: 0;
   }
 
-  .tab-btn {
-    background: transparent;
-    border: 0;
-    border-radius: 6px;
-    color: #7e928c;
-    font-size: 10px;
-    font-weight: 800;
-    height: 32px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .tab-btn.active {
-    background: rgba(55, 229, 143, 0.14);
-    color: #37e58f;
-  }
-
-  .drawer-content-scrollable {
+  .fullpage-rewards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 12px;
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
-    padding-right: 2px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(55, 229, 143, 0.3) transparent;
   }
 
-  .drawer-content-scrollable::-webkit-scrollbar {
-    width: 4px;
-  }
-  .drawer-content-scrollable::-webkit-scrollbar-thumb {
-    background: rgba(55, 229, 143, 0.3);
-    border-radius: 4px;
-  }
-
-  .drawer-rewards-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .drawer-reward-item {
+  .owned-reward-card {
     background: linear-gradient(135deg, rgba(14, 25, 24, 0.95) 0%, rgba(9, 17, 16, 0.95) 100%);
     border: 1px solid rgba(93, 124, 116, 0.25);
     border-radius: 10px;
     display: flex;
     overflow: hidden;
-    height: 100px;
+    height: 100%;
+    box-sizing: border-box;
   }
 
-  .drawer-reward-item img {
-    width: 90px;
+  .owned-image-frame {
+    width: 32%;
     height: 100%;
-    object-fit: cover;
+    overflow: hidden;
     flex-shrink: 0;
   }
 
-  .drawer-reward-info {
-    padding: 10px 12px;
+  .owned-image-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .owned-info-details {
+    padding: 12px;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -1777,9 +1586,9 @@ const styleSheet = `
     min-width: 0;
   }
 
-  .drawer-reward-info h3 {
+  .owned-info-details h3 {
     color: #f4fff9;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 800;
     margin: 0;
     overflow: hidden;
@@ -1787,45 +1596,50 @@ const styleSheet = `
     white-space: nowrap;
   }
 
-  .drawer-partner-label {
+  .owned-partner {
     color: #65a990;
-    font-size: 8px;
+    font-size: 9px;
     font-weight: 700;
-    margin-top: -2px;
+    margin-top: 1px;
     display: block;
   }
 
-  .drawer-fact-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    margin: 2px 0;
+  .owned-dates-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 4px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 4px;
   }
 
-  .fact-item {
-    font-size: 8px;
+  .owned-dates-row small {
+    display: block;
     color: #728780;
+    font-size: 7px;
+    text-transform: uppercase;
   }
 
-  .fact-item b {
+  .owned-dates-row strong {
     color: #bdcec9;
+    font-size: 9px;
   }
 
-  .drawer-action-row {
+  .owned-action-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
 
-  .spent-tag {
+  .coins-spent-tag {
     color: #8fa69f;
     font-size: 9px;
     display: inline-flex;
     align-items: center;
-    gap: 2px;
+    gap: 3px;
   }
 
-  .use-voucher-action {
+  .use-voucher-btn {
     background: rgba(55, 229, 143, 0.15);
     border: 1px solid rgba(55, 229, 143, 0.5);
     border-radius: 4px;
@@ -1837,50 +1651,512 @@ const styleSheet = `
     transition: all 0.2s ease;
   }
 
-  .use-voucher-action:hover {
+  .use-voucher-btn:hover {
     background: #37e58f;
     color: #081312;
   }
 
-  .status-badge {
+  .status-badge-text {
     font-size: 9px;
     font-weight: 800;
   }
-  .used-badge { color: #81958f; }
-  .expired-badge { color: #ff5c4e; }
 
-  .drawer-empty-state {
+  .fullpage-empty-vouchers {
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
     text-align: center;
-    padding: 60px 16px;
+    align-content: center;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: 6px;
   }
 
-  .empty-icon-svg {
-    color: #203530;
+  .empty-gift-icon {
+    color: #1a2c29;
   }
 
-  .drawer-empty-state strong {
-    color: #eafff5;
+  .fullpage-empty-vouchers h3 {
+    color: #f4fff9;
     font-size: 14px;
-  }
-
-  .drawer-empty-state p {
-    color: #7d918b;
-    font-size: 10px;
-    line-height: 1.5;
     margin: 0;
   }
 
-  /* Detail Dialog Panel overlay */
+  .fullpage-empty-vouchers p {
+    color: #7d918b;
+    font-size: 10px;
+    margin: 0;
+  }
+
+  .fullpage-grid-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0 0 0;
+    border-top: 1px solid rgba(55, 229, 143, 0.15);
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+
+  /* VIEW B: CATALOG WORKSPACE */
+  .catalog-workspace-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    justify-content: space-between;
+  }
+
+  /* Horizontal Selector Navbar (Always visible when browsing) */
+  .horizontal-categories-navbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+
+  .inline-back-home-btn {
+    background: rgba(142, 165, 160, 0.12);
+    border: 1px solid rgba(142, 165, 160, 0.35);
+    border-radius: 6px;
+    color: #eafff5;
+    font-size: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    height: 32px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+  }
+
+  .inline-back-home-btn:hover {
+    background: rgba(142, 165, 160, 0.22);
+  }
+
+  .nav-categories-cluster {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .nav-category-pill {
+    background: #0f1a19;
+    border: 1px solid rgba(117, 143, 137, 0.22);
+    border-radius: 6px;
+    color: #91a49f;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    height: 32px;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+  }
+
+  .nav-category-pill:hover {
+    border-color: rgba(55, 229, 143, 0.4);
+    color: #eafff5;
+  }
+
+  .nav-category-pill.active {
+    background: rgba(55, 229, 143, 0.14);
+    border-color: rgba(55, 229, 143, 0.85);
+    color: #37e58f;
+    box-shadow: 0 0 10px rgba(55, 229, 143, 0.15);
+  }
+
+  .pill-icon {
+    font-size: 14px;
+  }
+  
+  .pill-title {
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  /* VIEW B1: CATEGORY LANDING HOME DASHBOARD (1x4 grid of medium cards) */
+  .categories-landing-home {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .home-dashboard-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    height: 88%;
+    min-height: 0;
+  }
+
+  .medium-category-card {
+    background: rgba(14, 25, 24, 0.82);
+    border: 1px solid rgba(55, 229, 143, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .medium-card-banner {
+    height: 40%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .medium-card-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .card-image-shade-bottom {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(14, 25, 24, 0.98) 100%);
+  }
+
+  .medium-card-body {
+    padding: 12px 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .medium-card-icon {
+    font-size: 20px;
+    margin-bottom: 2px;
+  }
+
+  .medium-category-card h3 {
+    color: #f4fff9;
+    font-size: 15px;
+    font-weight: 800;
+    margin: 0 0 4px 0;
+  }
+
+  .medium-category-card p {
+    color: #9db3ad;
+    font-size: 10px;
+    line-height: 1.4;
+    margin: 0 0 10px 0;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .medium-card-total {
+    color: #37e58f;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .medium-category-card:hover {
+    border-color: rgba(55, 229, 143, 0.75);
+    box-shadow: 0 10px 24px rgba(55, 229, 143, 0.12);
+    transform: translateY(-2px);
+  }
+
+  .medium-category-card:hover .medium-card-banner img {
+    transform: scale(1.05);
+  }
+
+  /* VIEW B2: CATEGORY REWARDS SCOPED GRID VIEW (2x2 Grid) */
+  .category-rewards-browser {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .browser-tools-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+  }
+
+  .browser-title-group {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .browser-title-group h2 {
+    color: #f4fff9;
+    font-size: 16px;
+    font-weight: 800;
+    margin: 0;
+  }
+
+  .total-badge {
+    color: #78908a;
+    font-size: 10px;
+  }
+
+  .browser-filters {
+    display: flex;
+    gap: 8px;
+  }
+
+  .compact-search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-box-icon {
+    position: absolute;
+    left: 8px;
+    color: #728a83;
+  }
+
+  .compact-search-box input {
+    background: #0b1716;
+    border: 1px solid rgba(105, 134, 127, 0.35);
+    border-radius: 6px;
+    color: #eafff5;
+    font-size: 10px;
+    height: 28px;
+    outline: 0;
+    padding: 0 8px 0 24px;
+    width: 140px;
+    box-sizing: border-box;
+  }
+
+  .compact-sort-select {
+    background: #0b1716;
+    border: 1px solid rgba(105, 134, 127, 0.35);
+    border-radius: 6px;
+    color: #eafff5;
+    font-size: 10px;
+    height: 28px;
+    outline: 0;
+    padding: 0 6px;
+    cursor: pointer;
+    box-sizing: border-box;
+  }
+
+  /* Fixed height 2x2 Reward Grid (strict 4 cards) */
+  .rewards-grid-2x2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+
+  .rewards-grid-2x2.sliding-left {
+    transform: translateX(-15px);
+    opacity: 0;
+  }
+
+  .rewards-grid-2x2.sliding-right {
+    transform: translateX(15px);
+    opacity: 0;
+  }
+
+  .reward-item-card {
+    background: linear-gradient(180deg, rgba(14, 25, 24, 0.98) 0%, rgba(9, 18, 17, 0.98) 100%);
+    border: 1px solid rgba(91, 119, 112, 0.25);
+    border-radius: 10px;
+    display: flex;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+    height: 100%;
+  }
+
+  .reward-item-card:hover {
+    border-color: rgba(55, 229, 143, 0.55);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    transform: translateY(-2px);
+  }
+
+  .item-card-banner {
+    width: 32%;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .item-card-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .item-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 60%, rgba(14, 25, 24, 0.8) 100%);
+  }
+
+  .badge-pill {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    font-size: 7px;
+    font-weight: 900;
+    text-transform: uppercase;
+    padding: 3px 6px;
+    border-radius: 3px;
+  }
+
+  .badge-popular { background: rgba(55, 229, 143, 0.2); border: 1px solid #37e58f; color: #37e58f; }
+  .badge-best-value { background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; }
+  .badge-limited { background: rgba(245, 184, 75, 0.2); border: 1px solid #f5b84b; color: #f5b84b; }
+  .badge-new { background: rgba(255, 255, 255, 0.15); border: 1px solid #ffffff; color: #ffffff; }
+
+  .item-card-content {
+    padding: 10px 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .item-card-header {
+    display: grid;
+    gap: 1px;
+  }
+
+  .item-card-header h3 {
+    color: #f4fff9;
+    font-size: 13px;
+    font-weight: 800;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .item-partner {
+    color: #65a990;
+    font-size: 8px;
+    font-weight: 700;
+  }
+
+  .item-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 6px;
+  }
+
+  .item-cost {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    color: #37e58f;
+  }
+
+  .item-cost strong {
+    font-size: 16px;
+    font-weight: 950;
+  }
+
+  .item-cost small {
+    font-size: 8px;
+    color: #77a795;
+    text-transform: uppercase;
+  }
+
+  .item-redeem-action {
+    background: #37e58f;
+    border: 0;
+    border-radius: 4px;
+    color: #03120b;
+    font-size: 9px;
+    font-weight: 900;
+    cursor: pointer;
+    padding: 6px 12px;
+    transition: all 0.2s ease;
+  }
+
+  .item-redeem-action:hover:not(:disabled) {
+    background: #54f0a3;
+  }
+
+  .item-redeem-action:disabled {
+    background: #202d2b;
+    color: #667a75;
+    cursor: not-allowed;
+  }
+
+  .empty-grid-results {
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+    text-align: center;
+    align-content: center;
+    padding: 30px;
+  }
+
+  .empty-grid-results strong {
+    color: #f4fff9;
+    font-size: 13px;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .empty-grid-results p {
+    color: #8fa69f;
+    font-size: 10px;
+    margin: 0 0 10px 0;
+  }
+
+  .empty-grid-results button {
+    background: rgba(142, 165, 160, 0.1);
+    border: 1px solid rgba(142, 165, 160, 0.35);
+    border-radius: 4px;
+    color: #eafff5;
+    font-size: 9px;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+
+  /* MODAL DETAIL WINDOWS */
+  .marketplace-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 10, 10, 0.85);
+    backdrop-filter: blur(12px);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .marketplace-overlay--center {
+    padding: 24px;
+  }
+
   .reward-detail-dialog {
     background: #081211;
     border: 1px solid rgba(55, 229, 143, 0.3);
-    border-radius: 16px;
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
-    max-width: 680px;
+    border-radius: 12px;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
+    max-width: 620px;
     width: 100%;
     overflow: hidden;
     position: relative;
@@ -1888,15 +2164,15 @@ const styleSheet = `
 
   .detail-close-btn {
     position: absolute;
-    top: 14px;
-    right: 14px;
+    top: 10px;
+    right: 10px;
     background: rgba(14, 25, 24, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 50%;
     color: #ffffff;
-    font-size: 20px;
-    width: 32px;
-    height: 32px;
+    font-size: 18px;
+    width: 28px;
+    height: 28px;
     cursor: pointer;
     z-index: 5;
     display: inline-flex;
@@ -1906,8 +2182,8 @@ const styleSheet = `
 
   .detail-dialog-grid {
     display: grid;
-    grid-template-columns: 42% 58%;
-    min-height: 380px;
+    grid-template-columns: 40% 60%;
+    min-height: 320px;
   }
 
   .detail-dialog-banner {
@@ -1923,84 +2199,81 @@ const styleSheet = `
 
   .detail-badge-label {
     position: absolute;
-    top: 14px;
-    left: 14px;
+    top: 10px;
+    left: 10px;
     background: rgba(8, 18, 17, 0.85);
     border: 1px solid #37e58f;
     color: #37e58f;
-    font-size: 8px;
+    font-size: 7px;
     font-weight: 800;
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: 3px 6px;
+    border-radius: 3px;
   }
 
   .detail-dialog-body {
-    padding: 24px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 12px;
+    gap: 8px;
   }
 
   .detail-partner {
     color: #37e58f;
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
   }
 
   .detail-dialog-body h2 {
     color: #f4fff9;
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 900;
-    margin: -4px 0 0 0;
+    margin: -2px 0 0 0;
   }
 
   .detail-description {
     color: #9db1ab;
-    font-size: 11px;
-    line-height: 1.5;
+    font-size: 10px;
+    line-height: 1.4;
     margin: 0;
   }
 
   .detail-cost-display {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     color: #37e58f;
   }
 
   .detail-cost-display strong {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 950;
-    letter-spacing: -0.02em;
   }
 
   .detail-cost-display small {
-    font-size: 9px;
+    font-size: 8px;
     color: #769b8d;
     text-transform: uppercase;
-    font-weight: 800;
   }
 
   .detail-terms-box {
     background: rgba(14, 25, 24, 0.7);
     border: 1px solid rgba(55, 229, 143, 0.1);
-    border-radius: 8px;
-    padding: 10px 12px;
+    border-radius: 6px;
+    padding: 8px 10px;
   }
 
   .detail-terms-box h4 {
     color: #eafff5;
-    font-size: 9px;
-    margin: 0 0 4px 0;
+    font-size: 8px;
+    margin: 0 0 2px 0;
     text-transform: uppercase;
   }
 
   .detail-terms-box p {
     color: #748983;
-    font-size: 9px;
+    font-size: 8px;
     line-height: 1.4;
     margin: 0;
   }
@@ -2008,11 +2281,11 @@ const styleSheet = `
   .detail-redeem-btn {
     background: #37e58f;
     border: 0;
-    border-radius: 8px;
+    border-radius: 6px;
     color: #03120b;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 950;
-    height: 42px;
+    height: 36px;
     cursor: pointer;
     transition: all 0.2s ease;
   }
@@ -2027,162 +2300,362 @@ const styleSheet = `
     cursor: not-allowed;
   }
 
-  /* Redemption success modal styling */
+  /* Success Modal */
   .redemption-success-modal {
     background: #081211;
     border: 1px solid #37e58f;
-    border-radius: 16px;
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
-    max-width: 360px;
+    border-radius: 12px;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
+    max-width: 320px;
     width: 100%;
-    padding: 24px;
+    padding: 20px;
     box-sizing: border-box;
     text-align: center;
   }
 
   .success-icon-wrapper {
     color: #37e58f;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
 
   .redemption-success-modal h2 {
     color: #f4fff9;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 900;
     margin: 0;
   }
 
   .success-tagline {
     color: #8fa69f;
-    font-size: 11px;
-    margin: 4px 0 16px 0;
+    font-size: 10px;
+    margin: 2px 0 12px 0;
   }
 
   .success-summary-card {
     background: rgba(14, 25, 24, 0.8);
     border: 1px solid rgba(55, 229, 143, 0.15);
-    border-radius: 10px;
-    padding: 14px;
-    margin-bottom: 14px;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
   }
 
   .success-summary-card h3 {
     color: #f4fff9;
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 800;
     margin: 0;
   }
 
   .partner-text {
     color: #65a990;
-    font-size: 9px;
+    font-size: 8px;
     display: block;
-    margin-top: 2px;
+    margin-top: 1px;
   }
 
   .success-points-math {
-    margin-top: 12px;
+    margin-top: 8px;
     display: grid;
-    gap: 8px;
+    gap: 6px;
   }
 
   .math-row {
     display: flex;
     justify-content: space-between;
-    font-size: 11px;
+    font-size: 10px;
     color: #8fa69f;
   }
 
   .border-top-divider {
     border-top: 1px solid rgba(55, 229, 143, 0.15);
-    padding-top: 8px;
+    padding-top: 6px;
   }
 
   .voucher-instructions {
     color: #728780;
-    font-size: 9px;
+    font-size: 8px;
     line-height: 1.4;
-    margin: 0 0 20px 0;
+    margin: 0 0 16px 0;
   }
 
   .success-modal-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    gap: 8px;
   }
 
   .success-btn-primary {
     background: #37e58f;
     border: 0;
-    border-radius: 8px;
+    border-radius: 6px;
     color: #03120b;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 900;
-    height: 38px;
+    height: 32px;
     cursor: pointer;
   }
 
   .success-btn-secondary {
     background: rgba(142, 165, 160, 0.15);
     border: 1px solid rgba(142, 165, 160, 0.35);
-    border-radius: 8px;
+    border-radius: 6px;
     color: #eafff5;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 800;
-    height: 38px;
+    height: 32px;
     cursor: pointer;
   }
 
-  /* RESPONSIVE SCALING */
-  @media (max-width: 1024px) {
-    .categories-cards-grid {
-      grid-template-columns: repeat(2, 1fr);
-      min-height: 480px;
-    }
-    .rewards-cards-container {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    .reward-card-image {
-      height: 120px;
-    }
+  /* Dashboard-first home: information on the left, four direct actions on the right */
+  .rewards-home-dashboard {
+    display: grid;
+    flex: 1;
+    gap: 10px;
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(118px, .42fr) minmax(0, 1fr);
+    min-height: 0;
   }
 
-  @media (max-width: 640px) {
-    .cockpit-main--rewards {
-      padding: 70px 12px 90px;
-    }
+  .rewards-home-intro {
+    background: radial-gradient(circle at 80% 20%, rgba(56, 189, 248, .14), transparent 38%), linear-gradient(145deg, rgba(14, 30, 29, .98), rgba(7, 17, 16, .98));
+    border: 1px solid rgba(74, 126, 118, .28);
+    border-radius: 14px;
+    align-items: center;
+    display: grid;
+    gap: 5px 26px;
+    grid-template-columns: minmax(0, 1.45fr) minmax(350px, .55fr);
+    grid-template-rows: auto auto auto;
+    min-height: 0;
+    padding: 14px 22px;
+  }
+
+  .rewards-home-intro > span {
+    color: #38bdf8;
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .rewards-home-intro h2 {
+    color: #f4fff9;
+    font-size: clamp(25px, 2.4vw, 36px);
+    grid-column: 1;
+    letter-spacing: -.045em;
+    line-height: 1.02;
+    margin: 1px 0 3px;
+    max-width: 720px;
+  }
+
+  .rewards-home-intro > p {
+    color: #8ca29c;
+    font-size: 11px;
+    grid-column: 1;
+    line-height: 1.55;
+    margin: 0;
+    max-width: 760px;
+  }
+
+  .rewards-home-facts {
+    align-self: stretch;
+    border-left: 1px solid rgba(99, 128, 121, .2);
+    display: grid;
+    gap: 12px;
+    grid-column: 2;
+    grid-template-columns: repeat(3, 1fr);
+    grid-row: 1 / 4;
+    margin: 0;
+    padding-left: 24px;
+    place-items: center start;
+  }
+
+  .rewards-home-facts div { display: grid; gap: 1px; }
+  .rewards-home-facts strong { color: #37e58f; font-size: 28px; line-height: 1; }
+  .rewards-home-facts span { color: #6f8780; font-size: 8px; text-transform: uppercase; }
+
+  .reward-category-buttons {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    min-height: 0;
+  }
+
+  .reward-category-buttons button {
+    align-items: center;
+    background: rgba(12, 24, 23, .8);
+    border: 1px solid rgba(100, 130, 122, .2);
+    border-radius: 11px;
+    color: #dcece7;
+    cursor: pointer;
+    display: grid;
+    gap: 14px;
+    grid-template-columns: 38px minmax(0, 1fr) auto 26px;
+    min-height: 0;
+    padding: 14px 18px;
+    text-align: left;
+    transition: background .18s ease, border-color .18s ease, transform .18s ease;
+  }
+
+  .reward-category-buttons button:hover {
+    background: rgba(55, 229, 143, .08);
+    border-color: rgba(55, 229, 143, .55);
+    transform: translateX(3px);
+  }
+
+  .reward-category-number { color: #37e58f; font-size: 14px; font-weight: 950; }
+  .reward-category-copy { display: grid; gap: 5px; min-width: 0; }
+  .reward-category-copy strong { color: #f4fff9; font-size: 19px; }
+  .reward-category-copy small { color: #8ba099; font-size: 10px; line-height: 1.4; }
+  .reward-category-count { color: #7e948d; font-size: 9px; font-weight: 900; text-transform: uppercase; }
+
+  /* Compact sub-view header leaves the screen to the selected catalogue or wallet */
+  .rewards-panel--subview .marketplace-top-summary { padding-bottom: 8px; padding-top: 8px; }
+  .rewards-panel--subview .coins-value-display { font-size: 23px; }
+  .rewards-panel--subview .coins-value-display svg { height: 27px; width: 27px; }
+  .rewards-panel--subview .summary-metrics-grid { gap: 12px; padding-left: 16px; }
+  .rewards-panel--subview .metric-value { font-size: 15px; }
+
+  /* Local voucher tabs prevent browser default white buttons from leaking into the dark UI */
+  .voucher-tab-button {
+    appearance: none;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    color: #8da29c;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 850;
+    min-height: 31px;
+    padding: 0 12px;
+    transition: .18s ease;
+  }
+
+  .voucher-tab-button:hover { background: rgba(255,255,255,.035); color: #eafff5; }
+  .voucher-tab-button.active { background: rgba(55,229,143,.14); border-color: rgba(55,229,143,.45); color: #37e58f; box-shadow: inset 0 0 0 1px rgba(55,229,143,.04); }
+
+  .rewards-grid-pagination {
+    align-items: center;
+    display: flex;
+    flex-shrink: 0;
+    gap: 10px;
+    justify-content: center;
+    min-height: 35px;
+    padding-top: 5px;
+  }
+
+  .pagination-btn {
+    align-items: center;
+    appearance: none;
+    background: rgba(111, 140, 132, .09);
+    border: 1px solid rgba(111, 140, 132, .3);
+    border-radius: 7px;
+    color: #dcece7;
+    cursor: pointer;
+    display: inline-flex;
+    font-family: inherit;
+    font-size: 9px;
+    font-weight: 850;
+    gap: 4px;
+    min-height: 30px;
+    padding: 0 11px;
+  }
+
+  .pagination-btn:hover:not(:disabled) { background: rgba(55,229,143,.12); border-color: rgba(55,229,143,.45); color: #37e58f; }
+  .pagination-btn:disabled { cursor: default; opacity: .35; }
+  .pagination-text { color: #81968f; font-size: 9px; min-width: 70px; text-align: center; }
+  .pagination-text strong { color: #f4fff9; }
+
+  /* Reward cards use their full footprint instead of leaving an empty centre */
+  .rewards-grid-2x2 { gap: 10px; grid-template-columns: repeat(4,minmax(0,1fr)); grid-template-rows: minmax(0,1fr); }
+  .reward-item-card { flex-direction: column; }
+  .item-card-banner { height: 42%; width: 100%; }
+  .item-shade { background: linear-gradient(180deg,transparent 56%,rgba(9,18,17,.92) 100%); }
+  .item-card-content { gap: 8px; padding: 11px 13px; }
+  .item-card-header { align-content: start; height: auto; }
+  .item-card-header h3 { font-size: 16px; }
+  .item-partner { font-size: 10px; }
+  .reward-card-desc { color: #9aada7; display: -webkit-box; font-size: 10px; line-height: 1.45; margin: 7px 0 0; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .item-card-meta { display: flex; gap: 12px; margin-top: 7px; padding-top: 0; }
+  .item-card-meta span { color: #7f958e; font-size: 8px; font-weight: 800; text-transform: uppercase; }
+  .item-card-meta span:first-child { color: #f5b84b; }
+  .item-card-footer { margin-top: auto; padding-top: 8px; }
+  .item-cost strong { font-size: 20px; }
+  .item-cost small { font-size: 9px; }
+  .item-redeem-action { font-size: 10px; min-height: 34px; padding: 0 14px; }
+
+  @media (max-width: 1000px) and (min-width: 761px) {
+    .rewards-grid-2x2 { grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: repeat(2,minmax(0,1fr)); }
+    .reward-item-card { flex-direction: row; }
+    .item-card-banner { height: 100%; width: 38%; }
+    .item-shade { background: linear-gradient(90deg,transparent 58%,rgba(9,18,17,.88) 100%); }
+  }
+
+  @media (max-width: 760px) {
+    .cockpit-main--rewards { padding: 64px 7px 72px; }
+    .rewards-panel { height: calc(100vh - 136px); max-height: calc(100vh - 136px); padding: 7px; }
+    .marketplace-top-summary { padding: 7px 9px; }
+    .balance-info-hero { gap: 10px; }
+    .coins-value-display { font-size: 21px; }
+    .coins-value-display svg { height: 26px; width: 26px; }
+    .currency-label { font-size: 8px; }
+    .summary-metrics-grid { gap: 7px; padding-left: 9px; }
+    .summary-metrics-grid .metric-box:first-child { display: none; }
+    .warning-alert-box { padding: 3px 6px; }
+    .my-rewards-trigger-btn { min-width: 42px; padding: 8px; }
+    .my-rewards-trigger-btn > svg { margin: 0; }
+    .my-rewards-trigger-btn { font-size: 0; gap: 3px; }
+    .rewards-home-dashboard { gap: 6px; grid-template-columns: 1fr; grid-template-rows: minmax(0,.75fr) minmax(0,1.25fr); }
+    .rewards-home-intro { border-radius: 10px; display:flex; flex-direction:column; padding: 10px 12px; }
+    .rewards-home-intro h2 { font-size: 20px; margin: 4px 0; }
+    .rewards-home-intro > p { display: none; }
+    .rewards-home-facts { align-self:auto; border-left:0; border-top:1px solid rgba(99,128,121,.2); margin-top:auto; padding-left:0; padding-top:6px; width:100%; }
+    .rewards-home-facts strong { font-size: 16px; }
+    .reward-category-buttons { gap: 4px; grid-template-columns:1fr; grid-template-rows:repeat(4,minmax(0,1fr)); }
+    .reward-category-buttons button { gap: 7px; grid-template-columns: 25px minmax(0,1fr) 17px; padding: 5px 8px; }
+    .reward-category-copy strong { font-size: 11px; }
+    .reward-category-copy small,.reward-category-count { display: none; }
+    .horizontal-categories-navbar { gap: 5px; overflow-x: auto; scrollbar-width: none; }
+    .horizontal-categories-navbar::-webkit-scrollbar { display: none; }
+    .inline-back-home-btn,.nav-category-pill { flex: 0 0 auto; padding-left: 8px; padding-right: 8px; }
+    .browser-tools-heading { align-items: flex-start; gap: 4px; }
+    .browser-title-group { display: grid; gap: 0; }
+    .browser-title-group h2 { font-size: 13px; }
+    .browser-filters { gap: 4px; }
+    .compact-search-box input { width: 105px; }
+    .compact-sort-select { max-width: 100px; }
+    .rewards-grid-2x2 { gap: 5px; grid-template-columns: 1fr; grid-template-rows: repeat(4,minmax(0,1fr)); }
+    .reward-item-card { flex-direction:row; min-height: 0; }
+    .item-card-banner { height:100%; width: 28%; }
+    .item-shade { background:linear-gradient(90deg,transparent 58%,rgba(9,18,17,.88) 100%); }
+    .item-card-content { padding: 6px 8px; }
+    .item-card-header h3 { font-size: 10px; }
+    .reward-card-desc { display: none; }
+    .item-card-meta { padding-top: 2px; }
+    .item-cost strong { font-size: 13px; }
+    .item-cost small { display: none; }
+    .item-redeem-action { padding: 5px 8px; }
+    .rewards-grid-pagination { min-height: 28px; padding-top: 2px; }
+    .fullpage-tabs-row { margin: 4px 0; }
+    .voucher-tab-button { font-size: 8px; min-height: 27px; padding: 0 4px; }
+    .fullpage-rewards-grid { gap: 5px; grid-template-columns: 1fr; grid-template-rows: repeat(4,minmax(0,1fr)); }
+  }
+
+  /* MEDIA SCALING FOR COMPACT LANDSCAPE INFO SCANS */
+  @media (max-height: 720px) {
     .primary-panel {
-      padding: 12px;
-      gap: 12px;
+      padding: 10px 16px;
+      gap: 8px;
     }
-    .marketplace-top-summary {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 12px;
-      padding: 14px;
+    .medium-category-card p {
+      display: none;
     }
-    .balance-info-hero {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 12px;
+    .reward-item-card {
+      height: 100%;
     }
-    .summary-metrics-grid {
-      border-left: 0;
-      padding-left: 0;
-      gap: 16px;
-    }
-    .categories-cards-grid {
-      grid-template-columns: 1fr;
-      min-height: auto;
-    }
-    .rewards-cards-container {
-      grid-template-columns: 1fr;
-    }
-    .detail-dialog-grid {
-      grid-template-columns: 1fr;
-    }
-    .detail-dialog-banner {
-      height: 160px;
-    }
+    .rewards-home-intro { padding: 16px 20px; }
+    .rewards-home-intro h2 { font-size: 25px; }
+    .rewards-home-facts { padding-top: 10px; }
   }
 `;

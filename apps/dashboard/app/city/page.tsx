@@ -23,6 +23,7 @@ import { useDashboardStore } from "../../lib/dashboard-store";
 
 type PlacementMessage = { kind: "success" | "error"; text: string };
 type TerrainPoint = { x: number; y: number };
+type CityView = "overview" | "builder" | "store";
 
 const BUILDING_DRAG_TYPE = "application/x-ecodrive-building";
 const INFRASTRUCTURE_DRAG_TYPE = "application/x-ecodrive-infrastructure";
@@ -47,6 +48,7 @@ export default function CityPage() {
   const [selectedBuildingId, setSelectedBuildingId] = useState<CityBuildingId | null>(null);
   const [selectedInfrastructureId, setSelectedInfrastructureId] = useState<string | null>(null);
   const [selectedWarehouseId, setSelectedWarehouseId] = useState<string | null>(null);
+  const [cityView, setCityView] = useState<CityView>("overview");
   const [storeOpen, setStoreOpen] = useState(false);
   const [terrainYaw, setTerrainYaw] = useState(-4);
   const [terrainPitch, setTerrainPitch] = useState(56);
@@ -214,34 +216,82 @@ export default function CityPage() {
 
   return (
     <CockpitShell activeMode="city">
-      <main className={`city3d-page ${isDay ? "city3d-page--day" : "city3d-page--night"}`}>
+      <main className={`city3d-page city3d-page--${cityView} ${isDay ? "city3d-page--day" : "city3d-page--night"}`}>
         <section className="city3d-frame" aria-labelledby="city3d-title">
           <header className="city3d-header">
             <div>
               <p>Eco-City</p>
-              <h1 id="city3d-title">Eco-City Builder</h1>
-              <span>Invest EcoCoins. Build sustainable infrastructure. Generate passive Yield Coins.</span>
+              <h1 id="city3d-title">{cityView === "overview" ? "City command center" : cityView === "store" ? "Infrastructure store" : "3D Eco-City"}</h1>
+              <span>{cityView === "overview" ? "Your city performance, income and next actions at a glance." : cityView === "store" ? "Choose an asset, then place it precisely on your terrain." : "Explore, edit and grow your sustainable district."}</span>
             </div>
             <div className="city3d-header-actions">
-              <div className="city3d-sun-status">
-                <i aria-hidden="true" />
-                <span><b>{isDay ? "Daylight city" : "Night city"}</b><small>{isDay ? `Sunset ${formatTime(sunTimes.sunset)}` : `Sunrise ${formatTime(sunTimes.sunrise)}`}</small></span>
-              </div>
-              <button
-                className={storeOpen ? "city3d-store-toggle city3d-store-toggle--active" : "city3d-store-toggle"}
-                onClick={() => {
-                  setStoreOpen((open) => !open);
-                  setSelectedInfrastructureId(null);
-                  setSelectedWarehouseId(null);
-                  setPlacementPreview(null);
-                  setMessage({ kind: "success", text: storeOpen ? "Store closed. Terrain camera unlocked." : "Store open. Drag or tap to place infrastructure." });
-                }}
-                type="button"
-              >
-                {storeOpen ? "Close Store" : "Open Store"}
+              {cityView !== "overview" ? <button className="city3d-view-toggle city3d-back-button" onClick={() => { setCityView("overview"); setStoreOpen(false); setSelectedBuildingId(null); setSelectedInfrastructureId(null); setSelectedWarehouseId(null); }} type="button">← {cityView === "builder" ? "Back" : "Overview"}</button> : null}
+              {cityView === "builder" ? (
+                <div className="city3d-builder-kpis" aria-label="Key city information">
+                  <span><small>EcoCoins</small><strong><CityEcoCoin size={17} />{walletCoins.toLocaleString()}</strong></span>
+                  <span><small>Daily yield</small><strong className="is-cyan">+{cityStats.dailyYield}</strong></span>
+                  <span><small>City stage</small><strong>{stage.name}</strong></span>
+                </div>
+              ) : (
+                <div className="city3d-sun-status">
+                  <i aria-hidden="true" />
+                  <span><b>{isDay ? "Daylight city" : "Night city"}</b><small>{isDay ? `Sunset ${formatTime(sunTimes.sunset)}` : `Sunrise ${formatTime(sunTimes.sunrise)}`}</small></span>
+                </div>
+              )}
+              {cityView === "builder" ? (
+                <button className={storeOpen ? "city3d-view-toggle city3d-view-toggle--active" : "city3d-view-toggle"} onClick={() => { setStoreOpen((open) => !open); setSelectedBuildingId(null); setSelectedInfrastructureId(null); setSelectedWarehouseId(null); setPlacementPreview(null); setMessage({ kind: "success", text: storeOpen ? "Editing finished. Terrain camera unlocked." : "Edit mode active. Select an existing asset to move, rotate or sell it." }); }} type="button">
+                  {storeOpen ? "Finish Editing" : "Edit Layout"}
+                </button>
+              ) : null}
+              <button className="city3d-store-toggle" onClick={() => { if (cityView === "store") { setCityView("builder"); setStoreOpen(false); } else { setCityView("store"); setStoreOpen(false); } setSelectedInfrastructureId(null); setSelectedWarehouseId(null); setPlacementPreview(null); }} type="button">
+                {cityView === "store" ? "Open 3D City" : "Open Store"}
               </button>
             </div>
           </header>
+
+          {cityView === "overview" ? (
+            <section className="city3d-overview" aria-label="City command center overview">
+              <article className="city3d-overview-hero">
+                <div className="city3d-overview-stage-label"><span>Current city stage</span><strong>{stage.name}</strong></div>
+                <div className="city3d-overview-impact"><strong>{cityStats.impact}</strong><span>impact points</span></div>
+                <div className="city3d-overview-progress"><div><span>{nextStage ? `${nextStage.threshold - cityStats.impact} impact to unlock ${nextStage.name}` : "Maximum city stage reached"}</span><b>{Math.round(stageProgress)}%</b></div><i><span style={{ width: `${Math.max(4, Math.min(100, stageProgress))}%` }} /></i></div>
+                <div className="city3d-overview-hero-footer"><span><b>{infrastructure.length}</b> active assets</span><span><b>{warehouse.length}</b> in warehouse</span><span><b>{bonusInfrastructure.size}</b> synergy links</span></div>
+              </article>
+
+              <div className="city3d-overview-side">
+                <div className="city3d-overview-metrics">
+                  <article><span>Available EcoCoins</span><strong className="is-amber"><CityEcoCoin size={28} />{walletCoins.toLocaleString()}</strong><small>Ready to invest</small></article>
+                  <article><span>Total Yield Coins</span><strong className="is-green">{cityStats.yieldCoins.toLocaleString()}</strong><small>Generated by your city</small></article>
+                  <article><span>Passive income</span><strong className="is-cyan">+{cityStats.dailyYield}<em>/ day</em></strong><small>Updates with your layout</small></article>
+                </div>
+                <div className="city3d-overview-actions">
+                  <button className="city3d-launch-card city3d-launch-card--city" onClick={() => { setCityView("builder"); setStoreOpen(false); }} type="button"><span>Explore your district</span><strong>Open 3D City</strong><small>Inspect the terrain and rotate the view</small><b>Enter city →</b></button>
+                  <button className="city3d-launch-card city3d-launch-card--store" onClick={() => { setCityView("store"); setStoreOpen(false); }} type="button"><span>Grow your city</span><strong>Open Store</strong><small>Browse all infrastructure at full size</small><b>Browse assets →</b></button>
+                </div>
+              </div>
+            </section>
+          ) : null}
+
+          {cityView === "store" ? (
+            <section className="city3d-store-screen" aria-label="Full-screen infrastructure store">
+              <header><div><span>Build new infrastructure</span><h2>Choose your next city asset</h2><p>No charge yet. Select an item, then tap its exact position in the 3D city.</p></div><div className="city3d-store-balance"><small>Available</small><strong><CityEcoCoin size={22} />{walletCoins.toLocaleString()}</strong></div></header>
+              {warehouse.length ? (
+                <div className="city3d-store-warehouse-row"><span><strong>Warehouse</strong><small>{warehouse.length} owned assets · place again for free</small></span><div>{warehouse.map((item) => { const building = cityBuildingMap[item.buildingId]; return <button key={item.id} onClick={() => { setSelectedWarehouseId(item.id); setSelectedBuildingId(null); setSelectedInfrastructureId(null); setStoreOpen(true); setCityView("builder"); setMessage({ kind: "success", text: `${building.name} ready. Tap the terrain to place it for free.` }); }} type="button"><LowPolyModel buildingId={item.buildingId} compact /><span><strong>{building.name}</strong><small>Place free</small></span></button>; })}</div></div>
+              ) : null}
+              <div className="city3d-store-grid">
+                {cityBuildings.map((building) => {
+                  const affordable = walletCoins >= building.cost;
+                  return (
+                    <article className={affordable ? "city3d-store-product" : "city3d-store-product is-locked"} key={building.id} style={{ "--building-color": building.color } as CSSProperties}>
+                      <div className="city3d-store-model"><LowPolyModel buildingId={building.id} compact /></div>
+                      <div className="city3d-store-copy"><span>Eco infrastructure</span><h3>{building.name}</h3><p>{building.description}</p><div><small>Daily yield <b>+{building.yieldPerDay}</b></small><small>Impact <b>+{building.impact}</b></small></div></div>
+                      <div className="city3d-store-buy"><strong><CityEcoCoin size={17} />{building.cost}</strong><button disabled={!affordable || !storesReady} onClick={() => { setSelectedBuildingId(building.id); setSelectedWarehouseId(null); setSelectedInfrastructureId(null); setStoreOpen(true); setCityView("builder"); setMessage({ kind: "success", text: `${building.name} selected. Tap the exact terrain area where you want it.` }); }} type="button">{affordable ? "Select & place" : "More coins needed"}</button></div>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
 
           <section className="city3d-summary" aria-label="City summary">
             <SummaryStat label="EcoCoins" value={walletCoins.toLocaleString()} tone="amber" coin />
@@ -1064,6 +1114,40 @@ function getSunTimes(date: Date, latitude: number, longitude: number) {
   .city3d-palette { height: 100%; max-height: none; min-height: 0; overflow: auto; padding: 9px; }
   .city3d-palette-card { min-height: 62px; border-radius: 9px; }
   .city3d-palette-list { gap: 5px; }
-  @media(max-width:1100px){.city3d-workspace--store{grid-template-columns:minmax(0,1fr) minmax(235px,285px)}.city3d-world{width:min(74%,540px)}.city3d-palette-card{grid-template-columns:54px minmax(0,1fr) auto;min-height:58px}.city3d-palette-card .lowpoly--compact{transform:scale(.62) rotateY(14deg);transform-origin:center}.city3d-warehouse-list{grid-template-columns:1fr}.city3d-selected-detail{padding:7px}}
-  @media(max-width:760px){.city3d-page{padding:60px 7px 70px}.city3d-frame{border-radius:12px;padding:7px}.city3d-header{gap:7px}.city3d-header>div:first-child>span{display:none}.city3d-header h1{font-size:21px}.city3d-header-actions{gap:5px}.city3d-sun-status{padding:5px 7px}.city3d-store-toggle{min-height:32px;padding:0 9px}.city3d-summary{gap:4px;grid-template-columns:repeat(3,1fr)}.city3d-stage{display:none}.city3d-stat{padding:5px}.city3d-stat span{font-size:7px}.city3d-stat strong{font-size:13px}.city3d-workspace--store{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 128px}.city3d-map-heading{min-height:38px}.city3d-map-heading>div:first-child{display:none}.city3d-message{max-width:none;width:100%}.city3d-world{width:88%}.city3d-palette{display:grid;gap:5px;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);overflow:hidden}.city3d-palette-heading{grid-column:1/-1}.city3d-warehouse,.city3d-palette-label,.city3d-selected-detail{display:none}.city3d-palette-list{display:flex;grid-column:1/-1;overflow-x:auto;padding-bottom:3px;scrollbar-width:none}.city3d-palette-list::-webkit-scrollbar{display:none}.city3d-palette-card{flex:0 0 205px;min-height:56px}.city3d-legend{min-height:25px}.city3d-sky-orb{height:46px;width:46px}.city3d-instruction{bottom:7px;left:7px;max-width:78%}}
+  .city3d-view-toggle{background:rgba(139,164,157,.08);border:1px solid rgba(139,164,157,.28);border-radius:8px;color:#dcece7;cursor:pointer;font-size:9px;font-weight:900;min-height:38px;padding:0 14px;white-space:nowrap}.city3d-view-toggle--active{background:rgba(55,229,143,.12);border-color:rgba(55,229,143,.42);color:#37e58f}
+  .city3d-page--overview .city3d-summary,.city3d-page--overview .city3d-workspace,.city3d-page--store .city3d-summary,.city3d-page--store .city3d-workspace{display:none}
+  .city3d-page--builder .city3d-overview,.city3d-page--builder .city3d-store-screen{display:none}
+  .city3d-page--builder{padding:68px 7px 72px}
+  .city3d-page--builder .city3d-frame{border-radius:12px;padding:6px}
+  .city3d-page--builder .city3d-header{min-height:43px;padding:0 2px 6px}
+  .city3d-page--builder .city3d-header>div:first-child{display:none}
+  .city3d-page--builder .city3d-header-actions{display:flex;width:100%}
+  .city3d-page--builder .city3d-summary{display:none}
+  .city3d-page--builder .city3d-workspace--store{grid-template-columns:minmax(0,1fr)}
+  .city3d-page--builder .city3d-workspace>.city3d-palette{display:none}
+  .city3d-page--builder .city3d-map-heading{min-height:39px;padding:5px 10px}
+  .city3d-page--builder .city3d-legend{min-height:25px;padding:2px 10px}
+  .city3d-builder-kpis{align-items:stretch;display:flex;flex:1;gap:6px;min-width:0}
+  .city3d-builder-kpis>span{background:rgba(10,24,22,.78);border:1px solid rgba(91,121,113,.22);border-radius:9px;display:flex;flex:1;flex-direction:column;justify-content:center;min-width:105px;padding:5px 10px}
+  .city3d-builder-kpis small{color:#708a82;font-size:7px;font-weight:900;letter-spacing:.05em;text-transform:uppercase}
+  .city3d-builder-kpis strong{align-items:center;color:#eefdf6;display:flex;font-size:12px;gap:4px;line-height:1.2}.city3d-builder-kpis strong.is-cyan{color:#38bdf8}
+  .city3d-back-button{font-size:10px;min-width:76px}
+
+  .city3d-overview{display:grid;flex:1;gap:14px;grid-template-columns:minmax(0,1.05fr) minmax(460px,.95fr);min-height:0}
+  .city3d-overview-hero,.city3d-overview-metrics article,.city3d-launch-card{background:linear-gradient(145deg,rgba(14,29,27,.96),rgba(7,17,16,.98));border:1px solid rgba(88,119,110,.25);border-radius:16px}
+  .city3d-overview-hero{background:radial-gradient(circle at 82% 22%,rgba(55,229,143,.19),transparent 34%),linear-gradient(145deg,rgba(15,36,31,.98),rgba(6,17,15,.98));display:flex;flex-direction:column;justify-content:space-between;min-height:0;overflow:hidden;padding:clamp(20px,3vw,38px);position:relative}
+  .city3d-overview-hero::after{background:repeating-linear-gradient(90deg,rgba(55,229,143,.025) 0 1px,transparent 1px 38px),repeating-linear-gradient(0deg,rgba(55,229,143,.025) 0 1px,transparent 1px 38px);content:"";inset:0;pointer-events:none;position:absolute}
+  .city3d-overview-stage-label{display:grid;gap:5px;position:relative;z-index:1}.city3d-overview-stage-label span{color:#6e9587;font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}.city3d-overview-stage-label strong{color:#53e99e;font-size:clamp(25px,3vw,40px);letter-spacing:-.04em}
+  .city3d-overview-impact{align-items:flex-end;display:flex;gap:10px;position:relative;z-index:1}.city3d-overview-impact strong{color:#f5fff9;font-size:clamp(70px,8.5vw,118px);font-weight:950;letter-spacing:-.08em;line-height:.75}.city3d-overview-impact span{color:#8aa39b;font-size:11px;font-weight:900;margin-bottom:7px;text-transform:uppercase}
+  .city3d-overview-progress{display:grid;gap:8px;position:relative;z-index:1}.city3d-overview-progress>div{color:#91a79f;display:flex;font-size:9px;justify-content:space-between}.city3d-overview-progress>div b{color:#f4fff9}.city3d-overview-progress>i{background:#122522;border-radius:999px;height:8px;overflow:hidden}.city3d-overview-progress>i>span{background:linear-gradient(90deg,#37e58f,#38bdf8);border-radius:inherit;display:block;height:100%;box-shadow:0 0 16px rgba(55,229,143,.35)}
+  .city3d-overview-hero-footer{border-top:1px solid rgba(104,134,125,.2);display:grid;grid-template-columns:repeat(3,1fr);padding-top:14px;position:relative;z-index:1}.city3d-overview-hero-footer span{color:#789089;display:grid;font-size:8px;gap:2px}.city3d-overview-hero-footer b{color:#f2fff8;font-size:18px}
+  .city3d-overview-side{display:grid;gap:12px;grid-template-rows:auto minmax(0,1fr);min-height:0}.city3d-overview-metrics{display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}.city3d-overview-metrics article{display:flex;flex-direction:column;min-height:84px;padding:12px}.city3d-overview-metrics article>span{color:#789089;font-size:8px;font-weight:900;text-transform:uppercase}.city3d-overview-metrics article>strong{align-items:center;display:flex;font-size:clamp(18px,2.2vw,29px);gap:5px;letter-spacing:-.04em;margin:auto 0 2px}.city3d-overview-metrics strong.is-amber{color:#f5b84b}.city3d-overview-metrics strong.is-green{color:#37e58f}.city3d-overview-metrics strong.is-cyan{color:#38bdf8}.city3d-overview-metrics em{font-size:9px;font-style:normal;letter-spacing:0}.city3d-overview-metrics small{color:#607a72;font-size:7px}
+  .city3d-overview-actions{display:grid;gap:12px;grid-template-columns:repeat(2,1fr);min-height:0}.city3d-launch-card{color:#effff7;cursor:pointer;display:flex;flex-direction:column;justify-content:center;min-height:0;padding:18px;text-align:left;transition:.2s ease}.city3d-launch-card:hover{border-color:rgba(55,229,143,.55);transform:translateY(-2px)}.city3d-launch-card--city{background:radial-gradient(circle at 85% 20%,rgba(56,189,248,.16),transparent 40%),linear-gradient(145deg,#0d2424,#081514)}.city3d-launch-card--store{background:radial-gradient(circle at 85% 20%,rgba(245,184,75,.16),transparent 40%),linear-gradient(145deg,#211c10,#0e1512)}.city3d-launch-card>span{color:#749087;font-size:8px;font-weight:900;text-transform:uppercase}.city3d-launch-card strong{font-size:clamp(20px,2vw,28px);margin:6px 0}.city3d-launch-card small{color:#80978f;font-size:9px;line-height:1.45}.city3d-launch-card b{color:#37e58f;font-size:10px;margin-top:auto;padding-top:12px}.city3d-launch-card--store b{color:#f5b84b}
+
+  .city3d-store-screen{display:flex;flex:1;flex-direction:column;min-height:0;overflow:hidden}.city3d-store-screen>header{align-items:center;border-bottom:1px solid rgba(90,118,111,.18);display:flex;justify-content:space-between;padding:5px 2px 10px}.city3d-store-screen>header>div:first-child>span{color:#37e58f;font-size:8px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}.city3d-store-screen>header h2{color:#f4fff9;font-size:20px;margin:2px 0}.city3d-store-screen>header p{color:#789089;font-size:9px;margin:0}.city3d-store-balance{align-items:flex-end;background:rgba(245,184,75,.07);border:1px solid rgba(245,184,75,.25);border-radius:12px;display:flex;flex-direction:column;padding:8px 12px}.city3d-store-balance small{color:#a18d64;font-size:7px;font-weight:900;text-transform:uppercase}.city3d-store-balance strong{align-items:center;color:#f5b84b;display:flex;font-size:19px;gap:5px}
+  .city3d-store-warehouse-row{align-items:center;background:rgba(55,229,143,.045);border:1px solid rgba(55,229,143,.15);border-radius:11px;display:grid;gap:12px;grid-template-columns:155px minmax(0,1fr);margin-top:7px;padding:6px 8px}.city3d-store-warehouse-row>span{display:grid}.city3d-store-warehouse-row>span strong{color:#eafff5;font-size:11px}.city3d-store-warehouse-row>span small{color:#6f8880;font-size:7px}.city3d-store-warehouse-row>div{display:flex;gap:6px;overflow-x:auto}.city3d-store-warehouse-row button{align-items:center;background:#0b1816;border:1px solid rgba(55,229,143,.2);border-radius:8px;color:#f4fff9;display:flex;flex:0 0 170px;height:48px;padding:2px 7px;text-align:left}.city3d-store-warehouse-row button>.lowpoly--compact{height:42px;transform:scale(.45) rotateX(-30deg) rotateY(35deg);width:50px}.city3d-store-warehouse-row button>span{display:grid}.city3d-store-warehouse-row button strong{font-size:8px}.city3d-store-warehouse-row button small{color:#37e58f;font-size:7px}
+  .city3d-store-grid{display:grid;flex:1;gap:9px;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));min-height:0;padding-top:9px}.city3d-store-product{align-items:center;background:linear-gradient(145deg,rgba(15,29,27,.98),rgba(7,16,15,.98));border:1px solid rgba(97,127,119,.22);border-radius:14px;display:grid;gap:11px;grid-template-columns:112px minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;min-height:0;overflow:hidden;padding:12px;position:relative;transition:.2s ease}.city3d-store-product:hover{border-color:var(--building-color);box-shadow:0 10px 26px rgba(0,0,0,.25)}.city3d-store-product.is-locked{filter:saturate(.55)}.city3d-store-model{align-items:center;display:flex;height:100%;justify-content:center;min-height:86px}.city3d-store-model .lowpoly--compact{height:94px;transform:scale(.95) rotateX(-25deg) rotateY(32deg);width:102px}.city3d-store-copy{align-self:center;display:grid;gap:5px;min-width:0}.city3d-store-copy>span{color:var(--building-color);font-size:8px;font-weight:900;text-transform:uppercase}.city3d-store-copy h3{color:#f4fff9;font-size:17px;margin:0}.city3d-store-copy p{color:#91a69f;display:-webkit-box;font-size:10px;line-height:1.4;margin:0;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2}.city3d-store-copy>div{display:flex;gap:14px}.city3d-store-copy small{color:#7e948d;font-size:8px}.city3d-store-copy small b{color:#d8ece5}.city3d-store-buy{align-items:center;border-top:1px solid rgba(91,119,112,.16);display:flex;grid-column:1/-1;justify-content:space-between;padding-top:8px}.city3d-store-buy>strong{align-items:center;color:#f5b84b;display:flex;font-size:18px;gap:4px}.city3d-store-buy button{background:#37e58f;border:0;border-radius:7px;color:#04110b;cursor:pointer;font-size:10px;font-weight:950;min-height:34px;padding:0 14px}.city3d-store-buy button:disabled{background:#1b2926;color:#667c75;cursor:not-allowed}
+  @media(max-width:1100px){.city3d-workspace--store{grid-template-columns:minmax(0,1fr) minmax(235px,285px)}.city3d-page--builder .city3d-workspace--store{grid-template-columns:minmax(0,1fr)}.city3d-world{width:min(74%,540px)}.city3d-palette-card{grid-template-columns:54px minmax(0,1fr) auto;min-height:58px}.city3d-palette-card .lowpoly--compact{transform:scale(.62) rotateY(14deg);transform-origin:center}.city3d-warehouse-list{grid-template-columns:1fr}.city3d-selected-detail{padding:7px}.city3d-overview{grid-template-columns:minmax(0,.95fr) minmax(420px,1.05fr)}.city3d-store-copy p{display:none}}
+  @media(max-width:760px){.city3d-page{padding:60px 7px 70px}.city3d-frame{border-radius:12px;padding:7px}.city3d-header{gap:7px}.city3d-header>div:first-child>span{display:none}.city3d-header h1{font-size:21px}.city3d-header-actions{gap:4px}.city3d-sun-status{display:none}.city3d-view-toggle{min-height:32px;padding:0 8px}.city3d-store-toggle{min-height:32px;padding:0 9px}.city3d-summary{gap:4px;grid-template-columns:repeat(3,1fr)}.city3d-stage{display:none}.city3d-stat{padding:5px}.city3d-stat span{font-size:7px}.city3d-stat strong{font-size:13px}.city3d-workspace--store,.city3d-page--builder .city3d-workspace--store{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}.city3d-map-heading{min-height:38px}.city3d-map-heading>div:first-child{display:none}.city3d-message{max-width:none;width:100%}.city3d-world{width:88%}.city3d-palette{display:grid;gap:5px;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);overflow:hidden}.city3d-palette-heading{grid-column:1/-1}.city3d-warehouse,.city3d-palette-label,.city3d-selected-detail{display:none}.city3d-palette-list{display:flex;grid-column:1/-1;overflow-x:auto;padding-bottom:3px;scrollbar-width:none}.city3d-palette-list::-webkit-scrollbar{display:none}.city3d-palette-card{flex:0 0 205px;min-height:56px}.city3d-legend{min-height:25px}.city3d-sky-orb{height:46px;width:46px}.city3d-instruction{bottom:7px;left:7px;max-width:78%}.city3d-overview{gap:6px;grid-template-columns:1fr;grid-template-rows:minmax(0,.85fr) minmax(0,1.15fr)}.city3d-overview-hero{padding:11px}.city3d-overview-stage-label{display:flex;align-items:center;justify-content:space-between}.city3d-overview-stage-label strong{font-size:20px}.city3d-overview-impact strong{font-size:48px}.city3d-overview-impact span{font-size:8px}.city3d-overview-hero-footer{padding-top:6px}.city3d-overview-hero-footer b{font-size:13px}.city3d-overview-side{gap:5px}.city3d-overview-metrics{gap:4px}.city3d-overview-metrics article{min-height:45px;padding:6px}.city3d-overview-metrics article>strong{font-size:15px}.city3d-overview-metrics small{display:none}.city3d-overview-actions{gap:5px}.city3d-launch-card{border-radius:10px;padding:9px}.city3d-launch-card strong{font-size:17px}.city3d-launch-card small{display:none}.city3d-launch-card b{font-size:8px;padding-top:5px}.city3d-store-screen>header{padding-bottom:5px}.city3d-store-screen>header h2{font-size:15px}.city3d-store-screen>header p,.city3d-store-balance small{display:none}.city3d-store-balance{padding:5px 8px}.city3d-store-balance strong{font-size:14px}.city3d-store-warehouse-row{display:none}.city3d-store-grid{gap:5px;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));padding-top:5px}.city3d-store-product{gap:4px;grid-template-columns:52px minmax(0,1fr);padding:5px}.city3d-store-model{min-height:45px}.city3d-store-model .lowpoly--compact{height:50px;transform:scale(.5) rotateX(-25deg) rotateY(32deg);width:52px}.city3d-store-copy>span,.city3d-store-copy p,.city3d-store-copy>div{display:none}.city3d-store-copy h3{font-size:10px}.city3d-store-buy{padding-top:4px}.city3d-store-buy>strong{font-size:11px}.city3d-store-buy button{font-size:7px;min-height:24px;padding:0 6px}}
+  @media(max-width:760px){.city3d-page--builder{padding:60px 4px 68px}.city3d-page--builder .city3d-frame{padding:4px}.city3d-page--builder .city3d-header{min-height:38px;padding-bottom:4px}.city3d-page--builder .city3d-header-actions{gap:3px}.city3d-builder-kpis{gap:3px}.city3d-builder-kpis>span{min-width:54px;padding:3px 5px}.city3d-builder-kpis>span:nth-child(3){display:none}.city3d-builder-kpis small{font-size:5px}.city3d-builder-kpis strong{font-size:9px}.city3d-back-button{min-width:55px;padding:0 6px}.city3d-page--builder .city3d-store-toggle,.city3d-page--builder .city3d-view-toggle{font-size:7px;padding:0 6px}}
 `;
