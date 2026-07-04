@@ -350,9 +350,9 @@ function CommunitySurface() {
           border: none;
           border-radius: 999px;
           color: #9db3ad;
-          font-size: 9px;
+          font-size: 13px;
           font-weight: 800;
-          padding: 3px 10px;
+          padding: 6px 14px;
           cursor: pointer;
           transition: all 0.2s ease;
           text-transform: uppercase;
@@ -378,7 +378,7 @@ function CommunitySurface() {
 
         .ev-main-title {
           font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
-          font-size: 22px;
+          font-size: 26px;
           font-weight: 900;
           text-transform: uppercase;
           letter-spacing: 2px;
@@ -436,7 +436,7 @@ function CommunitySurface() {
         /* 3-Column layout grid containing Tab bar + Dynamic Panels */
         .leaderboards-tabbed-layout {
           display: grid !important;
-          grid-template-columns: 220px 1fr !important;
+          grid-template-columns: 200px 1fr !important;
           gap: 16px !important;
           width: 100% !important;
           flex: 1 !important;
@@ -463,7 +463,7 @@ function CommunitySurface() {
           align-items: center !important;
           gap: 8px !important;
           width: 100% !important;
-          padding: 8px 12px !important;
+          padding: 10px 14px !important;
           background: rgba(255, 255, 255, 0.02) !important;
           border: 1px solid rgba(255, 255, 255, 0.04) !important;
           border-radius: 8px !important;
@@ -492,7 +492,7 @@ function CommunitySurface() {
 
         .tab-label {
           font-family: 'Montserrat', system-ui, sans-serif !important;
-          font-size: 10px !important;
+          font-size: 13px !important;
           font-weight: 800 !important;
           letter-spacing: 0.5px !important;
           text-transform: uppercase !important;
@@ -573,7 +573,7 @@ function CommunitySurface() {
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 9.5px;
+          font-size: 13px;
           font-weight: 900;
           border: 1.5px solid #060c0d;
           z-index: 12;
@@ -651,7 +651,7 @@ function CommunitySurface() {
         }
 
         .podium-h-name {
-          font-size: 10.5px;
+          font-size: 14px;
           font-weight: 750;
           color: #f4fff9;
           white-space: nowrap;
@@ -665,7 +665,7 @@ function CommunitySurface() {
         }
 
         .podium-h-subtext {
-          font-size: 8.5px;
+          font-size: 12px;
           color: #78908a;
           margin: 2px 0 6px;
         }
@@ -724,7 +724,7 @@ function CommunitySurface() {
 
         .featured-header {
           font-family: 'Montserrat', system-ui, sans-serif !important;
-          font-size: 9.5px !important;
+          font-size: 12px !important;
           font-weight: 850 !important;
           color: #FCD34D !important;
           letter-spacing: 1.5px !important;
@@ -785,7 +785,7 @@ function CommunitySurface() {
         }
 
         .featured-winner-name {
-          font-size: 11.5px !important;
+          font-size: 15px !important;
           font-weight: 800 !important;
           color: #FCD34D !important;
           display: flex !important;
@@ -795,7 +795,7 @@ function CommunitySurface() {
         }
 
         .featured-winner-state {
-          font-size: 8.5px !important;
+          font-size: 12px !important;
           color: #78908a !important;
           margin: 2px 0 8px 0 !important;
         }
@@ -808,7 +808,7 @@ function CommunitySurface() {
           border: 1px solid rgba(55, 229, 143, 0.2) !important;
           border-radius: 999px !important;
           padding: 3px 8px !important;
-          font-size: 10px !important;
+          font-size: 13px !important;
           font-weight: 850 !important;
           color: #37e58f !important;
         }

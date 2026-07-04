@@ -84,18 +84,18 @@ export function CockpitShell({ activeMode, children }: CockpitShellProps) {
 
         <div className="header-stats-group" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
           <div className="wallet-pill">
-            <Leaf size={14} />
+            <Leaf size={18} />
             <span>{walletCoins.toLocaleString()} EcoCoins</span>
           </div>
           <div className="wallet-pill" style={{ background: "rgba(10, 18, 19, 0.8)", borderColor: "rgba(245, 184, 75, 0.4)", color: "#F5B84B" }}>
-            <Gauge size={14} />
+            <Gauge size={18} />
             <span>Score: {globalScore.toLocaleString()}</span>
           </div>
         </div>
 
         <div className="status-right">
           <span className={`live-pill live-pill--${connectionStatus}`}>
-            <RadioTower size={14} />
+            <RadioTower size={18} />
             {statusLabel}
           </span>
         </div>
@@ -116,7 +116,7 @@ export function CockpitShell({ activeMode, children }: CockpitShellProps) {
                 href={href}
                 key={item.id}
               >
-                <Icon size={16} />
+                <Icon size={20} />
                 <span>{item.shortLabel}</span>
               </Link>
             );

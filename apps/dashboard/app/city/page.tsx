@@ -757,7 +757,7 @@ function getSunTimes(date: Date, latitude: number, longitude: number) {
   .city3d-sun-status span { display: grid; gap: 1px; }
   .city3d-sun-status b { color: #e9fff4; font-size: 10px; }
   .city3d-sun-status small { color: #82958f; font-size: 8px; }
-  .city3d-store-toggle { background: rgba(245,184,75,.09); border: 1px solid rgba(245,184,75,.38); border-radius: 10px; color: #f5b84b; cursor: pointer; font-size: 10px; font-weight: 900; min-height: 42px; padding: 0 15px; }
+  .city3d-store-toggle { background: rgba(245,184,75,.09); border: 1px solid rgba(245,184,75,.38); border-radius: 10px; color: #f5b84b; cursor: pointer; font-size: 10px; font-weight: 900; min-height: 48px; padding: 0 15px; }
   .city3d-store-toggle--active { background: rgba(55,229,143,.13); border-color: rgba(55,229,143,.56); color: #37e58f; }
   .city3d-summary { background: rgba(6,14,14,.68); border: 1px solid rgba(84,112,105,.22); border-radius: 14px; display: grid; gap: 9px; grid-template-columns: repeat(3,minmax(120px,.65fr)) minmax(220px,1.2fr); margin-bottom: 14px; padding: 10px; }
   .city3d-stat,.city3d-stage { background: linear-gradient(145deg,rgba(17,31,29,.96),rgba(10,20,20,.96)); border: 1px solid rgba(89,117,110,.2); border-radius: 10px; }
