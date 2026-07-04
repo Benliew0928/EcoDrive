@@ -46,11 +46,28 @@ if (typeof window !== "undefined") {
   });
 }
 
+type PlaceSelection = {
+  name: string;
+  coords: [number, number];
+};
+
+type OriginMode = "current" | "custom";
+
+const DEFAULT_ORIGIN: PlaceSelection = {
+  name: "UTAR Kampar Campus",
+  coords: UTAR_KAMPAR,
+};
+
 export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePath) => void }) {
+  const [originMode, setOriginMode] = useState<OriginMode>("current");
+  const [originLocation, setOriginLocation] = useState<PlaceSelection>(DEFAULT_ORIGIN);
+  const [originQuery, setOriginQuery] = useState("");
+  const [originSuggestions, setOriginSuggestions] = useState<GeocodeSuggestion[]>([]);
+  const [showOriginSuggestions, setShowOriginSuggestions] = useState(false);
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<GeocodeSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [destination, setDestination] = useState<{ name: string; coords: [number, number] } | null>(null);
+  const [destination, setDestination] = useState<PlaceSelection | null>(null);
   const [routes, setRoutes] = useState<RoutePath[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -59,9 +76,10 @@ export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePa
   const [driveProgress, setDriveProgress] = useState(0);
   const searchRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const originDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mapRef = useRef<any>(null);
 
-  const origin: [number, number] = UTAR_KAMPAR;
+  const origin = originLocation.coords;
 
   const handleSearchInput = useCallback((value: string) => {
     setQuery(value);
@@ -88,6 +106,31 @@ export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePa
     }, 400);
   }, []);
 
+  const handleOriginSearchInput = useCallback((value: string) => {
+    setOriginQuery(value);
+    setError(null);
+    setIsDriving(false);
+    setDriveProgress(0);
+
+    if (originDebounceRef.current) clearTimeout(originDebounceRef.current);
+
+    if (value.trim().length < 2) {
+      setOriginSuggestions([]);
+      setShowOriginSuggestions(false);
+      return;
+    }
+
+    originDebounceRef.current = setTimeout(async () => {
+      try {
+        const results = await searchPlaces(value);
+        setOriginSuggestions(results);
+        setShowOriginSuggestions(results.length > 0);
+      } catch {
+        setOriginSuggestions([]);
+      }
+    }, 400);
+  }, []);
+
   const fitMapToRoutes = useCallback((routeList: RoutePath[]) => {
     if (!mapRef.current || typeof window === "undefined") return;
 
@@ -99,12 +142,7 @@ export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePa
     mapRef.current.fitBounds(bounds, { padding: [48, 48] });
   }, []);
 
-  const handleSelectDestination = useCallback(async (suggestion: GeocodeSuggestion) => {
-    const shortName = suggestion.displayName.split(",").slice(0, 2).join(",").trim();
-    setDestination({ name: shortName, coords: [suggestion.lat, suggestion.lon] });
-    setQuery(shortName);
-    setShowSuggestions(false);
-    setSuggestions([]);
+  const calculateRoutes = useCallback(async (startCoords: [number, number], endCoords: [number, number]) => {
     setLoading(true);
     setError(null);
     setRoutes([]);
@@ -113,27 +151,73 @@ export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePa
     setDriveProgress(0);
 
     try {
-      const result = await fetchRoutes(origin, [suggestion.lat, suggestion.lon]);
+      const result = await fetchRoutes(startCoords, endCoords);
       setRoutes(result);
       if (result.length > 0) {
         setSelectedRouteId(result[0].id);
         fitMapToRoutes(result);
       }
     } catch {
-      setError("Could not calculate routes. Try a different destination.");
+      setError("Could not calculate routes. Try a different start or destination.");
     } finally {
       setLoading(false);
     }
-  }, [fitMapToRoutes, origin]);
+  }, [fitMapToRoutes]);
+
+  const handleUseCurrentOrigin = useCallback(() => {
+    setOriginMode("current");
+    setOriginLocation(DEFAULT_ORIGIN);
+    setOriginQuery("");
+    setOriginSuggestions([]);
+    setShowOriginSuggestions(false);
+
+    if (destination) {
+      void calculateRoutes(DEFAULT_ORIGIN.coords, destination.coords);
+    }
+  }, [calculateRoutes, destination]);
+
+  const handleSelectOrigin = useCallback((suggestion: GeocodeSuggestion) => {
+    const shortName = getShortPlaceName(suggestion.displayName);
+    const nextOrigin = { name: shortName, coords: [suggestion.lat, suggestion.lon] as [number, number] };
+
+    setOriginMode("custom");
+    setOriginLocation(nextOrigin);
+    setOriginQuery(shortName);
+    setShowOriginSuggestions(false);
+    setOriginSuggestions([]);
+
+    if (destination) {
+      void calculateRoutes(nextOrigin.coords, destination.coords);
+    }
+  }, [calculateRoutes, destination]);
+
+  const handleSelectDestination = useCallback(async (suggestion: GeocodeSuggestion) => {
+    const shortName = getShortPlaceName(suggestion.displayName);
+    const nextDestination = { name: shortName, coords: [suggestion.lat, suggestion.lon] as [number, number] };
+
+    setDestination(nextDestination);
+    setQuery(shortName);
+    setShowSuggestions(false);
+    setSuggestions([]);
+    void calculateRoutes(origin, nextDestination.coords);
+  }, [calculateRoutes, origin]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
+        setShowOriginSuggestions(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (originDebounceRef.current) clearTimeout(originDebounceRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -208,9 +292,61 @@ export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePa
         {!isDriving ? (
           <>
             <div className="route-location-stack" ref={searchRef}>
-              <div className="route-location-card route-location-card--origin">
+              <div className="route-search-card route-search-card--origin">
                 <span className="route-location-kicker">From</span>
-                <strong>UTAR Kampar Campus</strong>
+                <div className="route-origin-toggle" role="group" aria-label="Starting point mode">
+                  <button
+                    className={originMode === "current" ? "route-origin-toggle-btn route-origin-toggle-btn--active" : "route-origin-toggle-btn"}
+                    onClick={handleUseCurrentOrigin}
+                    type="button"
+                  >
+                    Current
+                  </button>
+                  <button
+                    className={originMode === "custom" ? "route-origin-toggle-btn route-origin-toggle-btn--active" : "route-origin-toggle-btn"}
+                    onClick={() => {
+                      setOriginMode("custom");
+                      setShowOriginSuggestions(originSuggestions.length > 0);
+                    }}
+                    type="button"
+                  >
+                    Search
+                  </button>
+                </div>
+
+                {originMode === "current" ? (
+                  <strong className="route-fixed-origin">{originLocation.name}</strong>
+                ) : (
+                  <>
+                    <label className="route-search-label" htmlFor="route-origin-input">
+                      Starting point
+                    </label>
+                    <input
+                      id="route-origin-input"
+                      type="text"
+                      placeholder="Search starting place"
+                      value={originQuery}
+                      onChange={(event) => handleOriginSearchInput(event.target.value)}
+                      onFocus={() => originSuggestions.length > 0 && setShowOriginSuggestions(true)}
+                    />
+
+                    {showOriginSuggestions ? (
+                      <div className="search-suggestions">
+                        {originSuggestions.map((suggestion, index) => (
+                          <button
+                            key={`${suggestion.displayName}-${index}`}
+                            className="suggestion-item"
+                            onClick={() => handleSelectOrigin(suggestion)}
+                            type="button"
+                          >
+                            <span className="suggestion-name">{getShortPlaceName(suggestion.displayName)}</span>
+                            <span className="suggestion-detail">{suggestion.displayName.split(",").slice(2, 4).join(",")}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </>
+                )}
               </div>
 
               <div className="route-search-card">
@@ -237,7 +373,7 @@ export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePa
                         onClick={() => handleSelectDestination(suggestion)}
                         type="button"
                       >
-                        <span className="suggestion-name">{suggestion.displayName.split(",").slice(0, 2).join(",")}</span>
+                        <span className="suggestion-name">{getShortPlaceName(suggestion.displayName)}</span>
                         <span className="suggestion-detail">{suggestion.displayName.split(",").slice(2, 4).join(",")}</span>
                       </button>
                     ))}
@@ -266,7 +402,7 @@ export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePa
                           <h3>{route.label}</h3>
                         </div>
                         {route.ecoCoinsBonus > 0 ? (
-                          <span className="eco-bonus">+{route.ecoCoinsBonus}</span>
+                          <span className="eco-bonus">+{route.ecoCoinsBonus} coins</span>
                         ) : null}
                       </div>
                       <div className="route-stats">
@@ -276,7 +412,7 @@ export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePa
                         </div>
                         <div className="stat">
                           <span>Time</span>
-                          <strong>{route.timeMins} min</strong>
+                          <strong>{formatDuration(route.timeMins)}</strong>
                         </div>
                         <div className="stat">
                           <span>CO2</span>
@@ -289,6 +425,18 @@ export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePa
                             <span>Saves</span>
                             <strong>{route.carbonSavedKg} kg</strong>
                           </div>
+                        ) : null}
+                        {route.isEco ? (
+                          <>
+                            <div className="stat stat--reward">
+                              <span>Score</span>
+                              <strong>+{route.ecoScoreBonus}</strong>
+                            </div>
+                            <div className="stat stat--reward">
+                              <span>Coins</span>
+                              <strong>+{route.ecoCoinsBonus}</strong>
+                            </div>
+                          </>
                         ) : null}
                       </div>
                     </button>
@@ -307,7 +455,7 @@ export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePa
           <div className="route-drive-panel">
             <button className="route-compact-location" onClick={handleStopDemo} type="button">
               <span>From</span>
-              <strong>UTAR Kampar</strong>
+              <strong>{originLocation.name}</strong>
             </button>
             <button className="route-compact-location" onClick={handleStopDemo} type="button">
               <span>To</span>
@@ -321,7 +469,7 @@ export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePa
               </div>
               <div>
                 <span>ETA</span>
-                <strong>{Math.ceil(routeProgress.remainingMins)} min</strong>
+                <strong>{formatDuration(routeProgress.remainingMins)}</strong>
               </div>
               <div>
                 <span>Progress</span>
@@ -391,10 +539,23 @@ export function EcoRouteMap({ onRouteSelect }: { onRouteSelect?: (route: RoutePa
 
         {loading ? (
           <div className="map-overlay map-overlay--loading">
-            <p>Finding dashboard-friendly route choices...</p>
+            <p>Finding eco-save and shortest route choices...</p>
           </div>
         ) : null}
       </div>
     </div>
   );
+}
+
+function getShortPlaceName(displayName: string) {
+  return displayName.split(",").slice(0, 2).join(",").trim();
+}
+
+function formatDuration(value: number) {
+  const totalMins = Math.max(1, Math.ceil(value));
+  if (totalMins < 60) return `${totalMins} min`;
+
+  const hours = Math.floor(totalMins / 60);
+  const minutes = totalMins % 60;
+  return minutes > 0 ? `${hours} hr ${minutes} min` : `${hours} hr`;
 }

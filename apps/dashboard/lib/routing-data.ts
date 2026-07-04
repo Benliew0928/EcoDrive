@@ -8,6 +8,7 @@ export type RoutePath = {
   energyKwh: number;
   carbonEmissionKg: number;
   carbonSavedKg: number;
+  ecoScoreBonus: number;
   ecoCoinsBonus: number;
   color: string;
   points: [number, number][];
@@ -20,6 +21,18 @@ export type GeocodeSuggestion = {
   displayName: string;
   lat: number;
   lon: number;
+};
+
+type OsrmRoute = {
+  distance: number;
+  duration: number;
+  geometry?: {
+    coordinates?: [number, number][];
+  };
+};
+
+type RouteCandidate = RoutePath & {
+  originalIndex: number;
 };
 
 // ── EV Physics-Based Carbon Emission Model ──
@@ -84,43 +97,6 @@ export function calculateRouteCO2(distanceKm: number, avgSpeedKmh: number): numb
 }
 
 // ── OSRM Polyline Decoder ──
-// Decodes Google-encoded polyline format used by OSRM
-function decodePolyline(encoded: string): [number, number][] {
-  const points: [number, number][] = [];
-  let index = 0;
-  let lat = 0;
-  let lng = 0;
-
-  while (index < encoded.length) {
-    let shift = 0;
-    let result = 0;
-    let byte: number;
-
-    do {
-      byte = encoded.charCodeAt(index++) - 63;
-      result |= (byte & 0x1f) << shift;
-      shift += 5;
-    } while (byte >= 0x20);
-
-    lat += result & 1 ? ~(result >> 1) : result >> 1;
-
-    shift = 0;
-    result = 0;
-
-    do {
-      byte = encoded.charCodeAt(index++) - 63;
-      result |= (byte & 0x1f) << shift;
-      shift += 5;
-    } while (byte >= 0x20);
-
-    lng += result & 1 ? ~(result >> 1) : result >> 1;
-
-    points.push([lat / 1e5, lng / 1e5]);
-  }
-
-  return points;
-}
-
 // ── Nominatim Geocoding (free, no API key) ──
 
 export async function searchPlaces(query: string): Promise<GeocodeSuggestion[]> {
@@ -150,61 +126,48 @@ export async function fetchRoutes(
   origin: [number, number],
   destination: [number, number]
 ): Promise<RoutePath[]> {
-  // OSRM expects lon,lat (not lat,lon)
-  const originStr = `${origin[1]},${origin[0]}`;
-  const destStr = `${destination[1]},${destination[0]}`;
+  const directRoutes = await fetchOsrmRoutes([origin, destination], true);
+  if (directRoutes.length === 0) throw new Error("No routes found");
 
-  // Request 1: Direct route with alternatives
-  const urlDirect = `https://router.project-osrm.org/route/v1/driving/${originStr};${destStr}?alternatives=3&overview=full&geometries=polyline`;
+  const fallbackRoutes =
+    directRoutes.length >= 3
+      ? []
+      : (await Promise.all(
+          buildAlternativeWaypoints(origin, destination).map((waypoint) =>
+            fetchOsrmRoutes([origin, waypoint, destination], false)
+          )
+        )).flat();
 
-  // Request 2: Deviated route (waypoint offset by ~5km to force an alternative path)
-  const midLat = (origin[0] + destination[0]) / 2;
-  const midLon = (origin[1] + destination[1]) / 2;
-  const offsetLon = midLon + 0.05; // offset longitude
-  const waypointsUrl = `https://router.project-osrm.org/route/v1/driving/${originStr};${offsetLon},${midLat};${destStr}?overview=full&geometries=polyline`;
-
-  // Fetch both in parallel
-  const [resDirect, resDeviated] = await Promise.all([
-    fetch(urlDirect),
-    fetch(waypointsUrl)
-  ]);
-
-  const rawRoutes: any[] = [];
+  const rawRoutes = [...directRoutes, ...fallbackRoutes];
+  const primaryRoute = directRoutes[0];
+  const maxReasonableDistance = primaryRoute.distance * 1.55;
+  const maxReasonableDuration = primaryRoute.duration * 1.75;
+  const uniqueGeometries = new Set<string>();
+  const validRoutes: RouteCandidate[] = [];
   
-  if (resDirect.ok) {
-    const dataDirect = await resDirect.json();
-    if (dataDirect.routes) rawRoutes.push(...dataDirect.routes);
-  }
-  
-  if (resDeviated.ok) {
-    const dataDeviated = await resDeviated.json();
-    if (dataDeviated.routes) rawRoutes.push(...dataDeviated.routes);
-  }
+  rawRoutes.forEach((route, i) => {
+    const points = route.geometry?.coordinates?.map(([lon, lat]) => [lat, lon] as [number, number]) ?? [];
+    if (points.length < 2) return;
+    if (route.distance > maxReasonableDistance || route.duration > maxReasonableDuration) return;
 
-  if (rawRoutes.length === 0) throw new Error("No routes found");
+    const geometryKey = points
+      .filter((_, index) => index === 0 || index === points.length - 1 || index % Math.max(1, Math.floor(points.length / 8)) === 0)
+      .map(([lat, lon]) => `${lat.toFixed(4)},${lon.toFixed(4)}`)
+      .join("|");
 
-  // Calculate carbon for each real route and remove identical routes (deduplication)
-  const uniqueDistances = new Set<string>();
-  const validRoutes: RoutePath[] = [];
-  
-  rawRoutes.forEach((route: any, i: number) => {
-    let distanceKm = route.distance / 1000;
-    let timeMins = route.duration / 60;
-    
-    // Deduplicate by distance (rounded to 1 decimal)
-    const distKey = distanceKm.toFixed(1);
-    if (uniqueDistances.has(distKey)) return;
-    uniqueDistances.add(distKey);
+    if (uniqueGeometries.has(geometryKey)) return;
+    uniqueGeometries.add(geometryKey);
 
-    let points = decodePolyline(route.geometry);
+    const distanceKm = route.distance / 1000;
+    const timeMins = route.duration / 60;
     const avgSpeed = distanceKm / (timeMins / 60);
     const carbonEmissionKg = calculateRouteCO2(distanceKm, avgSpeed);
 
     // Also compute energy for display (same formula, without GEF multiplication)
     const v = avgSpeed / 3.6;
-    const F_roll = 1800 * 9.81 * 0.011;
-    const F_aero = 0.5 * 1.164 * 0.23 * 2.22 * v * v;
-    const P_kW = ((F_roll + F_aero) * v / 1000 / 0.85) + 0.8;
+    const F_roll = EV_MASS * GRAVITY * C_ROLLING;
+    const F_aero = 0.5 * AIR_DENSITY * C_DRAG * FRONTAL_AREA * v * v;
+    const P_kW = ((F_roll + F_aero) * v / 1000 / ETA_POWERTRAIN) + AUX_POWER_KW;
     const energyKwh = parseFloat(((P_kW / avgSpeed) * distanceKm).toFixed(2));
 
     validRoutes.push({
@@ -215,37 +178,145 @@ export async function fetchRoutes(
       energyKwh,
       carbonEmissionKg,
       carbonSavedKg: 0,
+      ecoScoreBonus: 0,
       ecoCoinsBonus: 0,
       color: "",
       points,
       isEco: false,
+      originalIndex: i,
     });
   });
 
-  // Sort by carbon emission to find the eco route
-  validRoutes.sort((a, b) => a.carbonEmissionKg - b.carbonEmissionKg);
+  if (validRoutes.length === 0) throw new Error("No routes found");
 
-  const lowestCarbon = validRoutes[0].carbonEmissionKg;
+  const ecoRoute = minBy(validRoutes, (route) =>
+    route.carbonEmissionKg * 10000 +
+    route.timeMins * 10 +
+    route.distanceKm
+  );
+  const shortestRoute = minBy(validRoutes, (route) =>
+    route.distanceKm * 10000 +
+    route.timeMins
+  );
+  const fastestRoute = minBy(validRoutes, (route) =>
+    route.timeMins * 10000 +
+    route.distanceKm
+  );
 
-  validRoutes.forEach((route, i) => {
-    if (i === 0) {
+  const orderedRoutes = [
+    ecoRoute,
+    shortestRoute,
+    fastestRoute,
+    ...validRoutes.sort((a, b) =>
+      a.carbonEmissionKg - b.carbonEmissionKg ||
+      a.distanceKm - b.distanceKm ||
+      a.timeMins - b.timeMins
+    )
+  ].filter((route, index, routes) =>
+    routes.findIndex((candidate) => candidate.originalIndex === route.originalIndex) === index
+  ).slice(0, 4);
+
+  const lowestCarbon = ecoRoute.carbonEmissionKg;
+  const secondBestCarbon = validRoutes
+    .filter((route) => route.originalIndex !== ecoRoute.originalIndex)
+    .sort((a, b) =>
+      a.carbonEmissionKg - b.carbonEmissionKg ||
+      a.distanceKm - b.distanceKm
+    )[0]?.carbonEmissionKg ?? lowestCarbon;
+  const baselineCarbon =
+    shortestRoute.originalIndex === ecoRoute.originalIndex
+      ? secondBestCarbon
+      : shortestRoute.carbonEmissionKg;
+  const ecoCarbonSaved = parseFloat(Math.max(0, baselineCarbon - lowestCarbon).toFixed(2));
+  const ecoCoinsBonus = Math.max(50, Math.round(50 + ecoCarbonSaved * 120));
+  const ecoScoreBonus = Math.max(120, Math.round(120 + ecoCarbonSaved * 180));
+  let alternativeCount = 1;
+
+  orderedRoutes.forEach((route, i) => {
+    route.id = `route-${i}`;
+
+    if (route.originalIndex === ecoRoute.originalIndex) {
       route.isEco = true;
-      route.label = "Eco Route";
+      route.label =
+        route.originalIndex === shortestRoute.originalIndex
+          ? "Eco Save + Shortest"
+          : "Eco Save Route";
       route.color = "#37E58F";
-      route.carbonSavedKg = 0;
-      route.ecoCoinsBonus = 50;
-    } else {
-      route.isEco = false;
-      route.label = validRoutes.length === 2 ? "Fast Route" : `Alternative ${i}`;
-      route.color = i === 1 ? "#FF5B5B" : "#F5B84B";
-      route.carbonSavedKg = 0;
-      route.ecoCoinsBonus = 0;
+      route.carbonSavedKg = ecoCarbonSaved;
+      route.ecoCoinsBonus = ecoCoinsBonus;
+      route.ecoScoreBonus = ecoScoreBonus;
+      return;
     }
 
-    if (!route.isEco) {
-      route.carbonSavedKg = parseFloat((route.carbonEmissionKg - lowestCarbon).toFixed(2));
+    route.isEco = false;
+    route.ecoCoinsBonus = 0;
+    route.ecoScoreBonus = 0;
+    route.carbonSavedKg = 0;
+
+    if (route.originalIndex === shortestRoute.originalIndex) {
+      route.label = "Shortest Route";
+      route.color = "#FF5B5B";
+    } else if (route.originalIndex === fastestRoute.originalIndex) {
+      route.label = "Fast Route";
+      route.color = "#F5B84B";
+    } else {
+      route.label = `Alternative ${alternativeCount}`;
+      route.color = alternativeCount === 1 ? "#38BDF8" : "#F5B84B";
+      alternativeCount += 1;
     }
   });
 
-  return validRoutes;
+  return orderedRoutes.map(({ originalIndex, ...route }) => route);
+}
+
+async function fetchOsrmRoutes(
+  coordinates: [number, number][],
+  includeAlternatives: boolean
+): Promise<OsrmRoute[]> {
+  const coordinateString = coordinates.map(([lat, lon]) => `${lon},${lat}`).join(";");
+  const alternatives = includeAlternatives ? "true" : "false";
+  const url =
+    `https://router.project-osrm.org/route/v1/driving/${coordinateString}` +
+    `?alternatives=${alternatives}&overview=full&geometries=geojson&continue_straight=false`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    return Array.isArray(data.routes) ? data.routes : [];
+  } catch {
+    return [];
+  }
+}
+
+function buildAlternativeWaypoints(
+  origin: [number, number],
+  destination: [number, number]
+): [number, number][] {
+  const midLat = (origin[0] + destination[0]) / 2;
+  const midLon = (origin[1] + destination[1]) / 2;
+  const latKm = 111.32;
+  const lonKm = Math.max(30, Math.cos(midLat * Math.PI / 180) * latKm);
+  const dxKm = (destination[1] - origin[1]) * lonKm;
+  const dyKm = (destination[0] - origin[0]) * latKm;
+  const straightKm = Math.max(1, Math.hypot(dxKm, dyKm));
+  const offsetKm = Math.min(10, Math.max(2.5, straightKm * 0.18));
+  const length = Math.max(1, Math.hypot(dxKm, dyKm));
+  const perpX = -dyKm / length;
+  const perpY = dxKm / length;
+
+  return [-1, 1, -1.45, 1.45].map((side) => {
+    const offset = offsetKm * side;
+    const alongShift = straightKm * 0.08 * Math.sign(side);
+
+    return [
+      midLat + ((perpY * offset) + (dyKm / length * alongShift)) / latKm,
+      midLon + ((perpX * offset) + (dxKm / length * alongShift)) / lonKm,
+    ];
+  });
+}
+
+function minBy<T>(items: T[], score: (item: T) => number): T {
+  return items.reduce((best, item) => score(item) < score(best) ? item : best);
 }

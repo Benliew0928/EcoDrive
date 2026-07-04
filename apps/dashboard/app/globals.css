@@ -909,6 +909,10 @@ h1 {
   color: var(--green);
 }
 
+.route-stats .stat--reward strong {
+  color: var(--amber);
+}
+
 .route-cta {
   background: var(--green);
   color: #000;
@@ -3169,6 +3173,48 @@ select {
   min-height: 150px;
   padding: 18px;
   position: relative;
+}
+
+.route-search-card--origin {
+  border-color: rgba(55, 229, 143, 0.36);
+  min-height: 170px;
+}
+
+.route-origin-toggle {
+  background: rgba(7, 19, 18, 0.92);
+  border: 1px solid rgba(91, 119, 112, 0.28);
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 4px;
+}
+
+.route-origin-toggle-btn {
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 900;
+  min-height: 38px;
+  text-transform: uppercase;
+}
+
+.route-origin-toggle-btn--active {
+  background: rgba(55, 229, 143, 0.16);
+  color: var(--green);
+}
+
+.route-fixed-origin {
+  align-items: center;
+  color: var(--text);
+  display: flex;
+  font-size: 24px;
+  line-height: 1.08;
+  min-height: 70px;
 }
 
 .route-search-label {
