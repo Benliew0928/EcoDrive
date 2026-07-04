@@ -128,7 +128,7 @@ export default function CommunityPage() {
                   >
                     <span className="social-selector-icon"><Icon size={25} /></span>
                     <span><strong>{option.shortLabel}</strong><small>{option.description}</small></span>
-                    <ChevronRight size={19} />
+                    <ChevronRight size={26} />
                   </button>
                 );
               })}
@@ -255,15 +255,15 @@ const socialStyles = `
   .social-workspace{display:grid;flex:1;gap:8px;grid-template-columns:minmax(205px,238px) minmax(0,1fr);min-height:0}
   .social-selector,.social-stage{background:linear-gradient(145deg,rgba(12,25,23,.96),rgba(6,15,14,.98));border:1px solid rgba(91,121,113,.25);border-radius:18px;min-height:0}
   .social-selector{display:flex;flex-direction:column;gap:6px;padding:8px}
-  .social-selector-label{color:#6f8981;font-size:9px;font-weight:900;letter-spacing:.12em;padding:1px 4px 4px;text-transform:uppercase}
-  .social-selector-button{align-items:center;background:rgba(255,255,255,.02);border:1px solid rgba(118,145,138,.13);border-radius:13px;color:#92a7a1;cursor:pointer;display:grid;gap:9px;grid-template-columns:40px 1fr auto;min-height:67px;padding:8px;text-align:left;transition:.2s ease}
+  .social-selector-label{color:#6f8981;font-size:16px;font-weight:900;letter-spacing:.12em;padding:1px 4px 4px;text-transform:uppercase}
+  .social-selector-button{align-items:center;background:rgba(255,255,255,.02);border:1px solid rgba(118,145,138,.13);border-radius:13px;color:#92a7a1;cursor:pointer;display:grid;gap:12px;grid-template-columns:52px 1fr auto;min-height:84px;padding:12px 16px;text-align:left;transition:.2s ease}
   .social-selector-button:hover{border-color:rgba(55,229,143,.36);color:#eafff5}
   .social-selector-button.is-active{background:linear-gradient(115deg,rgba(55,229,143,.16),rgba(55,229,143,.04));border-color:rgba(55,229,143,.55);box-shadow:0 10px 24px rgba(0,0,0,.2);color:#37e58f}
-  .social-selector-icon{align-items:center;background:rgba(255,255,255,.04);border-radius:10px;display:flex;height:40px;justify-content:center;width:40px}
+  .social-selector-icon{align-items:center;background:rgba(255,255,255,.04);border-radius:10px;display:flex;height:52px;justify-content:center;width:52px}
   .social-selector-button.is-active .social-selector-icon{background:rgba(55,229,143,.14)}
-  .social-selector-button span:nth-child(2){display:grid;gap:2px;min-width:0}.social-selector-button strong{color:#f0fff7;font-size:14px}.social-selector-button small{font-size:8px;line-height:1.25}
+  .social-selector-button span:nth-child(2){display:grid;gap:4px;min-width:0}.social-selector-button strong{color:#f0fff7;font-size:22px}.social-selector-button small{font-size:14px;line-height:1.25;color:#c0d3ce}
   .social-state-filter{display:grid;gap:4px;padding:2px}.social-state-filter span{color:#78918a;font-size:8px;font-weight:900;text-transform:uppercase}.social-state-filter select{background:#081312;border:1px solid rgba(55,229,143,.25);border-radius:9px;color:#eafff5;height:36px;padding:0 9px;width:100%}
-  .social-personal-rank{background:linear-gradient(135deg,rgba(245,184,75,.1),rgba(245,184,75,.025));border:1px solid rgba(245,184,75,.22);border-radius:13px;display:grid;gap:1px;margin-top:auto;padding:10px 12px}.social-personal-rank span{color:#c7ad72;font-size:8px;font-weight:900;text-transform:uppercase}.social-personal-rank strong{color:#f5b84b;font-size:26px;line-height:1}.social-personal-rank small{color:#8d8778;font-size:8px}
+  .social-personal-rank{background:linear-gradient(135deg,rgba(245,184,75,.1),rgba(245,184,75,.025));border:1px solid rgba(245,184,75,.22);border-radius:13px;display:grid;gap:4px;margin-top:auto;padding:16px 20px}.social-personal-rank span{color:#c7ad72;font-size:14px;font-weight:900;text-transform:uppercase}.social-personal-rank strong{color:#f5b84b;font-size:42px;line-height:1}.social-personal-rank small{color:#b3ab96;font-size:14px}
   .social-stage{display:flex;flex-direction:column;overflow:hidden;padding:9px 12px}
   .social-stage-heading{align-items:center;display:flex;justify-content:space-between;gap:16px}.social-stage-heading h2,.social-complete-list h2{font-size:23px;letter-spacing:-.02em;margin:2px 0}.social-stage-heading p,.social-complete-list p{color:#7e938d;font-size:10px;margin:0}
   .social-list-button,.social-complete-list header>button{align-items:center;background:rgba(55,229,143,.12);border:1px solid rgba(55,229,143,.45);border-radius:10px;color:#eafff5;cursor:pointer;display:flex;font-size:11px;font-weight:900;gap:7px;min-height:42px;padding:0 15px}
